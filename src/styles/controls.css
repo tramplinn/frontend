@@ -1,0 +1,18 @@
+.text-field {
+  height: var(--ctl-sm);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-caption);
+}
+
+.text-field::placeholder {
+  color: var(--text-muted);
+}
+
+.text-field:focus {
+  border-color: var(--accent);
+}

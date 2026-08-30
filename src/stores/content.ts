@@ -1,0 +1,84 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+import { getCourse, listModuleDependencies, listTracks } from '@/api/content'
+import type {
+  CourseTree,
+  Lesson,
+  ModuleDependency,
+  ModuleTree,
+  Quiz,
+  Track,
+} from '@/api/schemas/content'
+
+export interface LessonLocation {
+  module: ModuleTree
+  lesson: Lesson
+}
+
+export interface QuizLocation {
+  module: ModuleTree
+  quiz: Quiz
+}
+
+export const useContentStore = defineStore('content', () => {
+  const tracks = ref<Track[]>([])
+  const tracksLoaded = ref(false)
+  const courses = ref(new Map<string, CourseTree>())
+  const dependencies = ref(new Map<string, ModuleDependency[]>())
+
+  async function loadTracks(): Promise<Track[]> {
+    if (!tracksLoaded.value) {
+      tracks.value = await listTracks()
+      tracksLoaded.value = true
+    }
+    return tracks.value
+  }
+
+  async function loadCourse(slug: string): Promise<CourseTree> {
+    const cached = courses.value.get(slug)
+    if (cached) {
+      return cached
+    }
+    const [course, deps] = await Promise.all([getCourse(slug), listModuleDependencies(slug)])
+    courses.value.set(slug, course)
+    dependencies.value.set(slug, deps)
+    return course
+  }
+
+  function courseDependencies(slug: string): ModuleDependency[] {
+    return dependencies.value.get(slug) ?? []
+  }
+
+  function findLesson(
+    courseSlug: string,
+    moduleSlug: string,
+    lessonSlug: string,
+  ): LessonLocation | null {
+    const course = courses.value.get(courseSlug)
+    const module = course?.modules.find((item) => item.slug === moduleSlug)
+    const item = module?.items.find(
+      (item) => item.kind === 'lesson' && item.lesson.slug === lessonSlug,
+    )
+    const lesson = item?.kind === 'lesson' ? item.lesson : undefined
+    return module && lesson ? { module, lesson } : null
+  }
+
+  function findQuiz(courseSlug: string, moduleSlug: string, quizSlug: string): QuizLocation | null {
+    const course = courses.value.get(courseSlug)
+    const module = course?.modules.find((item) => item.slug === moduleSlug)
+    const item = module?.items.find((item) => item.kind === 'quiz' && item.quiz.slug === quizSlug)
+    const quiz = item?.kind === 'quiz' ? item.quiz : undefined
+    return module && quiz ? { module, quiz } : null
+  }
+
+  return {
+    tracks,
+    courses,
+    loadTracks,
+    loadCourse,
+    courseDependencies,
+    findLesson,
+    findQuiz,
+  }
+})

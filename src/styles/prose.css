@@ -1,0 +1,143 @@
+.prose {
+  max-width: var(--measure);
+  font-size: var(--text-body);
+  line-height: 1.65;
+}
+
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.prose h1 {
+  font-size: var(--text-display);
+}
+
+.prose h2 {
+  font-size: var(--text-title);
+}
+
+.prose h3 {
+  font-size: var(--text-body);
+}
+
+.prose > h2,
+.prose > h3 {
+  margin-top: var(--space-8);
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--space-6);
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface);
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-xs);
+}
+
+.prose pre {
+  background: var(--surface);
+  border-radius: var(--radius-ctl);
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: var(--text-caption);
+  line-height: 1.6;
+}
+
+.prose blockquote {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.prose img {
+  border-radius: var(--radius-ctl);
+}
+
+.prose .note,
+.prose .warning,
+.prose .pitfall {
+  padding: var(--space-4);
+  border-radius: var(--radius-ctl);
+  border-left: 2px solid var(--callout-line);
+  background: var(--callout-bg);
+}
+
+.prose .note > * + *,
+.prose .warning > * + *,
+.prose .pitfall > * + *,
+.prose .spoiler > * + * {
+  margin-top: var(--space-3);
+}
+
+.prose .note {
+  --callout-line: var(--accent);
+  --callout-bg: var(--accent-soft);
+}
+
+.prose .warning {
+  --callout-line: var(--warning);
+  --callout-bg: var(--warning-soft);
+}
+
+.prose .pitfall {
+  --callout-line: var(--danger);
+  --callout-bg: var(--danger-soft);
+}
+
+.prose details.spoiler {
+  background: var(--surface);
+  border-radius: var(--radius-ctl);
+  padding: var(--space-3) var(--space-4);
+}
+
+.prose details.spoiler > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  list-style: none;
+}
+
+.prose details.spoiler > summary::-webkit-details-marker {
+  display: none;
+}
+
+.prose details.spoiler[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+.prose .interview {
+  display: none;
+}

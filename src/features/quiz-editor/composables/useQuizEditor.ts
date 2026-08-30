@@ -1,0 +1,248 @@
+import { computed, onMounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
+
+import {
+  createQuestion,
+  deleteQuestion,
+  getDraftModule,
+  getDraftQuiz,
+  updateQuestion,
+  updateQuiz,
+} from '@/api/authoring'
+import { uploadAsset } from '@/api/assets'
+import type { QuestionDraft } from '@/api/authoring'
+import { assetMimeSchema } from '@/api/schemas/assets'
+import type { ModuleTree, QuizAuthor, QuizQuestionAuthor } from '@/api/schemas/content'
+import {
+  removeQuestionOption,
+  toEditableQuestion,
+  toQuestionAnswer,
+  toQuestionOptions,
+  type EditableQuestion,
+} from '@/features/quiz-editor/model/questionDraft'
+
+const MODULE_WIDE = 'module'
+
+export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
+  const loaded = ref<QuizAuthor | null>(null)
+  const drafts = ref(new Map<string, EditableQuestion>())
+  const pending = ref(true)
+  const error = ref<unknown>(null)
+  const busy = ref<string | null>(null)
+
+  async function load(): Promise<void> {
+    pending.value = true
+    error.value = null
+    try {
+      const quiz = await getDraftQuiz(toValue(quizId))
+      loaded.value = quiz
+      drafts.value = new Map(quiz.questions.map((item) => [item.id, toEditableQuestion(item)]))
+      module.value = await getDraftModule(quiz.moduleId)
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      pending.value = false
+    }
+  }
+
+  function draftOf(questionId: string): EditableQuestion | undefined {
+    return drafts.value.get(questionId)
+  }
+
+  function patch(questionId: string, changes: Partial<EditableQuestion>): void {
+    const current = draftOf(questionId)
+    if (current) {
+      drafts.value = new Map(drafts.value).set(questionId, { ...current, ...changes })
+    }
+  }
+
+  function toggleCorrect(questionId: string, index: number): void {
+    const draft = draftOf(questionId)
+    if (!draft) return
+    if (draft.type === 'single') {
+      patch(questionId, { correct: [index] })
+      return
+    }
+    patch(questionId, {
+      correct: draft.correct.includes(index)
+        ? draft.correct.filter((item) => item !== index)
+        : [...draft.correct, index],
+    })
+  }
+
+  function setOption(questionId: string, index: number, value: string): void {
+    const draft = draftOf(questionId)
+    if (draft) {
+      patch(questionId, { options: draft.options.map((item, at) => (at === index ? value : item)) })
+    }
+  }
+
+  function addOption(questionId: string): void {
+    const draft = draftOf(questionId)
+    if (draft) patch(questionId, { options: [...draft.options, ''] })
+  }
+
+  function removeOption(questionId: string, index: number): void {
+    const draft = draftOf(questionId)
+    if (draft) patch(questionId, removeQuestionOption(draft, index))
+  }
+
+  async function save(question: QuizQuestionAuthor): Promise<void> {
+    const draft = draftOf(question.id)
+    if (!draft) return
+    busy.value = question.id
+    error.value = null
+    try {
+      await updateQuestion(question.id, {
+        promptMd: draft.promptMd,
+        type: draft.type,
+        options: toQuestionOptions(draft),
+        answer: toQuestionAnswer(draft),
+        explainMd: draft.explainMd.trim() === '' ? null : draft.explainMd,
+        attachmentIds: draft.attachments.map((asset) => asset.id),
+      })
+      await load()
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  async function add(): Promise<void> {
+    const quiz = loaded.value
+    if (!quiz) return
+    busy.value = 'new'
+    error.value = null
+    const draft: QuestionDraft = {
+      position: quiz.questions.length,
+      promptMd: 'Новый вопрос',
+      type: 'single',
+      options: ['Вариант 1', 'Вариант 2'],
+      answer: { value: 'Вариант 1' },
+    }
+    try {
+      await createQuestion(quiz.id, draft)
+      await load()
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  async function attachFile(questionId: string, file: File): Promise<void> {
+    const mime = assetMimeSchema.safeParse(file.type)
+    if (!mime.success) {
+      error.value = new Error('Можно прикреплять изображения и PDF')
+      return
+    }
+    busy.value = `attachment-${questionId}`
+    error.value = null
+    try {
+      const asset = await uploadAsset(file, mime.data)
+      const draft = draftOf(questionId)
+      if (draft && !draft.attachments.some((item) => item.id === asset.id)) {
+        patch(questionId, { attachments: [...draft.attachments, asset] })
+      }
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  function detachFile(questionId: string, assetId: string): void {
+    const draft = draftOf(questionId)
+    if (draft) {
+      patch(questionId, {
+        attachments: draft.attachments.filter((asset) => asset.id !== assetId),
+      })
+    }
+  }
+
+  async function remove(questionId: string): Promise<void> {
+    busy.value = questionId
+    try {
+      await deleteQuestion(questionId)
+      await load()
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  async function togglePublished(): Promise<void> {
+    const quiz = loaded.value
+    if (!quiz) return
+    busy.value = 'quiz'
+    try {
+      await updateQuiz(quiz.id, {
+        status: quiz.status === 'published' ? 'draft' : 'published',
+      })
+      await load()
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  onMounted(() => void load())
+  watch(
+    () => toValue(quizId),
+    () => void load(),
+  )
+
+  const module = ref<ModuleTree | null>(null)
+
+  const lessonOptions = computed(() => {
+    const lessons =
+      module.value?.items.flatMap((item) => (item.kind === 'lesson' ? [item.lesson] : [])) ?? []
+    return [
+      { value: MODULE_WIDE, label: 'по всему модулю' },
+      ...lessons.map((lesson) => ({ value: lesson.id, label: `по уроку «${lesson.title}»` })),
+    ]
+  })
+
+  const boundLesson = computed(() => loaded.value?.lessonId ?? MODULE_WIDE)
+
+  async function bindTo(value: string): Promise<void> {
+    const quiz = loaded.value
+    if (!quiz) {
+      return
+    }
+    busy.value = 'quiz'
+    error.value = null
+    try {
+      await updateQuiz(quiz.id, { lessonId: value === MODULE_WIDE ? null : value })
+      await load()
+    } catch (cause) {
+      error.value = cause
+    } finally {
+      busy.value = null
+    }
+  }
+
+  return {
+    loaded,
+    lessonOptions,
+    boundLesson,
+    bindTo,
+    pending,
+    error,
+    busy,
+    draftOf,
+    patch,
+    toggleCorrect,
+    setOption,
+    addOption,
+    removeOption,
+    attachFile,
+    detachFile,
+    save,
+    add,
+    remove,
+    togglePublished,
+  }
+}

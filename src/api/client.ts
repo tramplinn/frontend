@@ -1,0 +1,177 @@
+import type { z } from 'zod'
+
+import { camelizeKeys } from './case'
+import { ApiError, ContractError, NetworkError, toApiError } from './errors'
+import { accessTokenSchema } from './schemas/auth'
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+
+interface Session {
+  token: string
+  expiresAt: number
+}
+
+/** Access-токен живёт только в памяти вкладки: в localStorage его достанет любой XSS,
+    а refresh лежит в httpOnly-куке и переживает перезагрузку сам. */
+let session: Session | null = null
+let refreshInFlight: Promise<Session | null> | null = null
+
+const EXPIRY_SKEW_MS = 30_000
+
+export function clearSession(): void {
+  session = null
+}
+
+function isExpired(value: Session): boolean {
+  return value.expiresAt - EXPIRY_SKEW_MS <= Date.now()
+}
+
+/** Обновление access-токена по refresh-куке. Параллельные вызовы делят один запрос:
+    иначе десять 401 подряд отправили бы десять ротаций refresh-токена. */
+export function refreshSession(): Promise<Session | null> {
+  refreshInFlight ??= (async (): Promise<Session | null> => {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!response.ok) {
+        session = null
+        return null
+      }
+      const parsed = accessTokenSchema.parse(camelizeKeys(await response.json()))
+      session = {
+        token: parsed.accessToken,
+        expiresAt: new Date(parsed.expiresAt).getTime(),
+      }
+      return session
+    } catch {
+      session = null
+      return null
+    } finally {
+      refreshInFlight = null
+    }
+  })()
+  return refreshInFlight
+}
+
+interface RequestOptions<T extends z.ZodType> {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  body?: unknown
+  rawBody?: { data: BodyInit; contentType: string }
+  query?: Record<string, string | number | boolean | undefined>
+  schema?: T
+  withCookies?: boolean
+  skipRetry?: boolean
+  signal?: AbortSignal
+}
+
+function buildUrl(path: string, query: RequestOptions<z.ZodType>['query']): string {
+  const url = `${BASE_URL}${path}`
+  if (!query) {
+    return url
+  }
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) {
+      params.set(key, String(value))
+    }
+  }
+  const search = params.toString()
+  return search ? `${url}?${search}` : url
+}
+
+async function send(path: string, options: RequestOptions<z.ZodType>): Promise<Response> {
+  const headers = new Headers()
+  if (options.rawBody) {
+    headers.set('Content-Type', options.rawBody.contentType)
+  } else if (options.body !== undefined) {
+    headers.set('Content-Type', 'application/json')
+  }
+  if (session && !isExpired(session)) {
+    headers.set('Authorization', `Bearer ${session.token}`)
+  }
+
+  const init: RequestInit = {
+    method: options.method ?? 'GET',
+    headers,
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.withCookies === true ? { credentials: 'include' as const } : {}),
+    ...(options.rawBody
+      ? { body: options.rawBody.data }
+      : options.body === undefined
+        ? {}
+        : { body: JSON.stringify(options.body) }),
+  }
+
+  try {
+    return await fetch(buildUrl(path, options.query), init)
+  } catch (cause) {
+    throw new NetworkError(cause)
+  }
+}
+
+export async function request<T extends z.ZodType>(
+  path: string,
+  options: RequestOptions<T> & { schema: T },
+): Promise<z.infer<T>>
+export async function request(path: string, options?: RequestOptions<z.ZodType>): Promise<void>
+export async function request<T extends z.ZodType>(
+  path: string,
+  options: RequestOptions<T> = {},
+): Promise<z.infer<T> | void> {
+  if (session && isExpired(session) && options.withCookies !== true) {
+    await refreshSession()
+  }
+
+  let response = await send(path, options)
+
+  if (response.status === 401 && options.skipRetry !== true && options.withCookies !== true) {
+    const renewed = await refreshSession()
+    if (renewed) {
+      response = await send(path, options)
+    }
+  }
+
+  if (!response.ok) {
+    throw await toApiError(response)
+  }
+
+  if (!options.schema || response.status === 204) {
+    return
+  }
+
+  const payload: unknown = camelizeKeys(await response.json())
+  const parsed = options.schema.safeParse(payload)
+  if (!parsed.success) {
+    throw new ContractError(path, parsed.error)
+  }
+  return parsed.data
+}
+
+export async function requestStream(
+  path: string,
+  options: Omit<RequestOptions<z.ZodType>, 'schema'>,
+): Promise<ReadableStream<Uint8Array>> {
+  if (session && isExpired(session)) {
+    await refreshSession()
+  }
+
+  let response = await send(path, options)
+  if (response.status === 401 && options.skipRetry !== true) {
+    const renewed = await refreshSession()
+    if (renewed) {
+      response = await send(path, options)
+    }
+  }
+
+  if (!response.ok) {
+    throw await toApiError(response)
+  }
+  if (!response.body) {
+    throw new NetworkError(new Error('Сервер не открыл поток'))
+  }
+  return response.body
+}
+
+export { ApiError, ContractError, NetworkError }

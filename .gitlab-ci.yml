@@ -1,0 +1,207 @@
+# Tramplin — фронтенд. Бэкенд лежит в отдельном репозитории со своим пайплайном.
+#
+# Переменные проекта, которые нужно завести в GitLab (Settings → CI/CD → Variables):
+#   SERVER_IP        адрес сервера развёртывания
+#   SSH_PRIVATE_KEY  приватный ключ в base64 (masked)
+#   STAGE_ENV        содержимое .env для stage: как минимум API_UPSTREAM и WEB_PORT
+#   PROD_ENV         то же для production (masked)
+#   STAGE_URL        адрес stage — по нему же ходит DAST
+#   PROD_URL         адрес production
+# Реестр ($CI_REGISTRY*) GitLab подставляет сам.
+
+stages:
+  - lint
+  - test
+  - security
+  - build
+  - deploy
+  - dast
+
+default:
+  tags:
+    - docker
+    - linux
+
+variables:
+  DOCKER_IMAGE_WEB: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_REF_SLUG"
+  SSH_PORT: "15945"
+  SSH_USER: "user1"
+  SSH_HOST: "$SERVER_IP"
+
+
+.node:
+  image: node:22-bookworm-slim
+  variables:
+    # Без CI pnpm прерывается на смене каталога хранилища: нет TTY.
+    CI: "true"
+    PNPM_STORE: "$CI_PROJECT_DIR/.pnpm-store"
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+  before_script:
+    - corepack enable
+    - pnpm install --frozen-lockfile --store-dir "$PNPM_STORE"
+
+.on-merge-and-branches:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+
+lint:
+  extends:
+    - .node
+    - .on-merge-and-branches
+  stage: lint
+  script:
+    - pnpm lint
+    - pnpm format:check
+
+typecheck:
+  extends:
+    - .node
+    - .on-merge-and-branches
+  stage: lint
+  script:
+    - pnpm typecheck
+
+test:
+  extends:
+    - .node
+    - .on-merge-and-branches
+  stage: test
+  script:
+    - pnpm exec vitest run --reporter=default --reporter=junit --outputFile=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+    expire_in: 7 days
+
+build:
+  extends:
+    - .node
+    - .on-merge-and-branches
+  stage: build
+  script:
+    - pnpm build
+  artifacts:
+    paths:
+      - dist
+    expire_in: 7 days
+
+
+# --no-git: история склонирована обрезанной, обход коммитов дал бы разный
+# результат от запуска к запуску.
+gitleaks:
+  extends: .on-merge-and-branches
+  stage: security
+  image:
+    name: zricethezav/gitleaks:v8.18.2
+    entrypoint: [""]
+  script:
+    - gitleaks detect --source . --no-git --verbose --redact
+
+semgrep:
+  extends: .on-merge-and-branches
+  stage: security
+  image: semgrep/semgrep
+  script:
+    - semgrep scan --config=p/typescript --config=p/javascript --config=p/owasp-top-ten --error .
+
+trivy-sca:
+  extends: .on-merge-and-branches
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 .
+
+
+build-and-push:
+  stage: build
+  image: docker:27.5.0
+  services:
+    - docker:27.5.0-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$DOCKER_IMAGE_WEB" .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 "$DOCKER_IMAGE_WEB"
+    - docker push "$DOCKER_IMAGE_WEB"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "stage"'
+
+
+.deploy:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking accept-new\n\tPort $SSH_PORT\n" > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+  script:
+    - ssh $SSH_USER@$SSH_HOST "mkdir -p $DEPLOY_PATH"
+    - scp docker-compose.yml $SSH_USER@$SSH_HOST:$DEPLOY_PATH/docker-compose.yml
+    - ssh $SSH_USER@$SSH_HOST "cat > $DEPLOY_PATH/.env" <<< "$ENV_CONTENT"
+    - |
+      ssh $SSH_USER@$SSH_HOST "
+        set -e
+        cd $DEPLOY_PATH
+        export DOCKER_IMAGE_WEB='$DOCKER_IMAGE_WEB'
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'
+        # Напрямую: у сервиса есть build, и compose pull собрал бы его на сервере.
+        docker pull '$DOCKER_IMAGE_WEB'
+        docker compose up -d --remove-orphans
+        docker image prune -f
+      "
+
+deploy_stage:
+  extends: .deploy
+  variables:
+    DEPLOY_PATH: "/home/user1/apps/frontend_stage"
+    ENV_CONTENT: "$STAGE_ENV"
+  environment:
+    name: staging
+    url: "$STAGE_URL"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "stage"'
+
+deploy_prod:
+  extends: .deploy
+  variables:
+    DEPLOY_PATH: "/home/user1/apps/frontend_prod"
+    ENV_CONTENT: "$PROD_ENV"
+  environment:
+    name: production
+    url: "$PROD_URL"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+
+nuclei-scan:
+  stage: dast
+  image:
+    name: projectdiscovery/nuclei:v3.3.8
+    entrypoint: [""]
+  script:
+    - nuclei -u "$TARGET_URL" -severity critical,high,medium -tags cve,exposure,misconfiguration -duc -jsonl -o nuclei-report.jsonl
+  artifacts:
+    when: always
+    paths:
+      - nuclei-report.jsonl
+    expire_in: 7 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "stage"'
+      variables:
+        TARGET_URL: "$STAGE_URL"
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      variables:
+        TARGET_URL: "$PROD_URL"
