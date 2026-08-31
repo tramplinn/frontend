@@ -84,13 +84,26 @@ pnpm build
 
 ## Конфигурация
 
-| Переменная          | Назначение                       | Значение по умолчанию   |
-| ------------------- | -------------------------------- | ----------------------- |
-| `BACKEND_ORIGIN`    | адрес backend для dev-proxy Vite | `http://localhost:8000` |
-| `VITE_API_BASE_URL` | базовый URL API в браузере       | `/api/v1`               |
+| Переменная             | Назначение                               | Значение по умолчанию   |
+| ---------------------- | ---------------------------------------- | ----------------------- |
+| `BACKEND_ORIGIN`       | адрес backend для dev-proxy Vite         | `http://localhost:8000` |
+| `VITE_API_BASE_URL`    | базовый URL API в браузере               | `/api/v1`               |
+| `API_UPSTREAM`         | адрес backend в общей Docker-сети       | обязательная            |
+| `EDGE_NETWORK`         | внешняя сеть frontend, backend и proxy  | `tramplin-edge`         |
+| `WEB_NETWORK_ALIAS`    | DNS-имя frontend в общей Docker-сети    | `tramplin-web`          |
+| `WEB_BIND_HOST`        | интерфейс опубликованного frontend-порта | `127.0.0.1`             |
+| `WEB_PORT`             | опубликованный порт frontend-контейнера | `8080`                  |
+| `CLIENT_MAX_BODY_SIZE` | лимит тела запроса в production Nginx   | `12m`                   |
 
 `BACKEND_ORIGIN` используется только конфигурацией Vite. Переменные с префиксом
 `VITE_` встраиваются в клиентский bundle и не должны содержать секретов.
+
+Runtime-переменные читаются контейнером при запуске и не попадают в browser
+bundle. Для production задайте `API_UPSTREAM=http://tramplin-prod-api:8000`, для
+stage — `API_UPSTREAM=http://tramplin-staging-api:8000`. Внешняя сеть
+`tramplin-edge` должна быть создана до запуска compose. Лимит Nginx оставлен
+немного выше backend-лимита файлов 10 МБ, чтобы валидированный ответ возвращало
+приложение, а не reverse proxy.
 
 В production рекомендуется оставить относительный `VITE_API_BASE_URL=/api/v1` и
 разместить frontend и backend за одним reverse proxy.

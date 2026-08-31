@@ -85,7 +85,6 @@ export const useProgressStore = defineStore('progress', () => {
     if (!auth.isAuthenticated || startedLoaded.value) {
       return
     }
-    startedLoaded.value = true
     const courses = await listCourses()
     const rows = await Promise.all(
       courses.map(async (course) => {
@@ -103,6 +102,7 @@ export const useProgressStore = defineStore('progress', () => {
         total: item?.totalLessons ?? 0,
       }))
       .sort((a, b) => b.completed / (b.total || 1) - a.completed / (a.total || 1))
+    startedLoaded.value = true
   }
 
   function reset(): void {

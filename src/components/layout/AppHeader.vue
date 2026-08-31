@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useRoute } from 'vue-router'
 
 import ThemeToggle from '@/components/layout/ThemeToggle.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import { authNextPath } from '@/lib/authNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
 
@@ -16,6 +17,8 @@ interface Crumb {
 const auth = useAuthStore()
 const content = useContentStore()
 const route = useRoute()
+const signingIn = ref(false)
+const signInError = ref(false)
 
 function param(name: string): string {
   const value = route.params[name]
@@ -70,7 +73,15 @@ const crumbs = computed<Crumb[]>(() => {
 })
 
 async function signIn(): Promise<void> {
-  await auth.login(route.fullPath)
+  signingIn.value = true
+  signInError.value = false
+  const nextPath = authNextPath(route.fullPath, route.query.login)
+  try {
+    await auth.login(nextPath)
+  } catch {
+    signInError.value = true
+    signingIn.value = false
+  }
 }
 </script>
 
@@ -86,15 +97,23 @@ async function signIn(): Promise<void> {
 
     <div class="side">
       <ThemeToggle />
-      <AppButton v-if="!auth.isAuthenticated" size="sm" variant="primary" @click="signIn">
+      <AppButton
+        v-if="!auth.isAuthenticated"
+        size="sm"
+        variant="primary"
+        :loading="signingIn"
+        @click="signIn"
+      >
         войти
       </AppButton>
+      <span v-if="signInError" class="sign-in-error" role="alert">не удалось войти</span>
     </div>
   </header>
 </template>
 
 <style scoped>
 .header {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -137,5 +156,27 @@ a.crumb:hover {
   align-items: center;
   gap: var(--space-2);
   margin-left: auto;
+}
+
+.sign-in-error {
+  color: var(--danger);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .header {
+    padding-inline: var(--space-4);
+  }
+
+  .sign-in-error {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + var(--space-2));
+    right: var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-ctl);
+    background: var(--danger-soft);
+  }
 }
 </style>

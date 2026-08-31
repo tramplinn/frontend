@@ -3,7 +3,7 @@
 # Переменные проекта, которые нужно завести в GitLab (Settings → CI/CD → Variables):
 #   SERVER_IP        адрес сервера развёртывания
 #   SSH_PRIVATE_KEY  приватный ключ в base64 (masked)
-#   STAGE_ENV        содержимое .env для stage: как минимум API_UPSTREAM и WEB_PORT
+#   STAGE_ENV        содержимое .env для stage: API_UPSTREAM, WEB_NETWORK_ALIAS и WEB_PORT
 #   PROD_ENV         то же для production (masked)
 #   STAGE_URL        адрес stage — по нему же ходит DAST
 #   PROD_URL         адрес production

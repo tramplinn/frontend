@@ -3,8 +3,27 @@ server {
     listen [::]:80;
     server_name _;
 
+    server_tokens off;
+    charset utf-8;
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
     resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
     root /usr/share/nginx/html;
+
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+    }
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -13,10 +32,18 @@ server {
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     }
 
     location = /index.html {
         add_header Cache-Control "no-store";
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     }
 
     location /api/ {

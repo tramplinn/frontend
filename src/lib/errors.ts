@@ -12,6 +12,9 @@ export function errorText(error: unknown): string {
     return error.message
   }
   if (error instanceof ApiError) {
+    if (error.status >= 500) {
+      return 'Сервис временно недоступен. Попробуйте позже.'
+    }
     return error.message
   }
   if (error instanceof NetworkError) {

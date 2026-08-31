@@ -1,10 +1,21 @@
+name: ${COMPOSE_PROJECT_NAME:-tramplin-frontend}
+
 services:
   web:
     image: ${DOCKER_IMAGE_WEB:-tramplin-web:local}
     build: .
-    env_file: .env
     environment:
-      API_UPSTREAM: ${API_UPSTREAM:-http://api:8000}
+      API_UPSTREAM: ${API_UPSTREAM:?set API_UPSTREAM}
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-12m}
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_BIND_HOST:-127.0.0.1}:${WEB_PORT:-8080}:80"
+    networks:
+      edge:
+        aliases:
+          - ${WEB_NETWORK_ALIAS:-tramplin-web}
     restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-tramplin-edge}
