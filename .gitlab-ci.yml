@@ -15,7 +15,7 @@ stages:
   - security
   - build
   - deploy
-  - dast
+  - scan
 
 default:
   tags:
@@ -187,7 +187,7 @@ deploy_prod:
 
 
 nuclei-scan:
-  stage: dast
+  stage: scan
   image:
     name: projectdiscovery/nuclei:v3.3.8
     entrypoint: [""]

@@ -224,3 +224,13 @@ pnpm build
 - возвращать `index.html` для неизвестных frontend-маршрутов;
 - не буферизовать SSE endpoint ассистента;
 - использовать HTTPS, чтобы production refresh-cookie передавалась безопасно.
+
+## CI
+
+Стадия DAST называется `scan`, а не `dast`. Пайплайн со стадией `dast` в этом
+namespace не проходит валидацию: GitLab отвечает `Insufficient permissions for
+dast_configuration keyword` и не ставит в очередь ни одной джобы, включая линт.
+DAST у GitLab это возможность тарифа Ultimate, а namespace на Free, поэтому
+починить причину нельзя — ни страницы Policies, ни профилей сканирования на этом
+тарифе нет. Своего DAST это не касается: `nuclei-scan` как ходил по стенду после
+деплоя, так и ходит.
