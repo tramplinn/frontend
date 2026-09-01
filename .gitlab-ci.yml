@@ -192,7 +192,7 @@ nuclei-scan:
     name: projectdiscovery/nuclei:v3.3.8
     entrypoint: [""]
   script:
-    - nuclei -u "$TARGET_URL" -severity critical,high,medium -tags cve,exposure,misconfiguration -duc -jsonl -o nuclei-report.jsonl
+    - nuclei -u "$TARGET_URL" -severity critical,high,medium -tags cve,exposure,misconfiguration -jsonl -o nuclei-report.jsonl
   artifacts:
     when: always
     paths:
