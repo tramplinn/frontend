@@ -3,8 +3,9 @@
 # Переменные проекта, которые нужно завести в GitLab (Settings → CI/CD → Variables):
 #   SERVER_IP        адрес сервера развёртывания
 #   SSH_PRIVATE_KEY  приватный ключ в base64 (masked)
-#   STAGE_ENV        содержимое .env для stage: API_UPSTREAM, WEB_NETWORK_ALIAS и WEB_PORT
-#   PROD_ENV         то же для production (masked)
+#   STAGE_ENV        тип File, содержимое .env для stage: API_UPSTREAM,
+#                    WEB_NETWORK_ALIAS, WEB_PORT и COMPOSE_PROJECT_NAME
+#   PROD_ENV         то же для production, тоже File
 #   STAGE_URL        адрес stage — по нему же ходит DAST
 #   PROD_URL         адрес production
 # Реестр ($CI_REGISTRY*) GitLab подставляет сам.
@@ -157,8 +158,8 @@ build-and-push:
   script:
     - ssh "$SSH_USER@$SSH_HOST" "mkdir -p $DEPLOY_PATH"
     - scp docker-compose.yml "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/docker-compose.yml"
-    - printf '%s' "$ENV_CONTENT" |
-      ssh "$SSH_USER@$SSH_HOST" "cat > $DEPLOY_PATH/.env && chmod 600 $DEPLOY_PATH/.env"
+    - scp "$ENV_FILE" "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/.env"
+    - ssh "$SSH_USER@$SSH_HOST" "chmod 600 $DEPLOY_PATH/.env"
     - printf '%s' "$CI_REGISTRY_PASSWORD" |
       ssh "$SSH_USER@$SSH_HOST" "docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY"
     - ssh "$SSH_USER@$SSH_HOST"
@@ -171,7 +172,7 @@ deploy_stage:
   extends: .deploy
   variables:
     DEPLOY_PATH: "/home/user1/apps/frontend_stage"
-    ENV_CONTENT: "$STAGE_ENV"
+    ENV_FILE: "$STAGE_ENV"
   environment:
     name: staging
     url: "$STAGE_URL"
@@ -182,7 +183,7 @@ deploy_prod:
   extends: .deploy
   variables:
     DEPLOY_PATH: "/home/user1/apps/frontend_prod"
-    ENV_CONTENT: "$PROD_ENV"
+    ENV_FILE: "$PROD_ENV"
   environment:
     name: production
     url: "$PROD_URL"
