@@ -15,6 +15,10 @@ RUN pnpm build
 
 FROM nginx:1.27-alpine AS serve
 
+# Базовый образ отстаёт от репозитория alpine на несколько исправлений
+# безопасности, поэтому пакеты обновляем на этапе сборки.
+RUN apk upgrade --no-cache
+
 # Без флага NGINX_LOCAL_RESOLVERS остаётся пустым и конфиг не соберётся.
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 ENV CLIENT_MAX_BODY_SIZE=12m

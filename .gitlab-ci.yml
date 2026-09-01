@@ -24,6 +24,7 @@ default:
 
 variables:
   DOCKER_IMAGE_WEB: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_REF_SLUG"
+  DOCKER_IMAGE_WEB_SHA: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHORT_SHA"
   SSH_PORT: "15945"
   SSH_USER: "user1"
   SSH_HOST: "$SERVER_IP"
@@ -127,11 +128,17 @@ build-and-push:
   image: docker:27.5.0
   services:
     - docker:27.5.0-dind
+  retry:
+    max: 2
+    when:
+      - script_failure
+      - runner_system_failure
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
-    - docker build --pull -t "$DOCKER_IMAGE_WEB" .
+    - docker build --pull -t "$DOCKER_IMAGE_WEB" -t "$DOCKER_IMAGE_WEB_SHA" .
     - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 "$DOCKER_IMAGE_WEB"
+    - docker push "$DOCKER_IMAGE_WEB_SHA"
     - docker push "$DOCKER_IMAGE_WEB"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "stage"'
@@ -155,10 +162,10 @@ build-and-push:
       ssh $SSH_USER@$SSH_HOST "
         set -e
         cd $DEPLOY_PATH
-        export DOCKER_IMAGE_WEB='$DOCKER_IMAGE_WEB'
+        export DOCKER_IMAGE_WEB='$DOCKER_IMAGE_WEB_SHA'
         echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'
         # Напрямую: у сервиса есть build, и compose pull собрал бы его на сервере.
-        docker pull '$DOCKER_IMAGE_WEB'
+        docker pull '$DOCKER_IMAGE_WEB_SHA'
         docker compose up -d --remove-orphans
         docker image prune -f
       "
