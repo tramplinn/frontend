@@ -6,7 +6,7 @@ import type { ModuleTree } from '@/api/schemas/content'
 import { useProgressStore } from '@/stores/progress'
 
 interface FlowItem {
-  kind: 'lesson' | 'quiz'
+  kind: 'lesson' | 'quiz' | 'practice'
   id: string
   slug: string
   title: string
@@ -26,8 +26,23 @@ onMounted(() => {
 
 const flow = computed<FlowItem[]>(() =>
   props.module.items.map((item) => {
-    const content = item.kind === 'lesson' ? item.lesson : item.quiz
-    return { kind: item.kind, id: content.id, slug: content.slug, title: content.title }
+    if (item.kind === 'lesson') {
+      return {
+        kind: item.kind,
+        id: item.lesson.id,
+        slug: item.lesson.slug,
+        title: item.lesson.title,
+      }
+    }
+    if (item.kind === 'quiz') {
+      return { kind: item.kind, id: item.quiz.id, slug: item.quiz.slug, title: item.quiz.title }
+    }
+    return {
+      kind: item.kind,
+      id: item.practiceSet.id,
+      slug: item.practiceSet.id,
+      title: item.practiceSet.title,
+    }
   }),
 )
 const siblings = computed(() => {
@@ -38,7 +53,11 @@ const siblings = computed(() => {
 })
 
 function isDone(item: FlowItem): boolean {
-  return item.kind === 'lesson' ? progress.isCompleted(item.id) : progress.isQuizPassed(item.id)
+  return item.kind === 'lesson'
+    ? progress.isCompleted(item.id)
+    : item.kind === 'quiz'
+      ? progress.isQuizPassed(item.id)
+      : false
 }
 
 const done = computed(() => flow.value.filter(isDone).length)
@@ -47,13 +66,16 @@ function target(item: FlowItem): RouteLocationRaw {
   const params = { course: props.course, module: props.module.slug }
   return item.kind === 'lesson'
     ? { name: 'lesson', params: { ...params, lesson: item.slug } }
-    : { name: 'quiz', params: { ...params, quiz: item.slug } }
+    : item.kind === 'quiz'
+      ? { name: 'quiz', params: { ...params, quiz: item.slug } }
+      : { name: 'algorithm-practice', params: { ...params, set: item.id } }
 }
 
 function label(item: FlowItem, direction: 'previous' | 'next'): string {
   if (item.kind === 'quiz') {
     return direction === 'next' ? 'перейти к тесту' : 'к тесту'
   }
+  if (item.kind === 'practice') return 'к практике'
   return direction === 'next' ? 'следующий урок' : 'предыдущий урок'
 }
 </script>

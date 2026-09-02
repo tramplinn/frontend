@@ -12,8 +12,9 @@ import {
 import AddCourse from '@/components/manage/AddCourse.vue'
 import CourseRow from '@/components/manage/CourseRow.vue'
 import InlineCreate from '@/components/manage/InlineCreate.vue'
-import ModuleDependencies from '@/components/manage/ModuleDependencies.vue'
-import ModuleItemRow from '@/components/manage/ModuleItemRow.vue'
+import CourseEditor from '@/components/manage/CourseEditor.vue'
+import ModuleCard from '@/components/manage/ModuleCard.vue'
+import TrackEditor from '@/components/manage/TrackEditor.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import RowMenu from '@/components/ui/RowMenu.vue'
 import RowMenuItem from '@/components/ui/RowMenuItem.vue'
@@ -38,19 +39,22 @@ const {
   courseEmptyForStudents,
   flip,
   publishLabel,
-  publishedItems,
-  isModuleEmptyForStudents,
   ordered,
   toggleCourse,
   refresh,
   run,
+  editing,
+  toggleEditing,
+  saveTrack,
+  saveCourse,
+  saveModule,
   addTrack,
   addCourse,
   addModule,
   addLesson,
   addQuiz,
   removeItem,
-  moveModule,
+  moveOpenModule,
   moveItem,
   move,
 } = useContentManagement()
@@ -79,6 +83,7 @@ const {
             <h2 class="track-title">{{ track.title }}</h2>
             <StatusChip :status="track.status" />
             <RowMenu class="actions" :disabled="busy" :label="`Действия: ${track.title}`">
+              <RowMenuItem @select="toggleEditing(track.id)">изменить трек</RowMenuItem>
               <RowMenuItem
                 @select="run(() => updateTrack(track.id, { status: flip(track.status) }))"
               >
@@ -89,6 +94,14 @@ const {
               </RowMenuItem>
             </RowMenu>
           </header>
+
+          <TrackEditor
+            v-if="editing === track.id"
+            :track="track"
+            :busy="busy"
+            @save="(changes) => saveTrack(track.id, changes)"
+            @cancel="editing = null"
+          />
 
           <ul class="courses">
             <li v-for="(link, index) in ordered(track)" :key="link.course.id">
@@ -103,8 +116,17 @@ const {
                   run(() => updateCourse(link.course.id, { status: flip(link.course.status) }))
                 "
                 @move="(delta) => move(track, index, delta)"
+                @edit="toggleEditing(link.course.id)"
                 @detach="run(() => detachCourse(track.id, link.course.id))"
                 @remove="run(() => deleteCourse(link.course.id))"
+              />
+
+              <CourseEditor
+                v-if="editing === link.course.id"
+                :course="link.course"
+                :busy="busy"
+                @save="(changes) => saveCourse(link.course.id, changes)"
+                @cancel="editing = null"
               />
 
               <div v-if="openSlug === link.course.slug" class="modules">
@@ -119,97 +141,31 @@ const {
                     опубликован.
                   </p>
 
-                  <div
+                  <ModuleCard
                     v-for="(module, moduleIndex) in openCourse.modules"
                     :key="module.id"
-                    class="module"
-                  >
-                    <div class="module-head">
-                      <span class="module-title">{{ module.title }}</span>
-                      <StatusChip :status="module.status" />
-                      <span
-                        v-if="isModuleEmptyForStudents(module)"
-                        class="warn-chip"
-                        title="Все уроки и тесты модуля — черновики"
-                      >
-                        не видно студентам
-                      </span>
-                      <span class="module-meta">
-                        {{ publishedItems(module) }} из {{ module.items.length }} опубликовано
-                      </span>
-                      <RowMenu
-                        class="actions"
-                        :disabled="busy"
-                        :label="`Действия: ${module.title}`"
-                      >
-                        <RowMenuItem
-                          @select="openModuleId = openModuleId === module.id ? null : module.id"
-                        >
-                          связи модуля
-                        </RowMenuItem>
-                        <RowMenuItem
-                          @select="
-                            run(() => updateModule(module.id, { status: flip(module.status) }))
-                          "
-                        >
-                          {{ publishLabel(module.status) }}
-                        </RowMenuItem>
-                        <RowMenuItem
-                          :disabled="moduleIndex === 0"
-                          @select="moveModule(openCourse, moduleIndex, -1)"
-                        >
-                          выше
-                        </RowMenuItem>
-                        <RowMenuItem
-                          :disabled="moduleIndex === openCourse.modules.length - 1"
-                          @select="moveModule(openCourse, moduleIndex, 1)"
-                        >
-                          ниже
-                        </RowMenuItem>
-                        <RowMenuItem danger @select="run(() => deleteModule(module.id))">
-                          удалить модуль
-                        </RowMenuItem>
-                      </RowMenu>
-                    </div>
-
-                    <div class="module-body">
-                      <ModuleDependencies
-                        v-if="openModuleId === module.id && openModule"
-                        :module="openModule"
-                        :modules="openCourse.modules"
-                        :dependencies="dependencies"
-                        @changed="refresh"
-                      />
-
-                      <ul class="items">
-                        <ModuleItemRow
-                          v-for="(item, itemIndex) in module.items"
-                          :key="item.id"
-                          :item="item"
-                          :busy="busy"
-                          :first="itemIndex === 0"
-                          :last="itemIndex === module.items.length - 1"
-                          @move="(delta) => moveItem(module, itemIndex, delta)"
-                          @remove="removeItem(item)"
-                        />
-                      </ul>
-
-                      <div class="module-add">
-                        <InlineCreate
-                          label="урок"
-                          placeholder="название урока"
-                          :saving="busy"
-                          @create="(draft) => addLesson(module.id, draft)"
-                        />
-                        <InlineCreate
-                          label="тест"
-                          placeholder="название теста"
-                          :saving="busy"
-                          @create="(draft) => addQuiz(module.id, draft)"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                    :module="module"
+                    :modules="openCourse.modules"
+                    :dependencies="dependencies"
+                    :busy="busy"
+                    :first="moduleIndex === 0"
+                    :last="moduleIndex === openCourse.modules.length - 1"
+                    :editing="editing === module.id"
+                    :expanded="openModule"
+                    :deps-open="openModuleId === module.id"
+                    @edit="toggleEditing(module.id)"
+                    @save="(changes) => saveModule(module.id, changes)"
+                    @cancel-edit="editing = null"
+                    @toggle-deps="openModuleId = openModuleId === module.id ? null : module.id"
+                    @deps-changed="refresh"
+                    @publish="run(() => updateModule(module.id, { status: flip(module.status) }))"
+                    @move="(delta) => moveOpenModule(moduleIndex, delta)"
+                    @remove="run(() => deleteModule(module.id))"
+                    @add-lesson="(draft) => addLesson(module.id, draft)"
+                    @add-quiz="(draft) => addQuiz(module.id, draft)"
+                    @move-item="(index, delta) => moveItem(module, index, delta)"
+                    @remove-item="(item) => removeItem(item)"
+                  />
 
                   <InlineCreate
                     label="модуль"

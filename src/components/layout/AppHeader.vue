@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useRoute } from 'vue-router'
 
+import SignInButton from '@/components/layout/SignInButton.vue'
 import ThemeToggle from '@/components/layout/ThemeToggle.vue'
-import AppButton from '@/components/ui/AppButton.vue'
 import { authNextPath } from '@/lib/authNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
@@ -17,8 +17,8 @@ interface Crumb {
 const auth = useAuthStore()
 const content = useContentStore()
 const route = useRoute()
-const signingIn = ref(false)
-const signInError = ref(false)
+
+const nextPath = computed(() => authNextPath(route.fullPath, route.query.login))
 
 function param(name: string): string {
   const value = route.params[name]
@@ -34,7 +34,6 @@ const SIMPLE_LABELS: Record<string, string> = {
   'manage-quiz': 'контент / тест',
   'manage-assets': 'медиа',
   'admin-users': 'пользователи',
-  'admin-groups': 'группы',
 }
 
 const crumbs = computed<Crumb[]>(() => {
@@ -71,18 +70,6 @@ const crumbs = computed<Crumb[]>(() => {
   }
   return trail
 })
-
-async function signIn(): Promise<void> {
-  signingIn.value = true
-  signInError.value = false
-  const nextPath = authNextPath(route.fullPath, route.query.login)
-  try {
-    await auth.login(nextPath)
-  } catch {
-    signInError.value = true
-    signingIn.value = false
-  }
-}
 </script>
 
 <template>
@@ -97,16 +84,7 @@ async function signIn(): Promise<void> {
 
     <div class="side">
       <ThemeToggle />
-      <AppButton
-        v-if="!auth.isAuthenticated"
-        size="sm"
-        variant="primary"
-        :loading="signingIn"
-        @click="signIn"
-      >
-        войти
-      </AppButton>
-      <span v-if="signInError" class="sign-in-error" role="alert">не удалось войти</span>
+      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" />
     </div>
   </header>
 </template>

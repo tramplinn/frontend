@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 
-import { askTutor } from '@/api/tutor'
-import type { TutorTurn } from '@/api/tutor'
 import AppButton from '@/components/ui/AppButton.vue'
-import { errorText } from '@/lib/errors'
+import { useTutorChat } from '@/features/tutor/composables/useTutorChat'
 import { useAuthStore } from '@/stores/auth'
 import { useTutorStore } from '@/stores/tutor'
 
@@ -16,16 +14,26 @@ const auth = useAuthStore()
 const tutor = useTutorStore()
 
 const expanded = ref(readExpanded())
-const draft = ref('')
-const streamed = ref('')
-const streaming = ref(false)
-const error = ref<string | null>(null)
-const log = ref<HTMLElement | null>(null)
+const {
+  answers,
+  canSend,
+  draft,
+  error,
+  loadRenderer,
+  setLog,
+  send,
+  stop,
+  streamed,
+  streamedHtml,
+  streaming,
+  turns,
+} = useTutorChat(() => props.lessonId)
 
-let controller: AbortController | null = null
-
-const turns = computed(() => tutor.turns(props.lessonId))
-const canSend = computed(() => draft.value.trim().length > 0 && !streaming.value)
+onMounted(() => {
+  if (expanded.value) {
+    loadRenderer()
+  }
+})
 
 function readExpanded(): boolean {
   try {
@@ -37,79 +45,15 @@ function readExpanded(): boolean {
 
 function toggle(): void {
   expanded.value = !expanded.value
+  if (expanded.value) {
+    loadRenderer()
+  }
   try {
     localStorage.setItem(STORAGE_KEY, expanded.value ? 'expanded' : 'collapsed')
   } catch {
     // Состояние просто не переживёт перезагрузку.
   }
 }
-
-function scrollToEnd(): void {
-  void nextTick(() => {
-    const element = log.value
-    if (element) {
-      element.scrollTop = element.scrollHeight
-    }
-  })
-}
-
-function stop(): void {
-  controller?.abort()
-  controller = null
-}
-
-async function send(): Promise<void> {
-  const question = draft.value.trim()
-  if (!question || streaming.value) {
-    return
-  }
-  const history: TutorTurn[] = [...turns.value, { role: 'user', content: question }]
-  draft.value = ''
-  error.value = null
-  streamed.value = ''
-  streaming.value = true
-  tutor.setTurns(props.lessonId, history)
-  scrollToEnd()
-
-  controller = new AbortController()
-  try {
-    for await (const event of askTutor(props.lessonId, history, controller.signal)) {
-      if ('delta' in event) {
-        streamed.value += event.delta
-        scrollToEnd()
-      } else if ('error' in event) {
-        error.value = event.error
-      }
-    }
-  } catch (cause) {
-    // Обрыв по кнопке «остановить» или уходу со страницы — не ошибка.
-    if (!(cause instanceof DOMException && cause.name === 'AbortError')) {
-      error.value = errorText(cause)
-    }
-  } finally {
-    // Успевшее прийти сохраняем в любом случае, даже при обрыве.
-    if (streamed.value) {
-      tutor.setTurns(props.lessonId, [...history, { role: 'assistant', content: streamed.value }])
-    }
-    streamed.value = ''
-    streaming.value = false
-    controller = null
-    scrollToEnd()
-  }
-}
-
-watch(
-  () => props.lessonId,
-  () => {
-    stop()
-    streamed.value = ''
-    streaming.value = false
-    error.value = null
-    draft.value = ''
-  },
-)
-
-onBeforeUnmount(stop)
 </script>
 
 <template>
@@ -132,18 +76,27 @@ onBeforeUnmount(stop)
     </header>
 
     <template v-if="expanded">
-      <div ref="log" class="log">
+      <div :ref="setLog" class="log">
         <p v-if="turns.length === 0 && !streaming" class="blank">
           Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст
           этого урока.
           <template v-if="!auth.isAuthenticated"> Без входа доступно несколько вопросов. </template>
         </p>
 
-        <div v-for="(turn, index) in turns" :key="index" class="turn" :class="`turn--${turn.role}`">
-          {{ turn.content }}
-        </div>
+        <template v-for="(turn, index) in turns" :key="index">
+          <div v-if="turn.role === 'user'" class="turn turn--user">{{ turn.content }}</div>
+          <!-- Ответ модели — markdown, отрендеренный с html=false: сырой html из него
+               экранирован, поэтому v-html здесь безопасен. -->
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <div v-else-if="answers[index]" class="answer prose" v-html="answers[index]" />
+          <div v-else class="turn">{{ turn.content }}</div>
+        </template>
 
-        <div v-if="streamed" class="turn turn--assistant">{{ streamed }}</div>
+        <template v-if="streamed">
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <div v-if="streamedHtml" class="answer prose" v-html="streamedHtml" />
+          <div v-else class="turn">{{ streamed }}</div>
+        </template>
         <p v-else-if="streaming" class="waiting">думает…</p>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
       </div>
@@ -171,7 +124,8 @@ onBeforeUnmount(stop)
   display: flex;
   flex-direction: column;
   flex: var(--panel-grow, 1) 1 0;
-  height: var(--panel-height, auto);
+  /* Своя высота, чтобы на узком экране чат не делил её поровну с картой модуля. */
+  height: var(--chat-height, var(--panel-height, auto));
   min-height: 0;
   container-type: inline-size;
   background: var(--card);
@@ -268,6 +222,8 @@ onBeforeUnmount(stop)
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--border);
   overflow-y: auto;
+  /* Иначе докрутка переписки до конца утаскивает за собой страницу урока. */
+  overscroll-behavior: contain;
 }
 
 .blank {
@@ -281,6 +237,21 @@ onBeforeUnmount(stop)
   overflow-wrap: anywhere;
   font-size: var(--text-caption);
   line-height: 1.6;
+}
+
+.answer {
+  overflow-wrap: anywhere;
+  font-size: var(--text-caption);
+  line-height: 1.6;
+}
+
+/* Разметка приходит из v-html и атрибута scoped не получает. */
+.answer :deep(> * + *) {
+  margin-top: var(--space-3);
+}
+
+.answer :deep(pre) {
+  overflow-x: auto;
 }
 
 .turn--user {
@@ -322,7 +293,7 @@ onBeforeUnmount(stop)
   background: var(--card);
   color: var(--text);
   font-family: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text-input);
   line-height: 1.5;
   resize: none;
 }

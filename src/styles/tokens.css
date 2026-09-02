@@ -53,6 +53,9 @@
 
   --text-micro: 11px;
   --text-caption: 13px;
+  /* Поля ввода: Safari на iOS зумит страницу на всём, что мельче 16px,
+     и обратно не отматывает, поэтому на узких экранах размер растёт. */
+  --text-input: 15px;
   --text-body: 15px;
   --text-title: 20px;
   --text-display: 28px;
@@ -66,6 +69,8 @@
   --ctl-sm: 32px;
 
   --measure: 72ch;
+  --learning-width: calc(var(--measure) + var(--space-12) * 2);
+  --learning-rail-width: 320px;
   --sidebar: 232px;
   --topbar: 56px;
   --brand-mark: 16px;
@@ -148,6 +153,13 @@
   --icon-purple-soft: #2b1b38;
 
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 32%);
+}
+
+@media (max-width: 800px) {
+  :root {
+    --text-input: 16px;
+    --ctl-sm: 44px;
+  }
 }
 
 @media (max-width: 520px) {

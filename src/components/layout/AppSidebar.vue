@@ -56,9 +56,20 @@ watch(
         class="menu-toggle"
         aria-controls="sidebar-navigation"
         :aria-expanded="mobileOpen"
+        :aria-label="mobileOpen ? 'Закрыть меню' : 'Меню'"
         @click="mobileOpen = !mobileOpen"
       >
-        {{ mobileOpen ? 'закрыть' : 'меню' }}
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <template v-if="mobileOpen">
+            <path d="M5 5 L15 15" />
+            <path d="M15 5 L5 15" />
+          </template>
+          <template v-else>
+            <path d="M3 6 H17" />
+            <path d="M3 10 H17" />
+            <path d="M3 14 H17" />
+          </template>
+        </svg>
       </button>
     </div>
 
@@ -342,14 +353,21 @@ watch(
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: var(--ctl-sm);
     height: var(--ctl-sm);
-    padding: 0 var(--space-4);
+    padding: 0;
     border: 0;
     border-radius: var(--radius-pill);
     background: var(--surface);
     color: var(--text-muted);
-    font-size: var(--text-caption);
     cursor: pointer;
+  }
+
+  .menu-toggle svg {
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    fill: none;
   }
 
   .menu-toggle:hover {

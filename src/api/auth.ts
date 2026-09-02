@@ -1,16 +1,28 @@
 import { clearSession, refreshSession, request } from './client'
-import { authorizeUrlSchema, meSchema } from './schemas/auth'
+import { authorizeUrlSchema, meSchema, providersSchema } from './schemas/auth'
 import type { Me } from './schemas/auth'
+import type { IdentityProvider } from './schemas/common'
 
-export function githubLoginUrl(nextPath: string): Promise<{ authorizeUrl: string }> {
-  return request('/auth/github/login', {
+/** Какие способы входа реально настроены на сервере: ключей может не быть. */
+export function listProviders(): Promise<{ providers: IdentityProvider[] }> {
+  return request('/auth/providers', { schema: providersSchema })
+}
+
+export function loginUrl(
+  provider: IdentityProvider,
+  nextPath: string,
+): Promise<{ authorizeUrl: string }> {
+  return request(`/auth/${provider}/login`, {
     query: { next_path: nextPath },
     schema: authorizeUrlSchema,
   })
 }
 
-export function githubLinkUrl(nextPath: string): Promise<{ authorizeUrl: string }> {
-  return request('/auth/github/link', {
+export function linkUrl(
+  provider: IdentityProvider,
+  nextPath: string,
+): Promise<{ authorizeUrl: string }> {
+  return request(`/auth/${provider}/link`, {
     query: { next_path: nextPath },
     schema: authorizeUrlSchema,
   })
@@ -30,7 +42,7 @@ export async function logoutEverywhere(): Promise<void> {
   clearSession()
 }
 
-export async function unlinkIdentity(provider: 'github'): Promise<void> {
+export async function unlinkIdentity(provider: IdentityProvider): Promise<void> {
   await request(`/auth/identities/${provider}`, { method: 'DELETE' })
 }
 

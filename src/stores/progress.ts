@@ -27,6 +27,9 @@ export const useProgressStore = defineStore('progress', () => {
   const loaded = ref(false)
   const started = ref<StartedCourse[]>([])
   const startedLoaded = ref(false)
+  let progressRequest: Promise<void> | null = null
+  let startedRequest: Promise<void> | null = null
+  let generation = 0
 
   const completedCount = computed(() => completedLessonIds.value.size)
   const startedCourses = computed(() => started.value)
@@ -44,10 +47,23 @@ export const useProgressStore = defineStore('progress', () => {
     if (!auth.isAuthenticated || loaded.value) {
       return
     }
-    const [lessons, quizzes] = await Promise.all([listLessonProgress(), listQuizProgress()])
-    completedLessonIds.value = new Set(lessons.map((item) => item.lessonId))
-    passedQuizIds.value = new Set(quizzes.filter((item) => item.passed).map((item) => item.quizId))
-    loaded.value = true
+    if (!progressRequest) {
+      const requestGeneration = generation
+      const request = Promise.all([listLessonProgress(), listQuizProgress()])
+        .then(([lessons, quizzes]) => {
+          if (requestGeneration !== generation) return
+          completedLessonIds.value = new Set(lessons.map((item) => item.lessonId))
+          passedQuizIds.value = new Set(
+            quizzes.filter((item) => item.passed).map((item) => item.quizId),
+          )
+          loaded.value = true
+        })
+        .finally(() => {
+          if (progressRequest === request) progressRequest = null
+        })
+      progressRequest = request
+    }
+    return progressRequest
   }
 
   async function loadCourseProgress(courseSlug: string): Promise<CourseProgress | null> {
@@ -55,8 +71,11 @@ export const useProgressStore = defineStore('progress', () => {
     if (!auth.isAuthenticated) {
       return null
     }
+    const requestGeneration = generation
     const progress = await getCourseProgress(courseSlug)
-    courseProgress.value.set(courseSlug, progress)
+    if (requestGeneration === generation) {
+      courseProgress.value.set(courseSlug, progress)
+    }
     return progress
   }
 
@@ -85,33 +104,49 @@ export const useProgressStore = defineStore('progress', () => {
     if (!auth.isAuthenticated || startedLoaded.value) {
       return
     }
-    const courses = await listCourses()
-    const rows = await Promise.all(
-      courses.map(async (course) => {
-        const item = await loadCourseProgress(course.slug)
-        return { course, item }
-      }),
-    )
-    started.value = rows
-      .filter(({ item }) => item !== null && item.completedLessons > 0)
-      .map(({ course, item }) => ({
-        slug: course.slug,
-        title: course.title,
-        summary: course.summary,
-        completed: item?.completedLessons ?? 0,
-        total: item?.totalLessons ?? 0,
-      }))
-      .sort((a, b) => b.completed / (b.total || 1) - a.completed / (a.total || 1))
-    startedLoaded.value = true
+    if (!startedRequest) {
+      const requestGeneration = generation
+      const request = listCourses()
+        .then((courses) =>
+          Promise.all(
+            courses.map(async (course) => {
+              const item = await loadCourseProgress(course.slug)
+              return { course, item }
+            }),
+          ),
+        )
+        .then((rows) => {
+          if (requestGeneration !== generation) return
+          started.value = rows
+            .filter(({ item }) => item !== null && item.completedLessons > 0)
+            .map(({ course, item }) => ({
+              slug: course.slug,
+              title: course.title,
+              summary: course.summary,
+              completed: item?.completedLessons ?? 0,
+              total: item?.totalLessons ?? 0,
+            }))
+            .sort((a, b) => b.completed / (b.total || 1) - a.completed / (a.total || 1))
+          startedLoaded.value = true
+        })
+        .finally(() => {
+          if (startedRequest === request) startedRequest = null
+        })
+      startedRequest = request
+    }
+    return startedRequest
   }
 
   function reset(): void {
+    generation += 1
     completedLessonIds.value = new Set()
     passedQuizIds.value = new Set()
     courseProgress.value = new Map()
     loaded.value = false
     started.value = []
     startedLoaded.value = false
+    progressRequest = null
+    startedRequest = null
   }
 
   return {

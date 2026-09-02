@@ -26,13 +26,25 @@ export const useContentStore = defineStore('content', () => {
   const tracksLoaded = ref(false)
   const courses = ref(new Map<string, CourseTree>())
   const dependencies = ref(new Map<string, ModuleDependency[]>())
+  let tracksRequest: Promise<Track[]> | null = null
+  const courseRequests = new Map<string, Promise<CourseTree>>()
 
   async function loadTracks(): Promise<Track[]> {
-    if (!tracksLoaded.value) {
-      tracks.value = await listTracks()
-      tracksLoaded.value = true
+    if (tracksLoaded.value) {
+      return tracks.value
     }
-    return tracks.value
+    if (!tracksRequest) {
+      tracksRequest = listTracks()
+        .then((loaded) => {
+          tracks.value = loaded
+          tracksLoaded.value = true
+          return loaded
+        })
+        .finally(() => {
+          tracksRequest = null
+        })
+    }
+    return tracksRequest
   }
 
   async function loadCourse(slug: string): Promise<CourseTree> {
@@ -40,10 +52,22 @@ export const useContentStore = defineStore('content', () => {
     if (cached) {
       return cached
     }
-    const [course, deps] = await Promise.all([getCourse(slug), listModuleDependencies(slug)])
-    courses.value.set(slug, course)
-    dependencies.value.set(slug, deps)
-    return course
+    const pending = courseRequests.get(slug)
+    if (pending) {
+      return pending
+    }
+
+    const request = Promise.all([getCourse(slug), listModuleDependencies(slug)])
+      .then(([course, deps]) => {
+        courses.value.set(slug, course)
+        dependencies.value.set(slug, deps)
+        return course
+      })
+      .finally(() => {
+        courseRequests.delete(slug)
+      })
+    courseRequests.set(slug, request)
+    return request
   }
 
   function courseDependencies(slug: string): ModuleDependency[] {

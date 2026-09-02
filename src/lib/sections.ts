@@ -1,7 +1,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 
 export type SectionAccess = 'everyone' | 'teacher' | 'admin'
-export type SectionKey = 'learning' | 'catalog' | 'content' | 'assets' | 'users' | 'groups'
+export type SectionKey = 'learning' | 'catalog' | 'content' | 'assets' | 'users'
 
 export interface Section {
   key: SectionKey
@@ -48,16 +48,8 @@ export const SECTIONS: Section[] = [
   {
     key: 'users',
     title: 'пользователи',
-    summary: 'Роли, группы и доступ',
+    summary: 'Роли и доступ',
     to: { name: 'admin-users' },
-    access: 'admin',
-    group: 'система',
-  },
-  {
-    key: 'groups',
-    title: 'группы',
-    summary: 'Учебные группы колледжа',
-    to: { name: 'admin-groups' },
     access: 'admin',
     group: 'система',
   },

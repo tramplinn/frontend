@@ -9,7 +9,8 @@ export const contentStatusAction = (status: ContentStatus): string =>
 
 export function publishedItemCount(module: ModuleTree): number {
   return module.items.filter((item) => {
-    const content = item.kind === 'lesson' ? item.lesson : item.quiz
+    const content =
+      item.kind === 'lesson' ? item.lesson : item.kind === 'quiz' ? item.quiz : item.practiceSet
     return content.status === 'published'
   }).length
 }

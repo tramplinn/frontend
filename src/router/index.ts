@@ -47,6 +47,13 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/courses/:course/:module/practice/:set',
+    name: 'algorithm-practice',
+    component: () => import('@/views/AlgorithmPracticeView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/me',
     name: 'profile',
     component: () => import('@/views/ProfileView.vue'),
@@ -82,12 +89,6 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('@/views/admin/UsersView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/groups',
-    name: 'admin-groups',
-    component: () => import('@/views/admin/GroupsView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {

@@ -16,7 +16,11 @@ import {
   reorderModuleItems,
   reorderModules,
   reorderTrackCourses,
+  updateCourse,
+  updateModule,
+  updateTrack,
 } from '@/api/authoring'
+import type { CourseDraft, ModuleDraft, TrackDraft } from '@/api/authoring'
 import type {
   Course,
   CourseTree,
@@ -47,6 +51,13 @@ export function useContentManagement() {
   const actionError = ref<unknown>(null)
   const courseError = ref<unknown>(null)
   const loadingCourse = ref(false)
+  // Открыт максимум один редактор: две формы на одну сущность разошлись бы
+  // в значениях, а третья кнопка «сохранить» на экране только мешает.
+  const editing = ref<string | null>(null)
+
+  function toggleEditing(id: string): void {
+    editing.value = editing.value === id ? null : id
+  }
 
   async function loadLists(): Promise<void> {
     const [loadedTracks, loadedCourses] = await Promise.all([listDraftTracks(), listDraftCourses()])
@@ -103,6 +114,25 @@ export function useContentManagement() {
     }
   }
 
+  async function saveEdited(action: () => Promise<unknown>): Promise<void> {
+    await run(action)
+    if (actionError.value === null) {
+      editing.value = null
+    }
+  }
+
+  function saveTrack(trackId: string, changes: Partial<TrackDraft>): Promise<void> {
+    return saveEdited(() => updateTrack(trackId, changes))
+  }
+
+  function saveCourse(courseId: string, changes: Partial<CourseDraft>): Promise<void> {
+    return saveEdited(() => updateCourse(courseId, changes))
+  }
+
+  function saveModule(moduleId: string, changes: Partial<ModuleDraft>): Promise<void> {
+    return saveEdited(() => updateModule(moduleId, changes))
+  }
+
   async function run(action: () => Promise<unknown>): Promise<void> {
     busy.value = true
     actionError.value = null
@@ -143,6 +173,7 @@ export function useContentManagement() {
   }
 
   function removeItem(item: ModuleItem): void {
+    if (item.kind === 'practice') return
     void run(() =>
       item.kind === 'lesson' ? deleteLesson(item.lesson.id) : deleteQuiz(item.quiz.id),
     )
@@ -155,6 +186,13 @@ export function useContentManagement() {
       delta,
     )
     if (ids) void run(() => reorderModules(course.id, ids))
+  }
+
+  /** Модуль всегда двигают внутри открытого курса, но узнать это из шаблона нельзя. */
+  function moveOpenModule(index: number, delta: number): void {
+    if (openCourse.value) {
+      moveModule(openCourse.value, index, delta)
+    }
   }
 
   function moveItem(module: ModuleTree, index: number, delta: number): void {
@@ -210,6 +248,11 @@ export function useContentManagement() {
     toggleCourse,
     refresh,
     run,
+    editing,
+    toggleEditing,
+    saveTrack,
+    saveCourse,
+    saveModule,
     addTrack,
     addCourse,
     addModule,
@@ -217,6 +260,7 @@ export function useContentManagement() {
     addQuiz,
     removeItem,
     moveModule,
+    moveOpenModule,
     moveItem,
     move: moveCourse,
   }

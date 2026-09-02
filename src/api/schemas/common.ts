@@ -14,7 +14,7 @@ export const questionTypeSchema = z.enum([
   'grouping',
   'file',
 ])
-export const identityProviderSchema = z.enum(['github'])
+export const identityProviderSchema = z.enum(['github', 'yandex'])
 
 export type ContentStatus = z.infer<typeof contentStatusSchema>
 export type UserRole = z.infer<typeof userRoleSchema>

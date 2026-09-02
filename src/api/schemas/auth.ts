@@ -6,6 +6,10 @@ export const authorizeUrlSchema = z.object({
   authorizeUrl: z.url(),
 })
 
+export const providersSchema = z.object({
+  providers: z.array(identityProviderSchema).default([]),
+})
+
 export const accessTokenSchema = z.object({
   accessToken: z.string().min(1),
   tokenType: z.string().default('Bearer'),
@@ -26,7 +30,6 @@ export const userSchema = z.object({
   email: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   studentNumber: z.string().nullable(),
-  groupId: uuidSchema.nullable(),
   role: userRoleSchema,
   isActive: z.boolean(),
 })

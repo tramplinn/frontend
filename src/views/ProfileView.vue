@@ -2,9 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { githubLinkUrl, logoutEverywhere, unlinkIdentity } from '@/api/auth'
+import { linkUrl, logoutEverywhere, unlinkIdentity } from '@/api/auth'
+import type { IdentityProvider } from '@/api/schemas/common'
 import AppButton from '@/components/ui/AppButton.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 import { useProgressStore } from '@/stores/progress'
 
@@ -22,13 +24,14 @@ const roleNames: Record<string, string> = {
   admin: 'администратор',
 }
 
-const providerNames: Record<string, string> = { github: 'GitHub' }
-
 const identities = computed(() => auth.user?.identities ?? [])
 const canUnlink = computed(() => identities.value.length > 1)
 const linkedProviders = computed(() => new Set(identities.value.map((item) => item.provider)))
 
-onMounted(() => void progress.load())
+onMounted(() => {
+  void progress.load()
+  void auth.loadProviders()
+})
 
 async function signOut(): Promise<void> {
   signingOut.value = true
@@ -59,11 +62,13 @@ async function signOutEverywhere(): Promise<void> {
   }
 }
 
-async function link(): Promise<void> {
+const unlinked = computed(() => auth.providers.filter((item) => !linkedProviders.value.has(item)))
+
+async function link(provider: IdentityProvider): Promise<void> {
   busy.value = true
   error.value = null
   try {
-    const { authorizeUrl } = await githubLinkUrl('/me')
+    const { authorizeUrl } = await linkUrl(provider, '/me')
     window.location.assign(authorizeUrl)
   } catch {
     error.value = 'Не удалось начать привязку.'
@@ -71,7 +76,7 @@ async function link(): Promise<void> {
   }
 }
 
-async function unlink(provider: 'github'): Promise<void> {
+async function unlink(provider: IdentityProvider): Promise<void> {
   busy.value = true
   error.value = null
   try {
@@ -120,7 +125,7 @@ async function unlink(provider: 'github'): Promise<void> {
     <ul class="identities">
       <li v-for="identity in identities" :key="identity.provider" class="identity">
         <span class="identity-name">
-          {{ providerNames[identity.provider] ?? identity.provider }}
+          {{ providerName(identity.provider) }}
         </span>
         <span v-if="identity.email" class="identity-email">{{ identity.email }}</span>
         <ConfirmButton
@@ -134,16 +139,18 @@ async function unlink(provider: 'github'): Promise<void> {
       </li>
     </ul>
 
-    <AppButton
-      v-if="!linkedProviders.has('github')"
-      class="link-button"
-      variant="secondary"
-      size="sm"
-      :loading="busy"
-      @click="link"
-    >
-      привязать GitHub
-    </AppButton>
+    <div v-if="unlinked.length > 0" class="link-buttons">
+      <AppButton
+        v-for="provider in unlinked"
+        :key="provider"
+        variant="secondary"
+        size="sm"
+        :loading="busy"
+        @click="link(provider)"
+      >
+        привязать {{ providerName(provider) }}
+      </AppButton>
+    </div>
 
     <p v-if="error" class="error">{{ error }}</p>
 
@@ -232,7 +239,11 @@ async function unlink(provider: 'github'): Promise<void> {
   margin-left: auto;
 }
 
-.link-button {
+.link-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+
   margin-top: var(--space-3);
 }
 

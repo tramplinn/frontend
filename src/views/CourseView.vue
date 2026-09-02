@@ -132,7 +132,7 @@ watch(
               </span>
             </RouterLink>
             <RouterLink
-              v-else
+              v-else-if="item.kind === 'quiz'"
               class="row"
               :to="{
                 name: 'quiz',
@@ -142,6 +142,20 @@ watch(
               <span class="dot dot--quiz" />
               <span class="row-title">{{ item.quiz.title }}</span>
               <span class="row-meta">тест</span>
+            </RouterLink>
+            <RouterLink
+              v-else
+              class="row"
+              :to="{
+                name: 'algorithm-practice',
+                params: { course: tree.slug, module: selected.slug, set: item.practiceSet.id },
+              }"
+            >
+              <span class="dot dot--practice" />
+              <span class="row-title">{{ item.practiceSet.title }}</span>
+              <span class="row-meta">
+                {{ item.practiceSet.mode === 'mock_interview' ? 'интервью' : 'практика' }}
+              </span>
             </RouterLink>
           </li>
         </ul>
@@ -258,6 +272,10 @@ watch(
 .dot--quiz {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--text-muted);
+}
+
+.dot--practice {
+  background: var(--accent);
 }
 
 .row-title {

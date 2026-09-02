@@ -7,6 +7,7 @@ import type { Quiz } from '@/api/schemas/content'
 import type { QuizAttempt } from '@/api/schemas/learning'
 import ModuleMap from '@/components/course/ModuleMap.vue'
 import ModulePager from '@/components/lesson/ModulePager.vue'
+import LearningPageLayout from '@/components/learning/LearningPageLayout.vue'
 import QuizRunner from '@/components/quiz/QuizRunner.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
@@ -27,6 +28,7 @@ const submitError = ref<unknown>(null)
 /** Растёт только при «пройти заново»: после проверки ответы должны
     остаться на экране рядом с вердиктами, иначе разбор бессмыслен. */
 const runKey = ref(0)
+let loadVersion = 0
 
 const best = computed(() =>
   previous.value.reduce<QuizAttempt | null>(
@@ -40,24 +42,35 @@ const place = computed(() => content.findQuiz(props.course, props.module, props.
 const courseModules = computed(() => content.courses.get(props.course)?.modules ?? [])
 
 async function load(): Promise<void> {
+  const version = ++loadVersion
+  const target = { course: props.course, module: props.module, quiz: props.quiz }
   pending.value = true
   error.value = null
   attempt.value = null
+  loaded.value = null
+  previous.value = []
   try {
-    await content.loadCourse(props.course)
-    const found = content.findQuiz(props.course, props.module, props.quiz)
+    await content.loadCourse(target.course)
+    if (version !== loadVersion) return
+    const found = content.findQuiz(target.course, target.module, target.quiz)
     if (!found) {
       error.value = new MissingContentError('Тест')
       return
     }
     // В дереве курса вопросы уже есть, но берём тест отдельно:
     // так он гарантированно свежий и не зависит от кэша курса.
-    loaded.value = await getQuiz(found.quiz.id)
-    previous.value = await listQuizAttempts(found.quiz.id)
+    const [quiz, attempts] = await Promise.all([
+      getQuiz(found.quiz.id),
+      listQuizAttempts(found.quiz.id),
+    ])
+    if (version !== loadVersion) return
+    loaded.value = quiz
+    previous.value = attempts
   } catch (cause) {
+    if (version !== loadVersion) return
     error.value = cause
   } finally {
-    pending.value = false
+    if (version === loadVersion) pending.value = false
   }
 }
 
@@ -92,126 +105,57 @@ watch(
 
 <template>
   <LoadState :pending="pending" :error="error">
-    <div v-if="loaded" class="layout">
-      <section class="quiz">
-        <header class="head">
-          <h1 class="title">{{ loaded.title }}</h1>
-          <p v-if="best && !attempt" class="meta">
-            лучший результат: {{ best.score }} из {{ best.maxScore }}
-          </p>
-        </header>
+    <LearningPageLayout v-if="loaded" sheet-padding="compact">
+      <template #header>
+        <h1 class="title">{{ loaded.title }}</h1>
+        <p v-if="best && !attempt" class="meta">
+          лучший результат: {{ best.score }} из {{ best.maxScore }}
+        </p>
+      </template>
 
+      <template #before-sheet>
         <div v-if="attempt" class="score">
           <span class="score-value">{{ attempt.score }} / {{ attempt.maxScore }}</span>
           <AppButton size="sm" @click="retry">пройти заново</AppButton>
         </div>
 
         <p v-if="submitError" class="submit-error" role="alert">{{ errorText(submitError) }}</p>
+      </template>
 
-        <div class="sheet">
-          <QuizRunner
-            :key="`${loaded.id}-${runKey}`"
-            :quiz="loaded"
-            :submitting="submitting"
-            :attempt="attempt"
-            @submit="send"
-          />
-        </div>
+      <QuizRunner
+        :key="`${loaded.id}-${runKey}`"
+        :quiz="loaded"
+        :submitting="submitting"
+        :attempt="attempt"
+        @submit="send"
+      />
 
-        <footer class="footer">
-          <ModulePager
-            v-if="place"
-            :course="props.course"
-            :module="place.module"
-            :current-id="place.quiz.id"
-          />
-        </footer>
-      </section>
+      <template #footer>
+        <ModulePager
+          v-if="place"
+          :course="props.course"
+          :module="place.module"
+          :current-id="place.quiz.id"
+        />
+      </template>
 
-      <aside v-if="place" class="rail">
+      <template v-if="place" #rail>
         <ModuleMap
           :course="props.course"
           :modules="courseModules"
           :dependencies="content.courseDependencies(props.course)"
           :current-module-id="place.module.id"
         />
-      </aside>
-    </div>
+      </template>
+    </LearningPageLayout>
   </LoadState>
 </template>
 
 <style scoped>
-.quiz {
-  flex: 0 1 calc(var(--measure) + var(--space-12) * 2);
-  min-width: 0;
-  max-width: calc(var(--measure) + var(--space-12) * 2);
-}
-
-.footer {
-  margin-top: var(--space-8);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--border);
-}
-
-.layout {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
-}
-
-.rail {
-  position: sticky;
-  top: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  flex: 1 1 320px;
-  min-width: 0;
-  height: calc(100dvh - var(--topbar) - var(--space-12));
-}
-
-@media (max-width: 1480px) {
-  .layout {
-    display: block;
-  }
-
-  .rail {
-    position: static;
-    display: flex;
-    height: auto;
-    margin-top: var(--space-12);
-    --panel-grow: 0;
-    --panel-height: var(--map-height);
-  }
-}
-
-@media (max-width: 800px) {
-  .rail {
-    --panel-height: var(--map-height-compact);
-  }
-}
-
 .submit-error {
   margin-bottom: var(--space-4);
   color: var(--danger);
   font-size: var(--text-caption);
-}
-
-.sheet {
-  padding: var(--space-8) var(--space-12);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-}
-
-@media (max-width: 800px) {
-  .sheet {
-    padding: var(--space-6) var(--space-4);
-  }
-}
-
-.head {
-  margin-bottom: var(--space-8);
 }
 
 .title {

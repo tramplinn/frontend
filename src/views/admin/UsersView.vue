@@ -1,12 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-
-import { listGroups, listUsers, updateUser } from '@/api/admin'
-import type { StudentGroup } from '@/api/schemas/admin'
-import type { User } from '@/api/schemas/auth'
 import type { UserRole } from '@/api/schemas/common'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useUsers } from '@/features/admin/composables/useUsers'
 import { errorText } from '@/lib/errors'
 import { withCount } from '@/lib/plural'
 
@@ -16,66 +12,8 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'админ' },
 ]
 
-const users = ref<User[]>([])
-const groups = ref<StudentGroup[]>([])
-const total = ref(0)
-const query = ref('')
-const roleFilter = ref<UserRole | ''>('')
-const pending = ref(true)
-const error = ref<unknown>(null)
-const actionError = ref<unknown>(null)
-const savingId = ref<string | null>(null)
-
-const groupName = computed(() => new Map(groups.value.map((group) => [group.id, group.name])))
-
-async function load(): Promise<void> {
-  pending.value = true
-  error.value = null
-  try {
-    const page = await listUsers({
-      ...(query.value ? { q: query.value } : {}),
-      ...(roleFilter.value ? { role: roleFilter.value } : {}),
-    })
-    users.value = page.items
-    total.value = page.total
-  } catch (cause) {
-    error.value = cause
-  } finally {
-    pending.value = false
-  }
-}
-
-async function patch(user: User, changes: Parameters<typeof updateUser>[1]): Promise<void> {
-  savingId.value = user.id
-  actionError.value = null
-  const before = { ...user }
-  try {
-    const updated = await updateUser(user.id, changes)
-    users.value = users.value.map((item) => (item.id === updated.id ? updated : item))
-  } catch (cause) {
-    users.value = users.value.map((item) => (item.id === before.id ? before : item))
-    actionError.value = cause
-  } finally {
-    savingId.value = null
-  }
-}
-
-onMounted(() => {
-  void listGroups()
-    .then((loaded) => (groups.value = loaded))
-    .catch(() => {})
-  void load()
-})
-
-let debounce: ReturnType<typeof setTimeout> | undefined
-watch([query, roleFilter], () => {
-  clearTimeout(debounce)
-  debounce = setTimeout(() => void load(), 250)
-})
-
-onUnmounted(() => {
-  clearTimeout(debounce)
-})
+const { users, total, query, roleFilter, pending, error, actionError, savingIds, patch } =
+  useUsers()
 </script>
 
 <template>
@@ -124,7 +62,6 @@ onUnmounted(() => {
           <thead>
             <tr>
               <th>человек</th>
-              <th>группа</th>
               <th>роль</th>
               <th class="right">доступ</th>
             </tr>
@@ -135,15 +72,12 @@ onUnmounted(() => {
                 <span class="name">{{ user.name ?? user.login }}</span>
                 <span class="login">{{ user.login }}</span>
               </td>
-              <td class="muted">
-                {{ user.groupId === null ? '—' : (groupName.get(user.groupId) ?? user.groupId) }}
-              </td>
               <td>
                 <AppSelect
                   :model-value="user.role"
                   :options="ROLES"
                   :label="`Роль: ${user.login}`"
-                  :disabled="savingId === user.id"
+                  :disabled="savingIds.has(user.id)"
                   @update:model-value="(role) => patch(user, { role })"
                 />
               </td>
@@ -152,7 +86,7 @@ onUnmounted(() => {
                   type="button"
                   class="toggle"
                   :class="{ 'toggle--off': !user.isActive }"
-                  :disabled="savingId === user.id"
+                  :disabled="savingIds.has(user.id)"
                   @click="patch(user, { isActive: !user.isActive })"
                 >
                   {{ user.isActive ? 'активен' : 'отключён' }}
@@ -307,5 +241,27 @@ onUnmounted(() => {
   padding: var(--space-12) 0;
   color: var(--text-muted);
   font-size: var(--text-caption);
+}
+
+@media (max-width: 620px) {
+  .input,
+  .pills {
+    width: 100%;
+  }
+
+  .pills {
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .pill {
+    flex-shrink: 0;
+  }
+
+  .table th,
+  .table td {
+    padding-inline: var(--space-3);
+    white-space: nowrap;
+  }
 }
 </style>

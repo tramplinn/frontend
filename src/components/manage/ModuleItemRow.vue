@@ -16,30 +16,38 @@ const props = defineProps<{
 
 const emit = defineEmits<{ move: [delta: number]; remove: [] }>()
 
-const content = computed(() => (props.item.kind === 'lesson' ? props.item.lesson : props.item.quiz))
+const content = computed(() =>
+  props.item.kind === 'lesson'
+    ? props.item.lesson
+    : props.item.kind === 'quiz'
+      ? props.item.quiz
+      : props.item.practiceSet,
+)
+
+const target = computed(() =>
+  props.item.kind === 'lesson'
+    ? { name: 'manage-lesson', params: { lesson: props.item.lesson.id } }
+    : props.item.kind === 'quiz'
+      ? { name: 'manage-quiz', params: { quiz: props.item.quiz.id } }
+      : { name: 'manage-content' },
+)
 </script>
 
 <template>
   <li class="item">
-    <RouterLink
-      class="item-link"
-      :to="
-        props.item.kind === 'lesson'
-          ? { name: 'manage-lesson', params: { lesson: props.item.lesson.id } }
-          : { name: 'manage-quiz', params: { quiz: props.item.quiz.id } }
-      "
-    >
+    <RouterLink class="item-link" :to="target">
       <span class="item-title">{{ content.title }}</span>
       <StatusChip :status="content.status" />
       <span v-if="props.item.kind === 'quiz'" class="item-meta">
         тест · {{ withCount(props.item.quiz.questions.length, 'вопрос', 'вопроса', 'вопросов') }}
       </span>
+      <span v-else-if="props.item.kind === 'practice'" class="item-meta">практика</span>
     </RouterLink>
 
     <RowMenu :disabled="props.busy" :label="`Действия: ${content.title}`">
       <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
       <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
-      <RowMenuItem danger @select="emit('remove')">
+      <RowMenuItem v-if="props.item.kind !== 'practice'" danger @select="emit('remove')">
         {{ props.item.kind === 'lesson' ? 'удалить урок' : 'удалить тест' }}
       </RowMenuItem>
     </RowMenu>

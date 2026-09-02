@@ -1,139 +1,37 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-
-import { getDraftLesson, previewMarkdown, updateLesson } from '@/api/authoring'
-import type { InterviewCardPreview, Lesson } from '@/api/schemas/content'
 import LessonBody from '@/components/lesson/LessonBody.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
-import { useAssetInsert } from '@/composables/useAssetInsert'
+import { useLessonEditor } from '@/features/lesson-editor/composables/useLessonEditor'
 import { errorText } from '@/lib/errors'
 import { withCount } from '@/lib/plural'
 
 const props = defineProps<{ lesson: string }>()
 
-const loaded = ref<Lesson | null>(null)
-const title = ref('')
-const bodyMd = ref('')
-const html = ref('')
-const cards = ref<InterviewCardPreview[]>([])
-
-const pending = ref(true)
-const error = ref<unknown>(null)
-const saving = ref(false)
-const previewError = ref<string | null>(null)
-const saveError = ref<unknown>(null)
-const savedAt = ref<Date | null>(null)
-
-const dirty = computed(
-  () =>
-    loaded.value !== null &&
-    (title.value !== loaded.value.title || bodyMd.value !== loaded.value.bodyMd),
-)
-
-async function load(): Promise<void> {
-  pending.value = true
-  error.value = null
-  try {
-    const fetched = await getDraftLesson(props.lesson)
-    loaded.value = fetched
-    title.value = fetched.title
-    bodyMd.value = fetched.bodyMd
-    html.value = fetched.bodyHtml
-  } catch (cause) {
-    error.value = cause
-  } finally {
-    pending.value = false
-  }
-}
-
-async function refreshPreview(): Promise<void> {
-  previewError.value = null
-  try {
-    const preview = await previewMarkdown(bodyMd.value)
-    html.value = preview.bodyHtml
-    cards.value = preview.interviewCards
-  } catch {
-    previewError.value = 'Блок :::interview не разобрался — проверьте разделитель ---'
-  }
-}
-
-async function save(status?: 'draft' | 'published'): Promise<void> {
-  const current = loaded.value
-  if (!current) {
-    return
-  }
-  saving.value = true
-  saveError.value = null
-  try {
-    loaded.value = await updateLesson(current.id, {
-      title: title.value,
-      bodyMd: bodyMd.value,
-      ...(status === undefined ? {} : { status }),
-    })
-    html.value = loaded.value.bodyHtml
-    savedAt.value = new Date()
-  } catch (cause) {
-    saveError.value = cause
-  } finally {
-    saving.value = false
-  }
-}
-
-const source = ref<HTMLTextAreaElement | null>(null)
-
-function insertAtCursor(text: string): void {
-  const field = source.value
-  if (!field) {
-    bodyMd.value += text
-    return
-  }
-  const start = field.selectionStart
-  const end = field.selectionEnd
-  bodyMd.value = bodyMd.value.slice(0, start) + text + bodyMd.value.slice(end)
-  void nextTick(() => {
-    const at = start + text.length
-    field.focus()
-    field.setSelectionRange(at, at)
-  })
-}
-
-function replacePlaceholder(placeholder: string, markdown: string): void {
-  bodyMd.value = bodyMd.value.replace(placeholder, markdown)
-}
-
 const {
-  uploading: uploadingAsset,
+  uploadingAsset,
   dragging,
-  error: assetError,
+  assetError,
   onPaste,
   onDrop,
   onDragOver,
   onDragLeave,
-} = useAssetInsert(insertAtCursor, replacePlaceholder)
-
-let debounce: ReturnType<typeof setTimeout> | undefined
-watch(bodyMd, () => {
-  clearTimeout(debounce)
-  debounce = setTimeout(() => void refreshPreview(), 400)
-})
-
-function guard(event: BeforeUnloadEvent): void {
-  if (dirty.value) {
-    event.preventDefault()
-  }
-}
-
-onMounted(() => {
-  void load()
-  window.addEventListener('beforeunload', guard)
-})
-
-onUnmounted(() => {
-  clearTimeout(debounce)
-  window.removeEventListener('beforeunload', guard)
-})
+  bodyMd,
+  cards,
+  dirty,
+  error,
+  html,
+  loaded,
+  pending,
+  previewError,
+  save,
+  saveError,
+  savedAt,
+  saving,
+  setSource,
+  title,
+} = useLessonEditor(() => props.lesson)
 </script>
 
 <template>
@@ -159,7 +57,7 @@ onUnmounted(() => {
             </span>
           </div>
           <textarea
-            ref="source"
+            :ref="setSource"
             v-model="bodyMd"
             class="source"
             :class="{ 'source--drop': dragging }"

@@ -6,8 +6,10 @@ import type { InterviewCard } from '@/api/schemas/content'
 import ModuleMap from '@/components/course/ModuleMap.vue'
 import InterviewCards from '@/components/lesson/InterviewCards.vue'
 import LessonChat from '@/components/lesson/LessonChat.vue'
+import SignInButton from '@/components/layout/SignInButton.vue'
 import ModulePager from '@/components/lesson/ModulePager.vue'
 import LessonBody from '@/components/lesson/LessonBody.vue'
+import LearningPageLayout from '@/components/learning/LearningPageLayout.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { MissingContentError } from '@/lib/errors'
@@ -28,6 +30,8 @@ const pending = ref(true)
 const error = ref<unknown>(null)
 const saving = ref(false)
 const progressError = ref<string | null>(null)
+const cardsError = ref(false)
+let loadVersion = 0
 
 const courseModules = computed(() => content.courses.get(props.course)?.modules ?? [])
 
@@ -36,22 +40,42 @@ const isCompleted = computed(() =>
 )
 
 async function load(): Promise<void> {
+  const version = ++loadVersion
+  const target = { course: props.course, module: props.module, lesson: props.lesson }
   pending.value = true
   error.value = null
+  location.value = null
+  cards.value = []
+  cardsError.value = false
+  progressError.value = null
   try {
-    await content.loadCourse(props.course)
-    const found = content.findLesson(props.course, props.module, props.lesson)
+    await content.loadCourse(target.course)
+    if (version !== loadVersion) return
+    const found = content.findLesson(target.course, target.module, target.lesson)
     location.value = found
     if (!found) {
       error.value = new MissingContentError('Урок')
       return
     }
-    await progress.load()
-    cards.value = await listInterviewCards(found.lesson.id)
+    await Promise.all([
+      progress.load().catch(() => {
+        if (version === loadVersion) {
+          progressError.value = 'Прогресс временно недоступен.'
+        }
+      }),
+      listInterviewCards(found.lesson.id)
+        .then((loadedCards) => {
+          if (version === loadVersion) cards.value = loadedCards
+        })
+        .catch(() => {
+          if (version === loadVersion) cardsError.value = true
+        }),
+    ])
   } catch (cause) {
+    if (version !== loadVersion) return
     error.value = cause
   } finally {
-    pending.value = false
+    if (version === loadVersion) pending.value = false
   }
 }
 
@@ -75,10 +99,6 @@ async function toggleCompleted(): Promise<void> {
   }
 }
 
-async function signIn(): Promise<void> {
-  await auth.login(`/courses/${props.course}/${props.module}/lessons/${props.lesson}`)
-}
-
 onMounted(() => void load())
 watch(
   () => [props.course, props.module, props.lesson],
@@ -88,46 +108,49 @@ watch(
 
 <template>
   <LoadState :pending="pending" :error="error">
-    <div v-if="location" class="layout">
-      <article class="lesson">
-        <header class="head">
-          <h1 class="title">{{ location.lesson.title }}</h1>
-          <span v-if="location.lesson.estMinutes !== null" class="meta">
-            {{ location.lesson.estMinutes }} мин
-          </span>
-        </header>
+    <LearningPageLayout v-if="location" prioritize-rail-end-on-mobile>
+      <template #header>
+        <h1 class="title">{{ location.lesson.title }}</h1>
+        <span v-if="location.lesson.estMinutes !== null" class="meta">
+          {{ location.lesson.estMinutes }} мин
+        </span>
+      </template>
 
-        <div class="sheet">
-          <LessonBody :html="location.lesson.bodyHtml" />
+      <LessonBody :html="location.lesson.bodyHtml" />
+
+      <template #after-sheet>
+        <p v-if="cardsError" class="support-error" role="status">
+          Вопросы к собеседованию временно недоступны.
+        </p>
+        <InterviewCards :cards="cards" />
+      </template>
+
+      <template #footer>
+        <div class="action">
+          <AppButton
+            v-if="auth.isAuthenticated"
+            :variant="isCompleted ? 'secondary' : 'primary'"
+            :loading="saving"
+            @click="toggleCompleted"
+          >
+            {{ isCompleted ? 'пройдено' : 'отметить пройденным' }}
+          </AppButton>
+          <SignInButton
+            v-else
+            label="войти, чтобы отмечать прогресс"
+            :next-path="`/courses/${props.course}/${props.module}/lessons/${props.lesson}`"
+          />
+          <p v-if="progressError" class="action-error" role="alert">{{ progressError }}</p>
         </div>
 
-        <InterviewCards :cards="cards" />
+        <ModulePager
+          :course="props.course"
+          :module="location.module"
+          :current-id="location.lesson.id"
+        />
+      </template>
 
-        <footer class="footer">
-          <div class="action">
-            <AppButton
-              v-if="auth.isAuthenticated"
-              :variant="isCompleted ? 'secondary' : 'primary'"
-              :loading="saving"
-              @click="toggleCompleted"
-            >
-              {{ isCompleted ? 'пройдено' : 'отметить пройденным' }}
-            </AppButton>
-            <AppButton v-else variant="primary" @click="signIn">
-              войти, чтобы отмечать прогресс
-            </AppButton>
-            <p v-if="progressError" class="action-error" role="alert">{{ progressError }}</p>
-          </div>
-
-          <ModulePager
-            :course="props.course"
-            :module="location.module"
-            :current-id="location.lesson.id"
-          />
-        </footer>
-      </article>
-
-      <aside class="rail">
+      <template #rail>
         <ModuleMap
           :course="props.course"
           :modules="courseModules"
@@ -135,76 +158,21 @@ watch(
           :current-module-id="location.module.id"
         />
         <LessonChat :lesson-id="location.lesson.id" />
-      </aside>
-    </div>
+      </template>
+    </LearningPageLayout>
   </LoadState>
 </template>
 
 <style scoped>
-.lesson {
-  flex: 0 1 calc(var(--measure) + var(--space-12) * 2);
-  min-width: 0;
-  max-width: calc(var(--measure) + var(--space-12) * 2);
-}
-
 .action-error {
   color: var(--danger);
   font-size: var(--text-caption);
 }
 
-.layout {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
-}
-
-.rail {
-  position: sticky;
-  top: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  flex: 1 1 320px;
-  min-width: 0;
-  height: calc(100dvh - var(--topbar) - var(--space-12));
-}
-
-@media (max-width: 1480px) {
-  .layout {
-    display: block;
-  }
-
-  .rail {
-    position: static;
-    display: flex;
-    height: auto;
-    margin-top: var(--space-12);
-    --panel-grow: 0;
-    --panel-height: var(--map-height);
-  }
-}
-
-@media (max-width: 800px) {
-  .rail {
-    --panel-height: var(--map-height-compact);
-  }
-}
-
-.sheet {
-  padding: var(--space-12);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-}
-
-@media (max-width: 800px) {
-  .sheet {
-    padding: var(--space-6);
-  }
-}
-
-.head {
-  margin-bottom: var(--space-8);
+.support-error {
+  margin-top: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
 }
 
 .title {
@@ -218,15 +186,6 @@ watch(
   margin-top: var(--space-2);
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-.footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  margin-top: var(--space-12);
-  padding-top: var(--space-8);
-  border-top: 1px solid var(--border);
 }
 
 .action {

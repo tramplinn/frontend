@@ -64,4 +64,10 @@ import AppSidebar from '@/components/layout/AppSidebar.vue'
     padding: var(--space-4);
   }
 }
+
+@media (max-width: 420px) {
+  .main {
+    padding: var(--space-3);
+  }
+}
 </style>

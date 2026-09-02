@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import type { ModuleDependency, ModuleTree } from '@/api/schemas/content'
 import type { ModuleProgress } from '@/api/schemas/learning'
+import { useGraphViewport } from '@/features/course-map/composables/useGraphViewport'
 import { useProgressStore } from '@/stores/progress'
 import ModuleGraphCanvas from './ModuleGraphCanvas.vue'
-import type { GraphNode } from './graph'
-import { NODE_HEIGHT, NODE_WIDTH, layoutGraph } from './graph'
-import type { View } from './panZoom'
-import { centerOn, fitView, panIntoView, zoomAt } from './panZoom'
+import { layoutGraph } from './graph'
 
 const props = defineProps<{
   course: string
@@ -18,19 +16,26 @@ const props = defineProps<{
   currentModuleId: string | null
 }>()
 
-const PADDING = 24
 const STORAGE_KEY = 'tramplin:course-map'
 
 const router = useRouter()
 const progress = useProgressStore()
 
 const expanded = ref(readExpanded())
-const viewport = ref<HTMLElement | null>(null)
-const size = ref({ width: 0, height: 0 })
-const view = ref<View>({ x: 0, y: 0, scale: 1 })
-const panning = ref(false)
-
 const layout = computed(() => layoutGraph(props.modules, props.dependencies))
+const {
+  endPan,
+  fit,
+  onPointerDown,
+  onPointerMove,
+  onWheel,
+  panning,
+  revealNode,
+  setViewport,
+  showCurrent,
+  view,
+  zoomBy,
+} = useGraphViewport(layout, () => props.currentModuleId)
 
 function readExpanded(): boolean {
   // Приватный режим и заблокированное хранилище кидают на самом доступе.
@@ -61,102 +66,6 @@ const moduleProgress = computed<ModuleProgress[]>(() =>
   }),
 )
 
-function fit(): void {
-  view.value = fitView(
-    { width: layout.value.width, height: layout.value.height },
-    size.value,
-    PADDING,
-  )
-}
-
-function showCurrent(): void {
-  const node =
-    layout.value.nodes.find((item) => item.id === props.currentModuleId) ?? layout.value.nodes[0]
-  if (!node) {
-    return
-  }
-  view.value = centerOn(
-    { x: node.x, y: node.y, width: NODE_WIDTH, height: NODE_HEIGHT },
-    size.value,
-    1,
-  )
-}
-
-function zoomBy(factor: number): void {
-  view.value = zoomAt(view.value, factor, size.value.width / 2, size.value.height / 2)
-}
-
-function onWheel(event: WheelEvent): void {
-  // Обычное колесо оставляем странице, иначе мимо доски не проскроллить.
-  // Щипок на тачпаде приходит с ctrl.
-  if (!event.ctrlKey && !event.metaKey) {
-    return
-  }
-  event.preventDefault()
-  const box = viewport.value?.getBoundingClientRect()
-  if (!box) {
-    return
-  }
-  view.value = zoomAt(
-    view.value,
-    Math.exp(-event.deltaY / 240),
-    event.clientX - box.left,
-    event.clientY - box.top,
-  )
-}
-
-let origin = { x: 0, y: 0, viewX: 0, viewY: 0, pointerId: -1 }
-
-function onPointerDown(event: PointerEvent): void {
-  if (event.button !== 0) {
-    return
-  }
-  // За карточку модуля не тянем: это кнопка, и нажатие на ней — переход.
-  if (event.target instanceof Element && event.target.closest('button')) {
-    return
-  }
-  panning.value = true
-  origin = {
-    x: event.clientX,
-    y: event.clientY,
-    viewX: view.value.x,
-    viewY: view.value.y,
-    pointerId: event.pointerId,
-  }
-  viewport.value?.setPointerCapture(event.pointerId)
-  event.preventDefault()
-}
-
-function onPointerMove(event: PointerEvent): void {
-  if (!panning.value || event.pointerId !== origin.pointerId) {
-    return
-  }
-  view.value = {
-    scale: view.value.scale,
-    x: origin.viewX + (event.clientX - origin.x),
-    y: origin.viewY + (event.clientY - origin.y),
-  }
-}
-
-function endPan(event: PointerEvent): void {
-  // Именно panning: клик по карточке захвата не открывал, освобождать нечего.
-  if (!panning.value || event.pointerId !== origin.pointerId) {
-    return
-  }
-  panning.value = false
-  origin.pointerId = -1
-  viewport.value?.releasePointerCapture(event.pointerId)
-}
-
-function revealNode(node: GraphNode): void {
-  view.value = panIntoView(
-    view.value,
-    { x: node.x, y: node.y, width: NODE_WIDTH, height: NODE_HEIGHT },
-    size.value,
-    PADDING,
-  )
-}
-
 function openModule(moduleId: string): void {
   const module = props.modules.find((item) => item.id === moduleId)
   const first = module?.items[0]
@@ -168,40 +77,11 @@ function openModule(moduleId: string): void {
   void router.push(
     first.kind === 'lesson'
       ? { name: 'lesson', params: { ...params, lesson: first.lesson.slug } }
-      : { name: 'quiz', params: { ...params, quiz: first.quiz.slug } },
+      : first.kind === 'quiz'
+        ? { name: 'quiz', params: { ...params, quiz: first.quiz.slug } }
+        : { name: 'algorithm-practice', params: { ...params, set: first.practiceSet.id } },
   )
 }
-
-let observer: ResizeObserver | undefined
-
-watch(
-  viewport,
-  (element) => {
-    observer?.disconnect()
-    if (!element) {
-      size.value = { width: 0, height: 0 }
-      return
-    }
-    observer = new ResizeObserver(([entry]) => {
-      if (!entry) {
-        return
-      }
-      const measured = entry.contentRect
-      const first = size.value.width === 0
-      size.value = { width: measured.width, height: measured.height }
-      // Только первое измерение: иначе сбросим то, что подвинули руками.
-      if (first) {
-        showCurrent()
-      }
-    })
-    observer.observe(element)
-  },
-  { flush: 'post' },
-)
-
-onBeforeUnmount(() => observer?.disconnect())
-
-watch(() => [props.course, props.currentModuleId], showCurrent)
 </script>
 
 <template>
@@ -232,7 +112,7 @@ watch(() => [props.course, props.currentModuleId], showCurrent)
 
     <div
       v-if="expanded"
-      ref="viewport"
+      :ref="setViewport"
       class="viewport"
       :class="{ 'viewport--panning': panning }"
       @pointerdown="onPointerDown"

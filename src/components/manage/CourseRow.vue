@@ -17,6 +17,7 @@ const emit = defineEmits<{
   toggle: []
   publish: []
   move: [delta: number]
+  edit: []
   detach: []
   remove: []
 }>()
@@ -34,6 +35,7 @@ const emit = defineEmits<{
       <RowMenuItem @select="emit('publish')">
         {{ contentStatusAction(props.course.status) }}
       </RowMenuItem>
+      <RowMenuItem @select="emit('edit')">изменить курс</RowMenuItem>
       <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше в треке</RowMenuItem>
       <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже в треке</RowMenuItem>
       <RowMenuItem @select="emit('detach')">убрать из трека</RowMenuItem>

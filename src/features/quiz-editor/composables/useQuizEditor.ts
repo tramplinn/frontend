@@ -28,19 +28,26 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   const pending = ref(true)
   const error = ref<unknown>(null)
   const busy = ref<string | null>(null)
+  let loadVersion = 0
 
   async function load(): Promise<void> {
+    const version = ++loadVersion
+    const targetQuizId = toValue(quizId)
     pending.value = true
     error.value = null
     try {
-      const quiz = await getDraftQuiz(toValue(quizId))
+      const quiz = await getDraftQuiz(targetQuizId)
+      if (version !== loadVersion) return
+      const loadedModule = await getDraftModule(quiz.moduleId)
+      if (version !== loadVersion) return
       loaded.value = quiz
       drafts.value = new Map(quiz.questions.map((item) => [item.id, toEditableQuestion(item)]))
-      module.value = await getDraftModule(quiz.moduleId)
+      module.value = loadedModule
     } catch (cause) {
+      if (version !== loadVersion) return
       error.value = cause
     } finally {
-      pending.value = false
+      if (version === loadVersion) pending.value = false
     }
   }
 

@@ -63,6 +63,19 @@ export const moduleItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('quiz'),
     quiz: quizSchema,
   }),
+  z.object({
+    id: uuidSchema,
+    position: z.number().int(),
+    kind: z.literal('practice'),
+    practiceSet: z.object({
+      id: uuidSchema,
+      title: z.string(),
+      description: z.string(),
+      mode: z.enum(['practice', 'mock_interview']),
+      durationMinutes: z.number().int().nullable(),
+      status: contentStatusSchema,
+    }),
+  }),
 ])
 
 export const moduleTreeSchema = moduleSchema.extend({
@@ -96,6 +109,8 @@ export const trackSchema = z.object({
   slug: z.string(),
   description: z.string().nullable(),
   color: z.string().nullable(),
+  coverAssetId: uuidSchema.nullable(),
+  coverUrl: z.url().nullable(),
   status: contentStatusSchema,
   courses: z.array(trackCourseSchema).default([]),
 })
