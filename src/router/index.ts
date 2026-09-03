@@ -15,6 +15,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
+    component: () => import('@/views/NewsView.vue'),
+  },
+  {
+    path: '/news/:slug',
+    name: 'news-item',
+    component: () => import('@/views/NewsItemView.vue'),
+    props: true,
+  },
+  {
+    path: '/learning',
+    name: 'learning',
     component: () => import('@/views/HomeView.vue'),
   },
   {
@@ -110,6 +121,12 @@ const routes: RouteRecordRaw[] = [
     name: 'manage-practice-set',
     component: () => import('@/views/manage/PracticeSetEditorView.vue'),
     props: true,
+    meta: { requiresAuth: true, requiresTeacher: true },
+  },
+  {
+    path: '/manage/news',
+    name: 'manage-news',
+    component: () => import('@/views/manage/NewsDeskView.vue'),
     meta: { requiresAuth: true, requiresTeacher: true },
   },
   {

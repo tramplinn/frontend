@@ -27,11 +27,14 @@ function param(name: string): string {
 
 const SIMPLE_LABELS: Record<string, string> = {
   sections: 'все разделы',
+  learning: 'моё обучение',
+  'news-item': 'новость',
   catalog: 'курсы',
   profile: 'профиль',
   'manage-content': 'контент',
   'manage-lesson': 'контент / урок',
   'manage-quiz': 'контент / тест',
+  'manage-news': 'новости',
   'admin-users': 'пользователи',
 }
 

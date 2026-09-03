@@ -6,7 +6,15 @@ defineProps<{ name: SectionKey }>()
 
 <template>
   <span class="icon" aria-hidden="true">
-    <svg v-if="name === 'learning'" viewBox="0 0 20 20">
+    <svg v-if="name === 'news' || name === 'news-desk'" viewBox="0 0 20 20">
+      <rect class="soft-cyan" x="2" y="4" width="16" height="12" rx="2.5" />
+      <rect class="accent" x="4.5" y="6.5" width="6" height="4.5" rx="1" />
+      <rect class="purple" x="12" y="6.5" width="3.5" height="1.6" rx="0.8" />
+      <rect class="warning" x="12" y="9.4" width="3.5" height="1.6" rx="0.8" />
+      <rect class="cyan" x="4.5" y="12.6" width="11" height="1.6" rx="0.8" />
+    </svg>
+
+    <svg v-else-if="name === 'learning'" viewBox="0 0 20 20">
       <circle class="soft-purple" cx="10" cy="10" r="8" />
       <path class="purple" d="M8 6.7 13.2 10 8 13.3Z" />
       <circle class="warning" cx="15.5" cy="4.5" r="2" />

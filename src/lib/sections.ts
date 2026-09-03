@@ -2,7 +2,14 @@ import type { RouteLocationRaw } from 'vue-router'
 
 export type SectionAccess = 'everyone' | 'teacher' | 'admin'
 export type SectionKey =
-  'learning' | 'catalog' | 'algorithms' | 'content' | 'algorithm-library' | 'users'
+  | 'news'
+  | 'learning'
+  | 'catalog'
+  | 'algorithms'
+  | 'content'
+  | 'news-desk'
+  | 'algorithm-library'
+  | 'users'
 
 export interface Section {
   key: SectionKey
@@ -15,10 +22,18 @@ export interface Section {
 
 export const SECTIONS: Section[] = [
   {
+    key: 'news',
+    title: 'новости',
+    summary: 'Что происходит',
+    to: { name: 'home' },
+    access: 'everyone',
+    group: 'обучение',
+  },
+  {
     key: 'learning',
     title: 'моё обучение',
     summary: 'Что начато и что продолжить',
-    to: { name: 'home' },
+    to: { name: 'learning' },
     access: 'everyone',
     group: 'обучение',
   },
@@ -43,6 +58,14 @@ export const SECTIONS: Section[] = [
     title: 'контент',
     summary: 'Треки, курсы, модули и уроки',
     to: { name: 'manage-content' },
+    access: 'teacher',
+    group: 'преподавание',
+  },
+  {
+    key: 'news-desk',
+    title: 'новости',
+    summary: 'Лента главной страницы',
+    to: { name: 'manage-news' },
     access: 'teacher',
     group: 'преподавание',
   },
