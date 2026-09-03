@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
+import { useExpandablePanel } from '@/composables/useExpandablePanel'
 import { useTutorChat } from '@/features/tutor/composables/useTutorChat'
 import { useAuthStore } from '@/stores/auth'
 import { useTutorStore } from '@/stores/tutor'
@@ -13,7 +14,7 @@ const STORAGE_KEY = 'tramplin:tutor-panel'
 const auth = useAuthStore()
 const tutor = useTutorStore()
 
-const expanded = ref(readExpanded())
+const { expanded, sheet, toggle: setExpanded } = useExpandablePanel(STORAGE_KEY)
 const {
   answers,
   canSend,
@@ -35,34 +36,25 @@ onMounted(() => {
   }
 })
 
-function readExpanded(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'expanded'
-  } catch {
-    return false
-  }
-}
-
 function toggle(): void {
-  expanded.value = !expanded.value
+  setExpanded()
   if (expanded.value) {
     loadRenderer()
-  }
-  try {
-    localStorage.setItem(STORAGE_KEY, expanded.value ? 'expanded' : 'collapsed')
-  } catch {
-    // Состояние просто не переживёт перезагрузку.
   }
 }
 </script>
 
 <template>
-  <section class="chat" :class="{ 'chat--collapsed': !expanded }" aria-label="Ассистент урока">
+  <section
+    class="chat"
+    :class="{ 'chat--collapsed': !expanded, 'chat--sheet': sheet }"
+    aria-label="Ассистент урока"
+  >
     <header class="head">
       <button type="button" class="bar" :aria-expanded="expanded" @click="toggle">
         <span class="chevron" aria-hidden="true"></span>
         <span class="title">спросить</span>
-        <span v-if="expanded" class="hint">про термин или непонятное место</span>
+        <span v-if="expanded && !sheet" class="hint">про термин или непонятное место</span>
       </button>
 
       <button
@@ -73,6 +65,8 @@ function toggle(): void {
       >
         очистить
       </button>
+
+      <button v-if="sheet" type="button" class="control" @click="toggle">закрыть</button>
     </header>
 
     <template v-if="expanded">
@@ -300,6 +294,27 @@ function toggle(): void {
 
 .input:focus {
   border-color: var(--accent);
+}
+
+/* Телефон: раскрытый чат уезжал бы под текст урока и перехватывал свайп
+   (см. overscroll-behavior у .log), поэтому раскрываем его на весь экран. */
+@media (max-width: 800px) {
+  .chat--sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+
+  .chat--sheet .head {
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+  }
+
+  .chat--sheet .composer {
+    padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  }
 }
 
 @container (max-width: 560px) {

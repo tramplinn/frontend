@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import type { ModuleDependency, ModuleTree } from '@/api/schemas/content'
 import type { ModuleProgress } from '@/api/schemas/learning'
+import { useExpandablePanel } from '@/composables/useExpandablePanel'
 import { useGraphViewport } from '@/features/course-map/composables/useGraphViewport'
 import { useProgressStore } from '@/stores/progress'
 import ModuleGraphCanvas from './ModuleGraphCanvas.vue'
@@ -21,7 +22,7 @@ const STORAGE_KEY = 'tramplin:course-map'
 const router = useRouter()
 const progress = useProgressStore()
 
-const expanded = ref(readExpanded())
+const { expanded, sheet, toggle } = useExpandablePanel(STORAGE_KEY)
 const layout = computed(() => layoutGraph(props.modules, props.dependencies))
 const {
   endPan,
@@ -36,24 +37,6 @@ const {
   view,
   zoomBy,
 } = useGraphViewport(layout, () => props.currentModuleId)
-
-function readExpanded(): boolean {
-  // Приватный режим и заблокированное хранилище кидают на самом доступе.
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'expanded'
-  } catch {
-    return false
-  }
-}
-
-function toggle(): void {
-  expanded.value = !expanded.value
-  try {
-    localStorage.setItem(STORAGE_KEY, expanded.value ? 'expanded' : 'collapsed')
-  } catch {
-    // Состояние просто не переживёт перезагрузку — падать из-за этого незачем.
-  }
-}
 
 const moduleProgress = computed<ModuleProgress[]>(() =>
   props.modules.map((module) => {
@@ -88,7 +71,7 @@ function openModule(moduleId: string): void {
   <section
     v-if="layout.nodes.length > 0"
     class="map"
-    :class="{ 'map--collapsed': !expanded }"
+    :class="{ 'map--collapsed': !expanded, 'map--sheet': sheet }"
     aria-label="Карта курса"
   >
     <header class="head">
@@ -107,6 +90,9 @@ function openModule(moduleId: string): void {
         </button>
         <button type="button" class="control control--wide" @click="showCurrent">к текущему</button>
         <button type="button" class="control control--wide" @click="fit">вся карта</button>
+        <button v-if="sheet" type="button" class="control control--wide" @click="toggle">
+          закрыть
+        </button>
       </div>
     </header>
 
@@ -114,7 +100,7 @@ function openModule(moduleId: string): void {
       v-if="expanded"
       :ref="setViewport"
       class="viewport"
-      :class="{ 'viewport--panning': panning }"
+      :class="{ 'viewport--panning': panning, 'viewport--sheet': sheet }"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="endPan"
@@ -265,6 +251,30 @@ function openModule(moduleId: string): void {
   top: 0;
   left: 0;
   transform-origin: 0 0;
+}
+
+/* Телефон: раскрытая карта уезжала бы под текст урока, а её жест панорамы
+   спорил бы с прокруткой страницы. На весь экран — прокручивать нечего,
+   поэтому доску можно тянуть в обе стороны. */
+@media (max-width: 800px) {
+  .map--sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+
+  .map--sheet .head {
+    flex-wrap: wrap;
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+  }
+
+  .viewport--sheet {
+    touch-action: none;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @container (max-width: 620px) {
