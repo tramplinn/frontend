@@ -31,6 +31,8 @@ const SIMPLE_LABELS: Record<string, string> = {
   'news-item': 'новость',
   catalog: 'курсы',
   profile: 'профиль',
+  people: 'люди',
+  'user-profile': 'профиль',
   'manage-content': 'контент',
   'manage-lesson': 'контент / урок',
   'manage-quiz': 'контент / тест',

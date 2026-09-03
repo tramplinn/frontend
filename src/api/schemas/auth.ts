@@ -32,6 +32,13 @@ export const userSchema = z.object({
   studentNumber: z.string().nullable(),
   role: userRoleSchema,
   isActive: z.boolean(),
+  headline: z.string().nullable(),
+  bio: z.string().nullable(),
+  specialty: z
+    .enum(['frontend', 'backend', 'fullstack', 'mobile', 'data', 'devops', 'qa'])
+    .nullable(),
+  grade: z.enum(['learning', 'junior', 'middle', 'senior']).nullable(),
+  experienceYears: z.number().int().nullable(),
 })
 
 export const meSchema = userSchema.extend({

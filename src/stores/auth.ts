@@ -7,7 +7,9 @@ import {
   loginUrl,
   logout as logoutRequest,
   restoreSession,
+  updateProfile as updateProfileRequest,
 } from '@/api/auth'
+import type { ProfileChanges } from '@/api/auth'
 import type { Me } from '@/api/schemas/auth'
 import type { IdentityProvider } from '@/api/schemas/common'
 
@@ -40,6 +42,10 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = await fetchMe()
   }
 
+  async function updateProfile(changes: ProfileChanges): Promise<void> {
+    user.value = await updateProfileRequest(changes)
+  }
+
   async function loadProviders(): Promise<void> {
     if (providers.value.length === 0) {
       providers.value = (await listProviders()).providers
@@ -70,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     forget,
     restore,
     reload,
+    updateProfile,
     providers,
     loadProviders,
     login,

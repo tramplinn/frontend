@@ -84,6 +84,17 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/people',
+    name: 'people',
+    component: () => import('@/views/PeopleView.vue'),
+  },
+  {
+    path: '/people/:login',
+    name: 'user-profile',
+    component: () => import('@/views/PublicProfileView.vue'),
+    props: true,
+  },
+  {
     path: '/manage/content',
     name: 'manage-content',
     component: () => import('@/views/manage/ContentView.vue'),

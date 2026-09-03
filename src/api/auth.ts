@@ -2,6 +2,8 @@ import { clearSession, refreshSession, request } from './client'
 import { authorizeUrlSchema, meSchema, providersSchema } from './schemas/auth'
 import type { Me } from './schemas/auth'
 import type { IdentityProvider } from './schemas/common'
+import type { DeveloperGrade, Specialty } from './schemas/users'
+import { snakeBody } from './case'
 
 /** Какие способы входа реально настроены на сервере: ключей может не быть. */
 export function listProviders(): Promise<{ providers: IdentityProvider[] }> {
@@ -30,6 +32,23 @@ export function linkUrl(
 
 export function fetchMe(): Promise<Me> {
   return request('/auth/me', { schema: meSchema })
+}
+
+export interface ProfileChanges {
+  name?: string | null
+  headline?: string | null
+  bio?: string | null
+  specialty?: Specialty | null
+  grade?: DeveloperGrade | null
+  experienceYears?: number | null
+}
+
+export function updateProfile(changes: ProfileChanges): Promise<Me> {
+  return request('/auth/me', {
+    method: 'PATCH',
+    body: snakeBody({ ...changes }),
+    schema: meSchema,
+  })
 }
 
 export async function logout(): Promise<void> {

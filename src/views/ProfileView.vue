@@ -4,8 +4,14 @@ import { useRouter } from 'vue-router'
 
 import { linkUrl, logoutEverywhere, unlinkIdentity } from '@/api/auth'
 import type { IdentityProvider } from '@/api/schemas/common'
+import type { DeveloperGrade, PublicProfile, Specialty } from '@/api/schemas/users'
+import { getPublicProfile } from '@/api/users'
+import ProfileSummary from '@/components/profile/ProfileSummary.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import { errorText } from '@/lib/errors'
+import { blankToNull } from '@/lib/forms'
+import { GRADES, SPECIALTIES } from '@/lib/profile'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 import { useProgressStore } from '@/stores/progress'
@@ -13,56 +19,70 @@ import { useProgressStore } from '@/stores/progress'
 const auth = useAuthStore()
 const progress = useProgressStore()
 const router = useRouter()
-
+const publicProfile = ref<PublicProfile | null>(null)
+const name = ref(auth.user?.name ?? '')
+const headline = ref(auth.user?.headline ?? '')
+const bio = ref(auth.user?.bio ?? '')
+const specialty = ref<Specialty | ''>(auth.user?.specialty ?? '')
+const grade = ref<DeveloperGrade | ''>(auth.user?.grade ?? '')
+const experienceYears = ref<number | null>(auth.user?.experienceYears ?? null)
+const saving = ref(false)
 const signingOut = ref(false)
 const busy = ref(false)
 const error = ref<string | null>(null)
 
-const roleNames: Record<string, string> = {
-  student: 'студент',
-  teacher: 'преподаватель',
-  admin: 'администратор',
-}
-
 const identities = computed(() => auth.user?.identities ?? [])
 const canUnlink = computed(() => identities.value.length > 1)
 const linkedProviders = computed(() => new Set(identities.value.map((item) => item.provider)))
+const unlinked = computed(() => auth.providers.filter((item) => !linkedProviders.value.has(item)))
+
+async function loadPublicProfile(): Promise<void> {
+  if (auth.user) publicProfile.value = await getPublicProfile(auth.user.login)
+}
 
 onMounted(() => {
-  void progress.load()
+  void loadPublicProfile().catch((cause: unknown) => (error.value = errorText(cause)))
   void auth.loadProviders()
 })
 
-async function signOut(): Promise<void> {
+async function saveProfile(): Promise<void> {
+  saving.value = true
+  error.value = null
+  try {
+    await auth.updateProfile({
+      name: blankToNull(name.value),
+      headline: blankToNull(headline.value),
+      bio: blankToNull(bio.value),
+      specialty: specialty.value || null,
+      grade: grade.value || null,
+      experienceYears: experienceYears.value,
+    })
+    await loadPublicProfile()
+  } catch (cause) {
+    error.value = errorText(cause)
+  } finally {
+    saving.value = false
+  }
+}
+
+async function signOut(all = false): Promise<void> {
   signingOut.value = true
   error.value = null
   try {
-    await auth.logout()
+    if (all) {
+      await logoutEverywhere()
+      auth.forget()
+    } else {
+      await auth.logout()
+    }
     progress.reset()
     await router.push({ name: 'home' })
   } catch {
-    error.value = 'Не удалось выйти. Попробуйте ещё раз.'
+    error.value = all ? 'Не удалось завершить сеансы.' : 'Не удалось выйти. Попробуйте ещё раз.'
   } finally {
     signingOut.value = false
   }
 }
-
-async function signOutEverywhere(): Promise<void> {
-  signingOut.value = true
-  error.value = null
-  try {
-    await logoutEverywhere()
-    auth.forget()
-    progress.reset()
-    await router.push({ name: 'home' })
-  } catch {
-    error.value = 'Не удалось завершить сеансы.'
-  } finally {
-    signingOut.value = false
-  }
-}
-
-const unlinked = computed(() => auth.providers.filter((item) => !linkedProviders.value.has(item)))
 
 async function link(provider: IdentityProvider): Promise<void> {
   busy.value = true
@@ -92,174 +112,253 @@ async function unlink(provider: IdentityProvider): Promise<void> {
 
 <template>
   <section v-if="auth.user" class="profile">
-    <h1 class="heading">профиль</h1>
+    <ProfileSummary v-if="publicProfile" :profile="publicProfile" own />
+    <div class="columns">
+      <form class="card editor" @submit.prevent="saveProfile">
+        <header>
+          <p>публично</p>
+          <h2>о себе</h2>
+        </header>
+        <label><span>имя</span><input v-model="name" class="text-field" maxlength="200" /></label>
+        <label
+          ><span>коротко о себе</span
+          ><input
+            v-model="headline"
+            class="text-field"
+            maxlength="120"
+            placeholder="Что делаете и куда растёте"
+        /></label>
+        <div class="pair">
+          <label
+            ><span>направление</span
+            ><select v-model="specialty" class="text-field">
+              <option value="">не выбрано</option>
+              <option v-for="item in SPECIALTIES" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </option>
+            </select></label
+          >
+          <label
+            ><span>грейд</span
+            ><select v-model="grade" class="text-field">
+              <option value="">не выбрано</option>
+              <option v-for="item in GRADES" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </option>
+            </select></label
+          >
+        </div>
+        <label
+          ><span>опыт, лет</span
+          ><input
+            v-model.number="experienceYears"
+            class="text-field years"
+            type="number"
+            min="0"
+            max="80"
+        /></label>
+        <label
+          ><span>подробнее</span
+          ><textarea
+            v-model="bio"
+            class="text-field"
+            rows="5"
+            maxlength="1000"
+            placeholder="Интересы, стек, цели"
+          ></textarea>
+        </label>
+        <AppButton type="submit" variant="primary" :loading="saving">сохранить профиль</AppButton>
+      </form>
 
-    <dl class="facts">
-      <div class="fact">
-        <dt>имя</dt>
-        <dd>{{ auth.displayName }}</dd>
-      </div>
-      <div class="fact">
-        <dt>логин</dt>
-        <dd>{{ auth.user.login }}</dd>
-      </div>
-      <div v-if="auth.user.email" class="fact">
-        <dt>почта</dt>
-        <dd>{{ auth.user.email }}</dd>
-      </div>
-      <div v-if="auth.user.studentNumber" class="fact">
-        <dt>номер студента</dt>
-        <dd>{{ auth.user.studentNumber }}</dd>
-      </div>
-      <div class="fact">
-        <dt>роль</dt>
-        <dd>{{ roleNames[auth.user.role] ?? auth.user.role }}</dd>
-      </div>
-      <div class="fact">
-        <dt>пройдено уроков</dt>
-        <dd>{{ progress.completedCount }}</dd>
-      </div>
-    </dl>
-
-    <h2 class="subheading">способы входа</h2>
-    <ul class="identities">
-      <li v-for="identity in identities" :key="identity.provider" class="identity">
-        <span class="identity-name">
-          {{ providerName(identity.provider) }}
-        </span>
-        <span v-if="identity.email" class="identity-email">{{ identity.email }}</span>
-        <ConfirmButton
-          v-if="canUnlink"
-          label="отвязать"
-          confirm-label="точно отвязать?"
-          :loading="busy"
-          @confirm="unlink(identity.provider)"
-        />
-        <span v-else class="identity-note">единственный вход</span>
-      </li>
-    </ul>
-
-    <div v-if="unlinked.length > 0" class="link-buttons">
-      <AppButton
-        v-for="provider in unlinked"
-        :key="provider"
-        variant="secondary"
-        size="sm"
-        :loading="busy"
-        @click="link(provider)"
-      >
-        привязать {{ providerName(provider) }}
-      </AppButton>
+      <section class="card account">
+        <header>
+          <p>приватно</p>
+          <h2>аккаунт</h2>
+        </header>
+        <dl class="facts">
+          <div>
+            <dt>логин</dt>
+            <dd>{{ auth.user.login }}</dd>
+          </div>
+          <div v-if="auth.user.email">
+            <dt>почта</dt>
+            <dd>{{ auth.user.email }}</dd>
+          </div>
+          <div v-if="auth.user.studentNumber">
+            <dt>номер студента</dt>
+            <dd>{{ auth.user.studentNumber }}</dd>
+          </div>
+        </dl>
+        <h3>способы входа</h3>
+        <ul class="identities">
+          <li v-for="identity in identities" :key="identity.provider">
+            <span
+              ><strong>{{ providerName(identity.provider) }}</strong
+              ><small v-if="identity.email">{{ identity.email }}</small></span
+            >
+            <ConfirmButton
+              v-if="canUnlink"
+              label="отвязать"
+              confirm-label="точно отвязать?"
+              :loading="busy"
+              @confirm="unlink(identity.provider)"
+            />
+            <small v-else>единственный вход</small>
+          </li>
+        </ul>
+        <div v-if="unlinked.length" class="links">
+          <AppButton
+            v-for="provider in unlinked"
+            :key="provider"
+            size="sm"
+            :loading="busy"
+            @click="link(provider)"
+            >привязать {{ providerName(provider) }}</AppButton
+          >
+        </div>
+        <div class="sessions">
+          <AppButton :loading="signingOut" @click="signOut(false)">выйти</AppButton>
+          <ConfirmButton
+            label="выйти везде"
+            confirm-label="завершить все сеансы?"
+            size="md"
+            :loading="signingOut"
+            @confirm="signOut(true)"
+          />
+        </div>
+      </section>
     </div>
-
-    <p v-if="error" class="error">{{ error }}</p>
-
-    <div class="session">
-      <AppButton variant="secondary" :loading="signingOut" @click="signOut">выйти</AppButton>
-      <ConfirmButton
-        label="выйти на всех устройствах"
-        confirm-label="точно завершить все сеансы?"
-        size="md"
-        :loading="signingOut"
-        @confirm="signOutEverywhere"
-      />
-    </div>
+    <p v-if="error" class="error" role="alert">{{ error }}</p>
   </section>
 </template>
 
 <style scoped>
 .profile {
-  max-width: var(--measure);
+  display: grid;
+  gap: var(--space-6);
+  max-width: 1100px;
 }
-
-.heading {
-  font-size: var(--text-hero);
-  font-weight: var(--weight-semibold);
-  letter-spacing: -0.03em;
-  margin-bottom: var(--space-8);
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: var(--space-6);
+  align-items: start;
 }
-
-.subheading {
+.card {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+header {
+  margin-bottom: var(--space-6);
+}
+header p {
+  color: var(--accent);
+  font-size: var(--text-caption);
+}
+header h2 {
   font-size: var(--text-title);
-  font-weight: var(--weight-medium);
-  margin: var(--space-12) 0 var(--space-4);
 }
-
-.facts {
-  display: flex;
-  flex-direction: column;
+.editor {
+  display: grid;
+  gap: var(--space-4);
+}
+.editor label {
+  display: grid;
+  gap: var(--space-2);
+}
+.editor label > span,
+.facts dt {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+.editor textarea.text-field {
+  height: auto;
+  padding-block: var(--space-3);
+  resize: vertical;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
 }
-
-.fact {
+.years {
+  width: 120px;
+}
+.facts {
+  display: grid;
+  gap: var(--space-3);
+}
+.facts div {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border);
 }
-
-.fact dt {
-  color: var(--text-muted);
+.facts dd {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.account h3 {
+  margin: var(--space-8) 0 var(--space-3);
   font-size: var(--text-caption);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
 }
-
 .identities {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: var(--space-2);
+  list-style: none;
 }
-
-.identity {
+.identities li {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
-  background: var(--surface);
+  padding: var(--space-3);
   border-radius: var(--radius-ctl);
+  background: var(--surface);
 }
-
-.identity-name {
-  font-weight: var(--weight-medium);
-  font-size: var(--text-caption);
+.identities li > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-
-.identity-email,
-.identity-note {
+.identities small {
   color: var(--text-muted);
   font-size: var(--text-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.identity-email {
-  margin-right: auto;
-}
-
-.identity-note {
-  margin-left: auto;
-}
-
-.link-buttons {
+.links,
+.sessions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-
   margin-top: var(--space-3);
 }
-
+.sessions {
+  padding-top: var(--space-6);
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border);
+}
 .error {
-  margin-top: var(--space-3);
   color: var(--danger);
   font-size: var(--text-caption);
 }
-
-.session {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-top: var(--space-6);
-  margin-top: var(--space-12);
-  border-top: 1px solid var(--border);
+@media (max-width: 820px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .card {
+    padding: var(--space-4);
+  }
+  .pair {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

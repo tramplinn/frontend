@@ -6,6 +6,7 @@ export type SectionKey =
   | 'learning'
   | 'catalog'
   | 'algorithms'
+  | 'people'
   | 'content'
   | 'news-desk'
   | 'algorithm-library'
@@ -50,6 +51,14 @@ export const SECTIONS: Section[] = [
     title: 'алгосы',
     summary: 'Тренажёр задач вне курсов',
     to: { name: 'algorithms' },
+    access: 'everyone',
+    group: 'обучение',
+  },
+  {
+    key: 'people',
+    title: 'люди',
+    summary: 'Профили и прогресс участников',
+    to: { name: 'people' },
     access: 'everyone',
     group: 'обучение',
   },
