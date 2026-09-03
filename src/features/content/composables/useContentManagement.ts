@@ -78,16 +78,26 @@ export function useContentManagement() {
     }
   }
 
+  /**
+   * Тянет дерево, не трогая экран: ошибку отдаёт наверх, старое содержимое
+   * оставляет на месте. Обновление после действия идёт только сюда — иначе
+   * дерево мигало бы «загружаем…» на каждое создание урока или теста.
+   */
+  async function fetchTree(slug: string): Promise<void> {
+    const [tree, moduleDependencies] = await Promise.all([
+      getDraftCourse(slug),
+      listDraftModuleDependencies(slug),
+    ])
+    openCourse.value = tree
+    dependencies.value = moduleDependencies
+  }
+
+  /** Первое открытие курса: показывать пока нечего, поэтому и заглушка уместна. */
   async function openTree(slug: string): Promise<void> {
     loadingCourse.value = true
     courseError.value = null
     try {
-      const [tree, moduleDependencies] = await Promise.all([
-        getDraftCourse(slug),
-        listDraftModuleDependencies(slug),
-      ])
-      openCourse.value = tree
-      dependencies.value = moduleDependencies
+      await fetchTree(slug)
     } catch (cause) {
       courseError.value = cause
       openCourse.value = null
@@ -110,8 +120,12 @@ export function useContentManagement() {
 
   async function refresh(): Promise<void> {
     await loadLists()
+    await refreshTree()
+  }
+
+  async function refreshTree(): Promise<void> {
     if (openSlug.value !== null) {
-      await openTree(openSlug.value)
+      await fetchTree(openSlug.value)
     }
   }
 
@@ -135,11 +149,24 @@ export function useContentManagement() {
   }
 
   async function run(action: () => Promise<unknown>): Promise<void> {
+    await perform(action, refresh)
+  }
+
+  /** Уроки, тесты и порядок живут только в дереве открытого курса: списки
+      треков и курсов перезапрашивать незачем. */
+  async function runInTree(action: () => Promise<unknown>): Promise<void> {
+    await perform(action, refreshTree)
+  }
+
+  async function perform(
+    action: () => Promise<unknown>,
+    reload: () => Promise<void>,
+  ): Promise<void> {
     busy.value = true
     actionError.value = null
     try {
       await action()
-      await refresh()
+      await reload()
     } catch (cause) {
       actionError.value = cause
     } finally {
@@ -161,24 +188,24 @@ export function useContentManagement() {
   function addModule(draft: { title: string; slug: string }): void {
     const course = openCourse.value
     if (course) {
-      void run(() => createModule(course.id, { ...draft, position: course.modules.length }))
+      void runInTree(() => createModule(course.id, { ...draft, position: course.modules.length }))
     }
   }
 
   function addLesson(moduleId: string, draft: { title: string; slug: string }): void {
-    void run(() => createLesson(moduleId, draft))
+    void runInTree(() => createLesson(moduleId, draft))
   }
 
   function addQuiz(moduleId: string, draft: { title: string; slug: string }): void {
-    void run(() => createQuiz(moduleId, draft))
+    void runInTree(() => createQuiz(moduleId, draft))
   }
 
   function addPractice(moduleId: string, draft: { title: string }): void {
-    void run(() => createPracticeSet(moduleId, { title: draft.title }))
+    void runInTree(() => createPracticeSet(moduleId, { title: draft.title }))
   }
 
   function removeItem(item: ModuleItem): void {
-    void run(() => {
+    void runInTree(() => {
       if (item.kind === 'lesson') return deleteLesson(item.lesson.id)
       if (item.kind === 'quiz') return deleteQuiz(item.quiz.id)
       return deletePracticeSet(item.practiceSet.id)
@@ -191,7 +218,7 @@ export function useContentManagement() {
       index,
       delta,
     )
-    if (ids) void run(() => reorderModules(course.id, ids))
+    if (ids) void runInTree(() => reorderModules(course.id, ids))
   }
 
   /** Модуль всегда двигают внутри открытого курса, но узнать это из шаблона нельзя. */
@@ -207,7 +234,7 @@ export function useContentManagement() {
       index,
       delta,
     )
-    if (ids) void run(() => reorderModuleItems(module.id, ids))
+    if (ids) void runInTree(() => reorderModuleItems(module.id, ids))
   }
 
   function moveCourse(track: Track, index: number, delta: number): void {
@@ -254,6 +281,7 @@ export function useContentManagement() {
     toggleCourse,
     refresh,
     run,
+    runInTree,
     editing,
     toggleEditing,
     saveTrack,
