@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 
 import type { TrackDraft } from '@/api/authoring'
 import type { Track } from '@/api/schemas/content'
-import CoverField from '@/components/manage/CoverField.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { blankToNull } from '@/lib/forms'
 
@@ -18,8 +17,6 @@ const title = ref(props.track.title)
 const slug = ref(props.track.slug)
 const description = ref(props.track.description ?? '')
 const color = ref(props.track.color ?? '')
-const coverAssetId = ref(props.track.coverAssetId)
-const coverUrl = ref(props.track.coverUrl)
 
 const valid = computed(() => title.value.trim().length > 0 && slug.value.trim().length > 0)
 
@@ -32,7 +29,6 @@ function save(): void {
     slug: slug.value.trim(),
     description: blankToNull(description.value),
     color: blankToNull(color.value),
-    coverAssetId: coverAssetId.value,
   })
 }
 </script>
@@ -60,12 +56,6 @@ function save(): void {
         <input v-model="color" class="text-field" placeholder="#2B7FFF" />
       </label>
     </div>
-
-    <CoverField
-      v-model:asset-id="coverAssetId"
-      v-model:url="coverUrl"
-      :alt="`Обложка трека ${props.track.title}`"
-    />
 
     <div class="actions">
       <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="props.busy">

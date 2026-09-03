@@ -39,7 +39,6 @@ export interface TrackDraft {
   slug: string
   description?: string | null
   color?: string | null
-  coverAssetId?: string | null
   status?: ContentStatus
 }
 

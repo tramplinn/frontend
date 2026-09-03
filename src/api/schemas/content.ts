@@ -109,8 +109,6 @@ export const trackSchema = z.object({
   slug: z.string(),
   description: z.string().nullable(),
   color: z.string().nullable(),
-  coverAssetId: uuidSchema.nullable(),
-  coverUrl: z.url().nullable(),
   status: contentStatusSchema,
   courses: z.array(trackCourseSchema).default([]),
 })

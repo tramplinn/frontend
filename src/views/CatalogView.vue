@@ -61,16 +61,7 @@ watch(
         </TabsList>
 
         <TabsContent v-for="track in content.tracks" :key="track.id" :value="track.slug">
-          <header v-if="track.coverUrl || track.description" class="track-head">
-            <img
-              v-if="track.coverUrl"
-              :src="track.coverUrl"
-              :alt="`Обложка трека ${track.title}`"
-              class="track-cover"
-              loading="lazy"
-            />
-            <p v-if="track.description" class="track-description">{{ track.description }}</p>
-          </header>
+          <p v-if="track.description" class="track-description">{{ track.description }}</p>
           <p v-if="track.courses.length === 0" class="empty">в треке пока нет курсов</p>
           <div v-else class="grid">
             <CourseCard v-for="link in track.courses" :key="link.course.id" :course="link.course" />
@@ -121,24 +112,10 @@ watch(
   color: var(--on-selected);
 }
 
-.track-head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-}
-
-.track-cover {
-  flex-shrink: 0;
-  width: var(--space-12);
-  height: var(--space-12);
-  border-radius: var(--radius-ctl);
-  object-fit: cover;
-}
-
 .track-description {
   max-width: var(--measure);
   color: var(--text-muted);
+  margin-bottom: var(--space-6);
 }
 
 .grid {
