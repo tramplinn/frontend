@@ -13,6 +13,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   overflow-wrap: break-word;
+  /* Свойство наследуется: серый прямоугольник, который WebKit рисует под
+     каждым тапом, гасим один раз на корне и заменяем своим :active ниже. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -78,6 +81,18 @@ canvas {
 
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* На сенсорных экранах :hover залипает после тапа и не годится как отклик,
+   поэтому нажатие показываем отдельно — мгновенно, без анимации. */
+@media (hover: none) {
+  button:not(:disabled):active,
+  a:active,
+  summary:active,
+  [role='button']:not([aria-disabled='true']):active,
+  [role='tab']:not([aria-disabled='true']):active {
+    opacity: 0.6;
+  }
 }
 
 ::selection {
