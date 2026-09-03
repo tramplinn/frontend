@@ -91,7 +91,7 @@ watch(
   height: var(--ctl-sm);
   padding: 0 var(--space-4);
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-ctl);
   background: var(--card);
   color: var(--text-muted);
   font-size: var(--text-caption);

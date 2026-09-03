@@ -154,7 +154,7 @@ function toggleTopic(value: string): void {
   height: var(--ctl-sm);
   padding: 0 var(--space-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-ctl);
   background: var(--card);
   color: var(--text);
   font-family: inherit;
@@ -170,7 +170,7 @@ function toggleTopic(value: string): void {
 .filter {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-ctl);
   background: var(--card);
   color: var(--text-muted);
   font-family: inherit;

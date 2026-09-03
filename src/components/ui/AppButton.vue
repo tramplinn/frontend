@@ -36,7 +36,7 @@ const isBlocked = computed(() => props.disabled || props.loading)
   justify-content: center;
   gap: var(--space-2);
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-ctl);
   font-weight: var(--weight-medium);
   cursor: pointer;
   white-space: nowrap;

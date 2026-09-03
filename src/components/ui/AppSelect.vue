@@ -80,7 +80,7 @@ function update(value: unknown): void {
   height: var(--ctl-sm);
   padding: 0 var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-ctl);
   background: var(--card);
   color: var(--text);
   font-family: inherit;
