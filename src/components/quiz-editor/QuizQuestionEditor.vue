@@ -7,6 +7,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCheckbox from '@/components/ui/AppCheckbox.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import InteractionBlockEditor from '@/components/quiz-editor/InteractionBlockEditor.vue'
 import type { EditableQuestion } from '@/features/quiz-editor/model/questionDraft'
 
 defineProps<{
@@ -117,22 +118,12 @@ function pickAttachment(event: Event): void {
       </div>
     </div>
 
-    <div v-else-if="draft.type === 'matching' || draft.type === 'grouping'" class="accepted">
-      <label class="label" :for="`interaction-${question.id}`">
-        {{
-          draft.type === 'matching'
-            ? 'пары, по одной в строке: понятие = соответствие'
-            : 'блоки: категория: элемент 1, элемент 2'
-        }}
-      </label>
-      <textarea
-        :id="`interaction-${question.id}`"
-        class="accepted-input"
-        :value="draft.interactionLines.join('\n')"
-        rows="5"
-        @input="emit('patch', { interactionLines: textareaLines($event) })"
-      ></textarea>
-    </div>
+    <InteractionBlockEditor
+      v-else-if="draft.type === 'matching' || draft.type === 'grouping'"
+      :type="draft.type"
+      :lines="draft.interactionLines"
+      @change="(interactionLines) => emit('patch', { interactionLines })"
+    />
 
     <p v-else class="file-note">
       Студент прикрепит изображение или PDF и сам отметит задание выполненным.
