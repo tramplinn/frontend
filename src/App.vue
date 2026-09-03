@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
+import FeedbackWidget from '@/components/layout/FeedbackWidget.vue'
 </script>
 
 <template>
@@ -14,6 +15,7 @@ import AppSidebar from '@/components/layout/AppSidebar.vue'
       </main>
     </div>
   </div>
+  <FeedbackWidget />
 </template>
 
 <style scoped>
