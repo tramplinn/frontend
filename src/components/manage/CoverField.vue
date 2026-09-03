@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { uploadAsset } from '@/api/admin'
-import { assetMimeSchema } from '@/api/schemas/admin'
+import { uploadAsset } from '@/api/assets'
+import { assetMimeSchema } from '@/api/schemas/assets'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const props = defineProps<{ alt: string }>()

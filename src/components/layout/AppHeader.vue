@@ -32,7 +32,6 @@ const SIMPLE_LABELS: Record<string, string> = {
   'manage-content': 'контент',
   'manage-lesson': 'контент / урок',
   'manage-quiz': 'контент / тест',
-  'manage-assets': 'медиа',
   'admin-users': 'пользователи',
 }
 

@@ -1,4 +1,4 @@
-import type { Asset } from '@/api/schemas/admin'
+import type { Asset } from '@/api/schemas/assets'
 
 export function assetMarkdown(asset: Asset): string {
   const label = asset.filename.replace(/\.[^.]+$/, '') || asset.filename

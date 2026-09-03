@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 
-import { uploadAsset } from '@/api/admin'
-import { assetMimeSchema } from '@/api/schemas/admin'
+import { uploadAsset } from '@/api/assets'
+import { assetMimeSchema } from '@/api/schemas/assets'
 import { assetMarkdown } from '@/lib/assetMarkdown'
 
 type Replace = (placeholder: string, markdown: string) => void

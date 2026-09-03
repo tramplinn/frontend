@@ -1,6 +1,6 @@
 import { request } from './client'
-import { assetPageSchema, userPageSchema } from './schemas/admin'
-import type { AssetPage, UserPage } from './schemas/admin'
+import { userPageSchema } from './schemas/admin'
+import type { UserPage } from './schemas/admin'
 import type { User } from './schemas/auth'
 import { userSchema } from './schemas/auth'
 import type { UserRole } from './schemas/common'
@@ -44,17 +44,4 @@ export function updateUser(userId: string, changes: UserChanges): Promise<User> 
     },
     schema: userSchema,
   })
-}
-
-export function listAssets(query?: string, limit = 50, offset = 0): Promise<AssetPage> {
-  return request('/assets', {
-    schema: assetPageSchema,
-    query: { q: query, limit, offset },
-  })
-}
-
-export { uploadAsset } from './assets'
-
-export async function deleteAsset(assetId: string): Promise<void> {
-  await request(`/assets/${assetId}`, { method: 'DELETE' })
 }
