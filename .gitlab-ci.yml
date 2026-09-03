@@ -20,6 +20,7 @@ variables:
 
 quality:
   stage: test
+  needs: []
   image: node:22-bookworm-slim
   cache:
     key:
@@ -41,6 +42,7 @@ quality:
 
 gitleaks:
   stage: test
+  needs: []
   image:
     name: zricethezav/gitleaks:v8.30.1
     entrypoint: [""]
@@ -49,12 +51,14 @@ gitleaks:
 
 semgrep:
   stage: test
+  needs: []
   image: semgrep/semgrep:1.172.0
   script:
     - semgrep scan --config=p/typescript --config=p/javascript --config=p/owasp-top-ten --error .
 
 trivy-sca:
   stage: test
+  needs: []
   image:
     name: aquasec/trivy:0.74.0
     entrypoint: [""]
@@ -63,6 +67,9 @@ trivy-sca:
 
 build:
   stage: build
+  needs:
+    - job: quality
+      artifacts: false
   image: docker:29.7.2
   retry:
     max: 2
@@ -81,6 +88,15 @@ build:
 
 .deploy:
   stage: deploy
+  needs:
+    - job: build
+      artifacts: false
+    - job: gitleaks
+      artifacts: false
+    - job: semgrep
+      artifacts: false
+    - job: trivy-sca
+      artifacts: false
   image: alpine:3.24.1
   before_script:
     - apk add --no-cache openssh-client
@@ -143,6 +159,13 @@ deploy-production:
 
 nuclei-scan:
   stage: scan
+  needs:
+    - job: deploy-stage
+      artifacts: false
+      optional: true
+    - job: deploy-production
+      artifacts: false
+      optional: true
   image:
     name: projectdiscovery/nuclei:v3.11.0
     entrypoint: [""]
