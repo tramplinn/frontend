@@ -38,7 +38,7 @@ export const practiceSetSchema = z.object({
 
 export const practiceSessionSchema = z.object({
   id: uuidSchema,
-  practiceSetId: uuidSchema,
+  practiceSetId: uuidSchema.nullable(),
   mode: practiceModeSchema,
   status: sessionStatusSchema,
   startedAt: z.string(),
@@ -103,8 +103,46 @@ export const submissionSchema = z.object({
 
 export const runnerLanguageSchema = z.object({ key: z.string(), name: z.string() })
 
+export const progressStatusSchema = z.enum(['unseen', 'attempted', 'solved', 'review'])
+
+export const problemCardSchema = z.object({
+  id: uuidSchema,
+  title: z.string(),
+  difficulty: algorithmDifficultySchema,
+  topics: z.array(z.string()),
+  provider: z.enum(['internal', 'leetcode', 'codeforces', 'external']),
+  externalUrl: z.string().nullable(),
+  languages: z.array(z.string()),
+  status: progressStatusSchema,
+  attempts: z.number().int(),
+  solved: z.boolean(),
+})
+
+export const problemCatalogSchema = z.object({
+  items: z.array(problemCardSchema),
+  topics: z.array(z.string()),
+  total: z.number().int(),
+})
+
+export const algorithmProgressSchema = z.object({
+  problemId: uuidSchema,
+  status: progressStatusSchema,
+  attempts: z.number().int(),
+  hintsUsed: z.number().int(),
+  firstSolvedAt: z.string().nullable(),
+  lastAttemptAt: z.string().nullable(),
+  complexityMd: z.string().nullable(),
+  confidence: z.number().int().nullable(),
+  reflectionMd: z.string().nullable(),
+})
+
 export type PracticeSet = z.infer<typeof practiceSetSchema>
 export type PracticeSession = z.infer<typeof practiceSessionSchema>
 export type AlgorithmProblem = z.infer<typeof algorithmProblemSchema>
 export type AlgorithmSubmission = z.infer<typeof submissionSchema>
 export type RunnerLanguage = z.infer<typeof runnerLanguageSchema>
+export type AlgorithmDifficulty = z.infer<typeof algorithmDifficultySchema>
+export type ProblemCard = z.infer<typeof problemCardSchema>
+export type ProblemCatalog = z.infer<typeof problemCatalogSchema>
+export type AlgorithmProgress = z.infer<typeof algorithmProgressSchema>
+export type AlgorithmVerdict = z.infer<typeof verdictSchema>

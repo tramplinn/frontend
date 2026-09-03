@@ -80,6 +80,20 @@
   --motion-fast: 120ms;
   --ease: ease-out;
 
+  /* Редактор кода (CodeMirror). Палитра совпадает с подсветкой уроков
+     в code.css: светлая — xcode, тёмная — github-dark. */
+  --code-comment: #177500;
+  --code-keyword: #a90d91;
+  --code-string: #c41a16;
+  --code-number: #1c01ce;
+  --code-name: #0f0f11;
+  --code-function: #26474b;
+  --code-type: #3f6e75;
+  --code-operator: #0f0f11;
+  --code-invalid: #ff3b30;
+  --code-gutter: #b6bac1;
+  --code-active-line: #f1f2f5;
+  --code-selection: #cfe2ff;
   --shadow-raised: 0 1px 2px rgb(15 15 17 / 6%), 0 8px 24px rgb(15 15 17 / 8%);
 }
 
@@ -116,6 +130,18 @@
     --icon-purple: #b777f0;
     --icon-purple-soft: #2b1b38;
 
+    --code-comment: #8b949e;
+    --code-keyword: #ff7b72;
+    --code-string: #a5d6ff;
+    --code-number: #79c0ff;
+    --code-name: #f2f3f5;
+    --code-function: #d2a8ff;
+    --code-type: #7ee787;
+    --code-operator: #f2f3f5;
+    --code-invalid: #ff453a;
+    --code-gutter: #545b66;
+    --code-active-line: #1f2127;
+    --code-selection: #234b7c;
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 32%);
   }
 }
@@ -152,6 +178,18 @@
   --icon-purple: #b777f0;
   --icon-purple-soft: #2b1b38;
 
+  --code-comment: #8b949e;
+  --code-keyword: #ff7b72;
+  --code-string: #a5d6ff;
+  --code-number: #79c0ff;
+  --code-name: #f2f3f5;
+  --code-function: #d2a8ff;
+  --code-type: #7ee787;
+  --code-operator: #f2f3f5;
+  --code-invalid: #ff453a;
+  --code-gutter: #545b66;
+  --code-active-line: #1f2127;
+  --code-selection: #234b7c;
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 32%);
 }
 

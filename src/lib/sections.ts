@@ -1,7 +1,8 @@
 import type { RouteLocationRaw } from 'vue-router'
 
 export type SectionAccess = 'everyone' | 'teacher' | 'admin'
-export type SectionKey = 'learning' | 'catalog' | 'content' | 'assets' | 'users'
+export type SectionKey =
+  'learning' | 'catalog' | 'algorithms' | 'content' | 'algorithm-library' | 'assets' | 'users'
 
 export interface Section {
   key: SectionKey
@@ -30,10 +31,26 @@ export const SECTIONS: Section[] = [
     group: 'обучение',
   },
   {
+    key: 'algorithms',
+    title: 'алгосы',
+    summary: 'Тренажёр задач вне курсов',
+    to: { name: 'algorithms' },
+    access: 'everyone',
+    group: 'обучение',
+  },
+  {
     key: 'content',
     title: 'контент',
     summary: 'Треки, курсы, модули и уроки',
     to: { name: 'manage-content' },
+    access: 'teacher',
+    group: 'преподавание',
+  },
+  {
+    key: 'algorithm-library',
+    title: 'алгозадачи',
+    summary: 'Условия, тесты и эталонные решения',
+    to: { name: 'manage-algorithms' },
     access: 'teacher',
     group: 'преподавание',
   },

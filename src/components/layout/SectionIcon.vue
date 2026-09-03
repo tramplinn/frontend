@@ -18,10 +18,23 @@ defineProps<{ name: SectionKey }>()
       <path class="warning" d="m13.2 4.6 3.3-.9 3.1 11.7-3.3.9z" />
     </svg>
 
+    <svg v-else-if="name === 'algorithms'" viewBox="0 0 20 20">
+      <rect class="soft-cyan" x="2" y="3" width="16" height="14" rx="3" />
+      <path class="cyan" d="M5.6 6.9 9.4 10l-3.8 3.1-1.1-1.4L6.9 10 4.5 8.3z" />
+      <rect class="warning" x="10.4" y="12.2" width="5.2" height="1.8" rx="0.9" />
+    </svg>
+
     <svg v-else-if="name === 'content'" viewBox="0 0 20 20">
       <path class="purple" d="M4 2.5h8l3.5 3.6v11.4H4z" />
       <path class="soft-purple" d="M12 2.5v4h3.5z" />
       <path class="warning" d="m8.1 14.8.7-3 5.4-5.4 2.3 2.3-5.4 5.4z" />
+    </svg>
+
+    <svg v-else-if="name === 'algorithm-library'" viewBox="0 0 20 20">
+      <rect class="soft-purple" x="3" y="2.5" width="14" height="15" rx="2.5" />
+      <rect class="purple" x="5.6" y="5.6" width="6" height="1.6" rx="0.8" />
+      <rect class="purple" x="5.6" y="8.7" width="8.8" height="1.6" rx="0.8" />
+      <path class="success" d="m6.2 13.7 1.4-1.4 1.4 1.4 3.4-3.4 1.4 1.4-4.8 4.8z" />
     </svg>
 
     <svg v-else-if="name === 'assets'" viewBox="0 0 20 20">

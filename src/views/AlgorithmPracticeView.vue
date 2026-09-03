@@ -1,31 +1,37 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
+import ProblemEditorPanel from '@/components/algorithms/ProblemEditorPanel.vue'
+import ProblemStatement from '@/components/algorithms/ProblemStatement.vue'
+import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmPractice } from '@/features/algorithms/composables/useAlgorithmPractice'
-import { errorText } from '@/lib/errors'
 
 const props = defineProps<{ course: string; module: string; set: string }>()
+
 const {
-  canExecute,
-  changeLanguage,
-  customInput,
   error,
-  execute,
   finish,
-  language,
+  finishing,
   pending,
   practiceSet,
-  problem,
-  problemPending,
-  queueStatus,
-  result,
-  runError,
-  running,
+  runner,
   selectedId,
   session,
-  sourceCode,
+  solvedIds,
   timerText,
 } = useAlgorithmPractice(() => props.set)
+
+const closing = ref(false)
+const summary = ref('')
+
+const SESSION_LABELS: Record<string, string> = {
+  active: 'идёт',
+  completed: 'завершена',
+  expired: 'время вышло',
+}
 </script>
 
 <template>
@@ -39,113 +45,59 @@ const {
           <h1>{{ practiceSet.title }}</h1>
           <p v-if="practiceSet.description" class="muted">{{ practiceSet.description }}</p>
         </div>
+
         <div class="session-state">
           <strong v-if="timerText" class="timer">{{ timerText }}</strong>
-          <span>{{ session.status }}</span>
-          <AppButton size="sm" :disabled="session.status !== 'active'" @click="finish">
+          <span class="status">{{ SESSION_LABELS[session.status] ?? session.status }}</span>
+          <AppButton size="sm" :disabled="session.status !== 'active'" @click="closing = !closing">
             завершить
           </AppButton>
         </div>
       </header>
 
+      <div v-if="closing && session.status === 'active'" class="closing">
+        <label class="field">
+          <span>что вынес из этой сессии</span>
+          <textarea v-model="summary" rows="3" placeholder="Необязательно" />
+        </label>
+        <div class="closing-actions">
+          <AppButton :loading="finishing" @click="finish(summary.trim() || null)">
+            завершить сессию
+          </AppButton>
+          <AppButton variant="quiet" @click="closing = false">отмена</AppButton>
+        </div>
+      </div>
+
       <div class="workspace">
-        <aside class="tasks" aria-label="Задачи">
+        <aside class="tasks" aria-label="Задачи набора">
           <button
             v-for="(item, index) in practiceSet.problems"
             :key="item.problemId"
             class="task"
             :class="{ 'task--active': item.problemId === selectedId }"
+            :aria-current="item.problemId === selectedId"
             @click="selectedId = item.problemId"
           >
-            <span>{{ index + 1 }}. {{ item.title }}</span>
-            <small>{{ item.difficulty }}</small>
+            <span class="task-title">
+              <span v-if="solvedIds.has(item.problemId)" class="tick" aria-label="решена">✓</span>
+              {{ index + 1 }}. {{ item.title }}
+            </span>
+            <DifficultyChip :difficulty="item.difficulty" />
           </button>
         </aside>
 
-        <main v-if="problem" class="problem">
-          <section class="statement">
-            <h2>{{ problem.title }}</h2>
-            <!-- HTML санитизируется backend markdown renderer. -->
-            <!-- eslint-disable-next-line vue/no-v-html -->
-            <div class="prose" v-html="problem.statementHtml" />
-            <details v-for="sample in problem.samples" :key="sample.position" class="sample">
-              <summary>пример {{ sample.position + 1 }}</summary>
-              <pre>
-stdin
-{{ sample.input }}</pre>
-              <pre>
-stdout
-{{ sample.expectedOutput }}</pre>
-            </details>
-          </section>
-
-          <section class="editor" :aria-busy="problemPending">
-            <div class="toolbar">
-              <label>
-                <span class="sr-only">Язык</span>
-                <select v-model="language" :disabled="running" @change="changeLanguage">
-                  <option
-                    v-for="item in problem.templates"
-                    :key="item.language"
-                    :value="item.language"
-                  >
-                    {{ item.language }}
-                  </option>
-                </select>
-              </label>
-              <span class="limits"
-                >{{ problem.timeLimitMs }} мс ·
-                {{ Math.round(problem.memoryLimitKb / 1024) }} МиБ</span
-              >
-            </div>
-            <textarea
-              v-model="sourceCode"
-              class="code"
-              spellcheck="false"
-              aria-label="Исходный код"
+        <main v-if="runner.problem.value" class="problem">
+          <ProblemStatement :problem="runner.problem.value" />
+          <div class="right">
+            <ProblemEditorPanel :runner="runner" />
+            <ReflectionPanel
+              :progress="runner.progress.value"
+              :saving="runner.savingReflection.value"
+              @save="runner.saveReflection"
             />
-            <details class="stdin">
-              <summary>свой stdin</summary>
-              <textarea
-                v-model="customInput"
-                spellcheck="false"
-                aria-label="Пользовательский stdin"
-              />
-            </details>
-            <div class="actions">
-              <AppButton :disabled="!canExecute" :loading="running" @click="execute('run')"
-                >запустить</AppButton
-              >
-              <AppButton
-                variant="primary"
-                :disabled="!canExecute"
-                :loading="running"
-                @click="execute('submit')"
-                >отправить</AppButton
-              >
-              <span
-                v-if="queueStatus"
-                class="result"
-                :class="`result--${result?.verdict ?? 'pending'}`"
-                >{{ queueStatus }}</span
-              >
-            </div>
-            <p v-if="runError" class="error" role="alert">{{ errorText(runError) }}</p>
-            <div v-if="result?.safeError" class="output error">{{ result.safeError }}</div>
-            <div
-              v-for="item in result?.cases ?? []"
-              :key="item.position ?? 'custom'"
-              class="output"
-            >
-              <strong
-                >{{ item.position === null ? 'свой stdin' : `пример ${item.position + 1}` }} ·
-                {{ item.verdict }}</strong
-              >
-              <pre v-if="item.stdout">{{ item.stdout }}</pre>
-              <pre v-if="item.stderr" class="error">{{ item.stderr }}</pre>
-            </div>
-          </section>
+          </div>
         </main>
+
         <p v-else-if="practiceSet.problems.length === 0" class="muted">в наборе пока нет задач</p>
       </div>
     </article>
@@ -157,176 +109,159 @@ stdout
   display: grid;
   gap: var(--space-6);
 }
-.head,
-.session-state,
-.toolbar,
-.actions {
+
+.head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--space-3);
 }
-.head {
-  justify-content: space-between;
-}
+
 .head h1 {
   margin-top: var(--space-2);
   font-size: var(--text-display);
 }
+
 .back,
 .muted,
-.limits {
+.status {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }
+
 .session-state {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--space-3);
 }
+
 .timer {
   font-family: var(--font-mono);
   font-size: var(--text-title);
 }
-.workspace {
+
+.closing {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: var(--space-4);
-}
-.tasks,
-.statement,
-.editor {
-  background: var(--card);
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
+  background: var(--card);
 }
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+textarea {
+  width: 100%;
+  padding: var(--space-3);
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-input);
+}
+
+.closing-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
 .tasks {
-  align-self: start;
+  display: grid;
+  gap: var(--space-1);
   padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card);
 }
+
 .task {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: var(--space-2);
   width: 100%;
   padding: var(--space-3);
   border: 0;
   border-radius: var(--radius-ctl);
   background: transparent;
   color: inherit;
+  font-family: inherit;
+  font-size: var(--text-caption);
   text-align: left;
   cursor: pointer;
 }
+
+.task:hover {
+  background: var(--surface);
+}
+
 .task--active {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.task small {
-  color: var(--text-muted);
+
+.task-title {
+  min-width: 0;
 }
+
+.tick {
+  color: var(--success);
+  font-weight: var(--weight-medium);
+}
+
 .problem {
   display: grid;
   grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
   gap: var(--space-4);
+  align-items: start;
   min-width: 0;
 }
-.statement,
-.editor {
-  padding: var(--space-4);
+
+.right {
+  display: grid;
+  gap: var(--space-4);
   min-width: 0;
 }
-.statement h2 {
-  margin-bottom: var(--space-4);
-  font-size: var(--text-title);
-}
-.sample,
-.stdin {
-  margin-top: var(--space-4);
-}
-pre {
-  overflow: auto;
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font-family: var(--font-mono);
-  white-space: pre-wrap;
-}
-.toolbar {
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-select {
-  height: var(--ctl-sm);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--card);
-  color: inherit;
-}
-textarea {
-  width: 100%;
-  resize: vertical;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--bg);
-  color: inherit;
-  font: var(--text-input)/1.5 var(--font-mono);
-}
-.code {
-  min-height: 420px;
-  padding: var(--space-4);
-}
-.stdin textarea {
-  min-height: 100px;
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-}
-.actions {
-  margin-top: var(--space-4);
-}
-.result {
-  margin-left: auto;
-  font-size: var(--text-caption);
-}
-.result--accepted {
-  color: var(--success);
-}
-.result--wrong_answer,
-.result--compile_error,
-.result--runtime_error,
-.result--internal_error {
-  color: var(--danger);
-}
-.error {
-  color: var(--danger);
-}
-.output {
-  margin-top: var(--space-3);
-  font-size: var(--text-caption);
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
-@media (max-width: 1000px) {
+
+@media (max-width: 1100px) {
   .problem {
     grid-template-columns: 1fr;
   }
 }
+
 @media (max-width: 700px) {
   .workspace {
     grid-template-columns: 1fr;
   }
+
   .tasks {
     display: flex;
     overflow-x: auto;
   }
+
   .task {
-    min-width: 180px;
+    min-width: 200px;
   }
+
   .head {
-    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

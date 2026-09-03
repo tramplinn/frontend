@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
 
+import { createPracticeSet, deletePracticeSet } from '@/api/algorithmAuthoring'
 import {
   attachCourse,
   createCourse,
@@ -172,11 +173,16 @@ export function useContentManagement() {
     void run(() => createQuiz(moduleId, draft))
   }
 
+  function addPractice(moduleId: string, draft: { title: string }): void {
+    void run(() => createPracticeSet(moduleId, { title: draft.title }))
+  }
+
   function removeItem(item: ModuleItem): void {
-    if (item.kind === 'practice') return
-    void run(() =>
-      item.kind === 'lesson' ? deleteLesson(item.lesson.id) : deleteQuiz(item.quiz.id),
-    )
+    void run(() => {
+      if (item.kind === 'lesson') return deleteLesson(item.lesson.id)
+      if (item.kind === 'quiz') return deleteQuiz(item.quiz.id)
+      return deletePracticeSet(item.practiceSet.id)
+    })
   }
 
   function moveModule(course: CourseTree, index: number, delta: number): void {
@@ -257,6 +263,7 @@ export function useContentManagement() {
     addCourse,
     addModule,
     addLesson,
+    addPractice,
     addQuiz,
     removeItem,
     moveModule,

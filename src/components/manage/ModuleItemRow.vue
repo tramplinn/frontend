@@ -29,7 +29,15 @@ const target = computed(() =>
     ? { name: 'manage-lesson', params: { lesson: props.item.lesson.id } }
     : props.item.kind === 'quiz'
       ? { name: 'manage-quiz', params: { quiz: props.item.quiz.id } }
-      : { name: 'manage-content' },
+      : { name: 'manage-practice-set', params: { set: props.item.practiceSet.id } },
+)
+
+const removeLabel = computed(() =>
+  props.item.kind === 'lesson'
+    ? 'удалить урок'
+    : props.item.kind === 'quiz'
+      ? 'удалить тест'
+      : 'удалить практику',
 )
 </script>
 
@@ -41,15 +49,15 @@ const target = computed(() =>
       <span v-if="props.item.kind === 'quiz'" class="item-meta">
         тест · {{ withCount(props.item.quiz.questions.length, 'вопрос', 'вопроса', 'вопросов') }}
       </span>
-      <span v-else-if="props.item.kind === 'practice'" class="item-meta">практика</span>
+      <span v-else-if="props.item.kind === 'practice'" class="item-meta">
+        {{ props.item.practiceSet.mode === 'mock_interview' ? 'интервью' : 'практика' }}
+      </span>
     </RouterLink>
 
     <RowMenu :disabled="props.busy" :label="`Действия: ${content.title}`">
       <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
       <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
-      <RowMenuItem v-if="props.item.kind !== 'practice'" danger @select="emit('remove')">
-        {{ props.item.kind === 'lesson' ? 'удалить урок' : 'удалить тест' }}
-      </RowMenuItem>
+      <RowMenuItem danger @select="emit('remove')">{{ removeLabel }}</RowMenuItem>
     </RowMenu>
   </li>
 </template>

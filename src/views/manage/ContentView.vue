@@ -52,6 +52,7 @@ const {
   addCourse,
   addModule,
   addLesson,
+  addPractice,
   addQuiz,
   removeItem,
   moveOpenModule,
@@ -163,6 +164,7 @@ const {
                     @remove="run(() => deleteModule(module.id))"
                     @add-lesson="(draft) => addLesson(module.id, draft)"
                     @add-quiz="(draft) => addQuiz(module.id, draft)"
+                    @add-practice="(draft) => addPractice(module.id, draft)"
                     @move-item="(index, delta) => moveItem(module, index, delta)"
                     @remove-item="(item) => removeItem(item)"
                   />

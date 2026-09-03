@@ -38,6 +38,7 @@ const emit = defineEmits<{
   remove: []
   addLesson: [draft: { title: string; slug: string }]
   addQuiz: [draft: { title: string; slug: string }]
+  addPractice: [draft: { title: string }]
   moveItem: [index: number, delta: number]
   removeItem: [item: ModuleItem]
 }>()
@@ -112,6 +113,12 @@ const emit = defineEmits<{
           placeholder="название теста"
           :saving="props.busy"
           @create="(draft) => emit('addQuiz', draft)"
+        />
+        <InlineCreate
+          label="практику"
+          placeholder="название набора задач"
+          :saving="props.busy"
+          @create="(draft) => emit('addPractice', { title: draft.title })"
         />
       </div>
     </div>
