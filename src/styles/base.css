@@ -100,6 +100,15 @@ canvas {
   color: var(--text);
 }
 
+/* Флаг живёт один кадр, пока useTheme подменяет палитру: без него каждый
+   transition на цвете доезжал бы позже соседей и тема «переключалась» рывками. */
+:root[data-theme-switching],
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -19,6 +19,8 @@ function read(): ThemeChoice {
   }
 }
 
+const SWITCHING_ATTR = 'data-theme-switching'
+
 function apply(value: ThemeChoice): void {
   const root = document.documentElement
   if (value === 'system') {
@@ -26,6 +28,21 @@ function apply(value: ThemeChoice): void {
   } else {
     root.setAttribute('data-theme', value)
   }
+}
+
+/**
+ * Смена темы переписывает все токены разом, но элементы с transition на цвете
+ * доезжают до новой палитры на 120 мс позже соседей — это и читается как
+ * отставание и мерцание. Гасим переходы ровно на время подмены.
+ */
+function applyWithoutTransitions(value: ThemeChoice): void {
+  const root = document.documentElement
+  root.setAttribute(SWITCHING_ATTR, '')
+  apply(value)
+  // Чтение геометрии заставляет браузер пересчитать стили с новыми цветами
+  // до снятия флага, иначе оба изменения схлопнутся в один кадр с переходом.
+  root.getBoundingClientRect()
+  root.removeAttribute(SWITCHING_ATTR)
 }
 
 export function toggledTheme(value: ThemeChoice, systemIsDark: boolean): VisibleTheme {
@@ -44,7 +61,7 @@ export function useTheme(): {
 } {
   function set(value: ThemeChoice): void {
     choice.value = value
-    apply(value)
+    applyWithoutTransitions(value)
     try {
       localStorage.setItem(STORAGE_KEY, value)
     } catch {
