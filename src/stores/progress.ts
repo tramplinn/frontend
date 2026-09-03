@@ -33,6 +33,13 @@ export const useProgressStore = defineStore('progress', () => {
 
   const completedCount = computed(() => completedLessonIds.value.size)
   const startedCourses = computed(() => started.value)
+  /** «Продолжить» — только незаконченное: пройденный курс продолжать нечем. */
+  const inProgressCourses = computed(() =>
+    started.value.filter((course) => course.completed < course.total),
+  )
+  const finishedCourses = computed(() =>
+    started.value.filter((course) => course.total > 0 && course.completed >= course.total),
+  )
 
   function isCompleted(lessonId: string): boolean {
     return completedLessonIds.value.has(lessonId)
@@ -154,6 +161,8 @@ export const useProgressStore = defineStore('progress', () => {
     courseProgress,
     completedCount,
     startedCourses,
+    inProgressCourses,
+    finishedCourses,
     isCompleted,
     isQuizPassed,
     load,

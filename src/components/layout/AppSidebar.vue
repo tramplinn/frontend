@@ -29,7 +29,7 @@ const groups = computed(() => {
   return [...byGroup.entries()]
 })
 
-const started = computed(() => progress.startedCourses)
+const continuing = computed(() => progress.inProgressCourses)
 
 onMounted(() => {
   void content.loadTracks().catch(() => {})
@@ -112,16 +112,16 @@ watch(
         </nav>
       </div>
 
-      <div v-if="started.length > 0" class="group">
+      <div v-if="continuing.length > 0" class="group">
         <p class="group-title">продолжить</p>
         <nav class="nav" aria-label="Продолжить обучение">
           <RouterLink
-            v-for="course in started"
+            v-for="course in continuing"
             :key="course.slug"
             :to="{ name: 'course', params: { course: course.slug } }"
             class="item"
           >
-            <span class="mark" :class="{ 'mark--done': course.completed === course.total }" />
+            <span class="mark" />
             <span class="item-title">{{ course.title }}</span>
             <span class="item-tail">{{ course.completed }}/{{ course.total }}</span>
           </RouterLink>
@@ -327,10 +327,6 @@ watch(
   height: var(--space-2);
   border-radius: var(--radius-xs);
   background: var(--accent);
-}
-
-.mark--done {
-  background: var(--success);
 }
 
 @media (max-width: 800px) {

@@ -15,8 +15,8 @@ const pending = ref(true)
 const error = ref<unknown>(null)
 
 const started = computed(() => progress.startedCourses)
-const inProgress = computed(() => started.value.filter((course) => course.completed < course.total))
-const finished = computed(() => started.value.filter((course) => course.completed === course.total))
+const inProgress = computed(() => progress.inProgressCourses)
+const finished = computed(() => progress.finishedCourses)
 
 onMounted(async () => {
   if (!auth.isAuthenticated) {
