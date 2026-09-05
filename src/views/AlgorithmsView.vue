@@ -35,7 +35,6 @@ function toggleTopic(value: string): void {
     <header class="head">
       <div>
         <h1>алгосы</h1>
-        <p class="muted">Тренажёр: задачи можно решать вне курса, прогресс сохраняется.</p>
       </div>
       <p v-if="total > 0" class="counter">
         решено {{ solvedCount }} из {{ items.length }} на странице · всего {{ total }}
@@ -141,7 +140,9 @@ function toggleTopic(value: string): void {
 }
 
 .filters {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
 }
 
