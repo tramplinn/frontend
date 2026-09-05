@@ -153,6 +153,7 @@ const emit = defineEmits<{
 
 .module-add {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding-top: var(--space-1);
 }

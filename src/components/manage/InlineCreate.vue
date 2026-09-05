@@ -75,20 +75,30 @@ function submit(): void {
 </template>
 
 <style scoped>
+.wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .form {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-2);
+  max-width: 100%;
 }
 
 .field {
   display: flex;
+  flex: 1 1 200px;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
 }
 
 .input {
-  width: 240px;
+  width: 100%;
+  max-width: 240px;
 }
 
 .slug {
