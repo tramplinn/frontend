@@ -84,6 +84,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/mcp/authorize',
+    name: 'mcp-authorize',
+    component: () => import('@/views/McpAuthorizeView.vue'),
+    meta: { requiresAuth: true, requiresTeacher: true },
+  },
+  {
     path: '/people',
     name: 'people',
     component: () => import('@/views/PeopleView.vue'),

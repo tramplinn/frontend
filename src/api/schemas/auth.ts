@@ -45,8 +45,18 @@ export const meSchema = userSchema.extend({
   identities: z.array(identitySchema).default([]),
 })
 
+export const mcpAuthorizationRequestSchema = z.object({
+  clientName: z.string(),
+  scope: z.string(),
+})
+
+export const mcpAuthorizationApprovalSchema = z.object({
+  redirectUrl: z.url(),
+})
+
 export type AuthorizeUrl = z.infer<typeof authorizeUrlSchema>
 export type AccessToken = z.infer<typeof accessTokenSchema>
 export type Identity = z.infer<typeof identitySchema>
 export type User = z.infer<typeof userSchema>
 export type Me = z.infer<typeof meSchema>
+export type McpAuthorizationRequest = z.infer<typeof mcpAuthorizationRequestSchema>

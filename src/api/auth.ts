@@ -1,6 +1,12 @@
 import { clearSession, refreshSession, request } from './client'
-import { authorizeUrlSchema, meSchema, providersSchema } from './schemas/auth'
-import type { Me } from './schemas/auth'
+import {
+  authorizeUrlSchema,
+  mcpAuthorizationApprovalSchema,
+  mcpAuthorizationRequestSchema,
+  meSchema,
+  providersSchema,
+} from './schemas/auth'
+import type { McpAuthorizationRequest, Me } from './schemas/auth'
 import type { IdentityProvider } from './schemas/common'
 import type { DeveloperGrade, Specialty } from './schemas/users'
 import { snakeBody } from './case'
@@ -48,6 +54,26 @@ export function updateProfile(changes: ProfileChanges): Promise<Me> {
     method: 'PATCH',
     body: snakeBody({ ...changes }),
     schema: meSchema,
+  })
+}
+
+export function getMcpAuthorizationRequest(requestId: string): Promise<McpAuthorizationRequest> {
+  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}`, {
+    schema: mcpAuthorizationRequestSchema,
+  })
+}
+
+export function approveMcpAuthorization(requestId: string): Promise<{ redirectUrl: string }> {
+  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}/approve`, {
+    method: 'POST',
+    schema: mcpAuthorizationApprovalSchema,
+  })
+}
+
+export function denyMcpAuthorization(requestId: string): Promise<{ redirectUrl: string }> {
+  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}/deny`, {
+    method: 'POST',
+    schema: mcpAuthorizationApprovalSchema,
   })
 }
 
