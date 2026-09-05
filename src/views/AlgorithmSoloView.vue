@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AlgorithmChat from '@/components/algorithms/AlgorithmChat.vue'
 import ProblemEditorPanel from '@/components/algorithms/ProblemEditorPanel.vue'
 import ProblemStatement from '@/components/algorithms/ProblemStatement.vue'
 import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
@@ -28,6 +29,8 @@ const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
           />
         </div>
       </div>
+
+      <AlgorithmChat v-if="runner.problem.value" :problem-id="runner.problem.value.id" />
     </article>
   </LoadState>
 </template>

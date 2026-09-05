@@ -12,7 +12,7 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
       <h2>{{ props.problem.title }}</h2>
       <div class="meta">
         <DifficultyChip :difficulty="props.problem.difficulty" />
-        <span v-for="topic in props.problem.topics" :key="topic" class="topic">{{ topic }}</span>
+        <span v-for="tag in props.problem.tags" :key="tag.id" class="topic">{{ tag.name }}</span>
       </div>
       <p class="limits">
         {{ props.problem.timeLimitMs }} мс · {{ memoryLabel(props.problem.memoryLimitKb) }}

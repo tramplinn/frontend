@@ -10,12 +10,12 @@ export interface TutorTurn {
   content: string
 }
 
-export async function* askTutor(
-  lessonId: string,
+async function* askTutorAt(
+  path: string,
   messages: TutorTurn[],
   signal?: AbortSignal,
 ): AsyncGenerator<TutorEvent> {
-  const stream = await requestStream(`/tutor/lessons/${lessonId}/messages`, {
+  const stream = await requestStream(path, {
     method: 'POST',
     body: snakeBody({ messages }),
     withCookies: true,
@@ -25,8 +25,25 @@ export async function* askTutor(
   for await (const data of readSseData(stream)) {
     const parsed = tutorEventSchema.safeParse(JSON.parse(data))
     if (!parsed.success) {
-      throw new ContractError('/tutor/lessons/{id}/messages', parsed.error)
+      throw new ContractError(path, parsed.error)
     }
     yield parsed.data
   }
+}
+
+export function askTutor(
+  lessonId: string,
+  messages: TutorTurn[],
+  signal?: AbortSignal,
+): AsyncGenerator<TutorEvent> {
+  return askTutorAt(`/tutor/lessons/${lessonId}/messages`, messages, signal)
+}
+
+/** Тот же ассистент, но контекст — условие алгоритмической задачи, а не урок. */
+export function askProblemTutor(
+  problemId: string,
+  messages: TutorTurn[],
+  signal?: AbortSignal,
+): AsyncGenerator<TutorEvent> {
+  return askTutorAt(`/tutor/algorithm-problems/${problemId}/messages`, messages, signal)
 }

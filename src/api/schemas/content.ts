@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { contentStatusSchema, questionTypeSchema, uuidSchema } from './common'
 import { assetSchema } from './assets'
+import { tagSchema } from './tags'
 
 export const interviewCardSchema = z.object({
   id: uuidSchema,
@@ -92,6 +93,7 @@ export const courseSchema = z.object({
   coverAssetId: uuidSchema.nullable(),
   coverUrl: z.url().nullable(),
   status: contentStatusSchema,
+  tags: z.array(tagSchema),
 })
 
 export const courseTreeSchema = courseSchema.extend({

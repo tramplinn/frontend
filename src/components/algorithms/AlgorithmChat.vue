@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { askProblemTutor } from '@/api/tutor'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useFloatingPanel } from '@/composables/useFloatingPanel'
 import { useTutorChat } from '@/features/tutor/composables/useTutorChat'
 import { useAuthStore } from '@/stores/auth'
 import { useTutorStore } from '@/stores/tutor'
 
-const props = defineProps<{ lessonId: string }>()
+const props = defineProps<{ problemId: string }>()
 
 const auth = useAuthStore()
 const tutor = useTutorStore()
@@ -24,7 +25,7 @@ const {
   streamedHtml,
   streaming,
   turns,
-} = useTutorChat(() => props.lessonId)
+} = useTutorChat(() => props.problemId, askProblemTutor)
 
 function show(): void {
   openPanel()
@@ -38,27 +39,27 @@ function show(): void {
       v-if="!expanded"
       type="button"
       class="tutor-tab"
-      aria-label="Спросить по уроку"
-      title="Спросить по уроку"
+      aria-label="Спросить по задаче"
+      title="Спросить по задаче"
       @click="show"
     >
       <span aria-hidden="true">✦</span>
     </button>
 
     <Transition name="tutor-drawer">
-      <section v-if="expanded" class="chat" aria-label="Ассистент урока">
+      <section v-if="expanded" class="chat" aria-label="Ассистент задачи">
         <header class="head">
           <div class="bar">
             <span aria-hidden="true">✦</span>
             <span class="title">спросить</span>
-            <span class="hint">про термин или непонятное место</span>
+            <span class="hint">подскажет подход, но не решение целиком</span>
           </div>
 
           <button
             v-if="turns.length > 0 && !streaming"
             type="button"
             class="control"
-            @click="tutor.clear(props.lessonId)"
+            @click="tutor.clear(props.problemId)"
           >
             очистить
           </button>
@@ -70,8 +71,8 @@ function show(): void {
 
         <div :ref="setLog" class="log">
           <p v-if="turns.length === 0 && !streaming" class="blank">
-            Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст
-            этого урока.
+            Спросите про подход к задаче или разбор ошибки в коде. Готовое решение ассистент не даёт
+            — только подсказки.
             <template v-if="!auth.isAuthenticated">
               Без входа доступно несколько вопросов.
             </template>
@@ -100,7 +101,7 @@ function show(): void {
             v-model="draft"
             class="input"
             rows="2"
-            placeholder="вопрос по уроку"
+            placeholder="вопрос по задаче"
             aria-label="Вопрос ассистенту"
             @keydown.enter.exact.prevent="send"
           ></textarea>
@@ -235,7 +236,7 @@ function show(): void {
   min-height: var(--space-12);
   padding: var(--space-3) var(--space-4);
   overflow-y: auto;
-  /* Иначе докрутка переписки до конца утаскивает за собой страницу урока. */
+  /* Иначе докрутка переписки до конца утаскивает за собой страницу задачи. */
   overscroll-behavior: contain;
 }
 

@@ -21,6 +21,7 @@ const course: CourseTree = {
   coverAssetId: null,
   coverUrl: null,
   status: 'published',
+  tags: [],
   modules: [],
 }
 

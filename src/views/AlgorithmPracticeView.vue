@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AlgorithmChat from '@/components/algorithms/AlgorithmChat.vue'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import ProblemEditorPanel from '@/components/algorithms/ProblemEditorPanel.vue'
 import ProblemStatement from '@/components/algorithms/ProblemStatement.vue'
@@ -100,6 +101,12 @@ const SESSION_LABELS: Record<string, string> = {
 
         <p v-else-if="practiceSet.problems.length === 0" class="muted">в наборе пока нет задач</p>
       </div>
+
+      <!-- В mock interview ассистент выключен: он бы свёл на нет смысл тренировки. -->
+      <AlgorithmChat
+        v-if="runner.problem.value && practiceSet.mode !== 'mock_interview'"
+        :problem-id="runner.problem.value.id"
+      />
     </article>
   </LoadState>
 </template>

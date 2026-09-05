@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { contentStatusSchema, uuidSchema } from './common'
+import { tagSchema } from './tags'
 
 export const algorithmDifficultySchema = z.enum(['easy', 'medium', 'hard'])
 export const practiceModeSchema = z.enum(['practice', 'mock_interview'])
@@ -66,7 +67,7 @@ export const algorithmProblemSchema = z.object({
   title: z.string(),
   statementHtml: z.string(),
   difficulty: algorithmDifficultySchema,
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
   timeLimitMs: z.number().int(),
   memoryLimitKb: z.number().int(),
   samples: z.array(sampleCaseSchema),
@@ -109,7 +110,7 @@ export const problemCardSchema = z.object({
   id: uuidSchema,
   title: z.string(),
   difficulty: algorithmDifficultySchema,
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
   provider: z.enum(['internal', 'leetcode', 'codeforces', 'external']),
   externalUrl: z.string().nullable(),
   languages: z.array(z.string()),
@@ -120,7 +121,7 @@ export const problemCardSchema = z.object({
 
 export const problemCatalogSchema = z.object({
   items: z.array(problemCardSchema),
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
   total: z.number().int(),
 })
 
@@ -134,6 +135,8 @@ export const algorithmProgressSchema = z.object({
   complexityMd: z.string().nullable(),
   confidence: z.number().int().nullable(),
   reflectionMd: z.string().nullable(),
+  lastSolutionLanguage: z.string().nullable(),
+  lastSolutionCode: z.string().nullable(),
 })
 
 export type PracticeSet = z.infer<typeof practiceSetSchema>

@@ -2,10 +2,18 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 
 import { askTutor, type TutorTurn } from '@/api/tutor'
+import type { TutorEvent } from '@/api/schemas/tutor'
 import { errorText } from '@/lib/errors'
 import { useTutorStore } from '@/stores/tutor'
 
-export function useTutorChat(lessonId: () => string) {
+export type AskTutor = (
+  id: string,
+  messages: TutorTurn[],
+  signal?: AbortSignal,
+) => AsyncGenerator<TutorEvent>
+
+/** contentId identifies the thread (lesson or algorithm problem); ask picks the endpoint. */
+export function useTutorChat(contentId: () => string, ask: AskTutor = askTutor) {
   const tutor = useTutorStore()
   const draft = ref('')
   const streamed = ref('')
@@ -16,7 +24,7 @@ export function useTutorChat(lessonId: () => string) {
 
   let controller: AbortController | null = null
 
-  const turns = computed(() => tutor.turns(lessonId()))
+  const turns = computed(() => tutor.turns(contentId()))
   const canSend = computed(() => draft.value.trim().length > 0 && !streaming.value)
   const answers = computed(() => {
     const render = renderer.value
@@ -51,11 +59,8 @@ export function useTutorChat(lessonId: () => string) {
     const question = draft.value.trim()
     if (!question || streaming.value) return
 
-    const targetLessonId = lessonId()
-    const history: TutorTurn[] = [
-      ...tutor.turns(targetLessonId),
-      { role: 'user', content: question },
-    ]
+    const targetId = contentId()
+    const history: TutorTurn[] = [...tutor.turns(targetId), { role: 'user', content: question }]
     const requestController = new AbortController()
     let received = ''
 
@@ -64,11 +69,11 @@ export function useTutorChat(lessonId: () => string) {
     streamed.value = ''
     streaming.value = true
     controller = requestController
-    tutor.setTurns(targetLessonId, history)
+    tutor.setTurns(targetId, history)
     scrollToEnd()
 
     try {
-      for await (const event of askTutor(targetLessonId, history, requestController.signal)) {
+      for await (const event of ask(targetId, history, requestController.signal)) {
         if ('delta' in event) {
           received += event.delta
           if (controller === requestController) {
@@ -88,7 +93,7 @@ export function useTutorChat(lessonId: () => string) {
       }
     } finally {
       if (received) {
-        tutor.setTurns(targetLessonId, [...history, { role: 'assistant', content: received }])
+        tutor.setTurns(targetId, [...history, { role: 'assistant', content: received }])
       }
       if (controller === requestController) {
         streamed.value = ''
@@ -99,7 +104,7 @@ export function useTutorChat(lessonId: () => string) {
     }
   }
 
-  watch(lessonId, () => {
+  watch(contentId, () => {
     const previousController = controller
     previousController?.abort()
     if (controller === previousController) controller = null

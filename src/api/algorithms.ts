@@ -26,7 +26,7 @@ import type {
    иначе фильтры пришлось бы собирать по одному полю. */
 export interface CatalogFilters {
   difficulty?: AlgorithmDifficulty | undefined
-  topic?: string | undefined
+  tagId?: string | undefined
   query?: string | undefined
   limit?: number | undefined
   offset?: number | undefined
@@ -35,7 +35,13 @@ export interface CatalogFilters {
 /** Каталог тренажёра: только опубликованные задачи плюс прогресс текущего пользователя. */
 export function listCatalog(filters: CatalogFilters = {}): Promise<ProblemCatalog> {
   return request('/algorithm-problems', {
-    query: { ...filters },
+    query: {
+      difficulty: filters.difficulty,
+      tag_id: filters.tagId,
+      query: filters.query,
+      limit: filters.limit,
+      offset: filters.offset,
+    },
     schema: problemCatalogSchema,
   })
 }

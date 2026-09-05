@@ -19,7 +19,7 @@ const { courses, algorithms, pending, error } = useRecommendations()
             :key="item.id"
             :to="{ name: 'algorithm-solo', params: { problem: item.id } }"
             :title="item.title"
-            :topics="item.topics"
+            :tags="item.tags"
           >
             <DifficultyChip :difficulty="item.difficulty" />
           </RecommendationRow>
@@ -34,7 +34,7 @@ const { courses, algorithms, pending, error } = useRecommendations()
             :key="item.id"
             :to="{ name: 'course', params: { course: item.slug } }"
             :title="item.title"
-            :topics="item.topics"
+            :tags="item.tags"
           >
             <span v-if="item.estHours !== null" class="hours">{{ hours(item.estHours) }}</span>
           </RecommendationRow>

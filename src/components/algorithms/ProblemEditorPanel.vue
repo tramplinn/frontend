@@ -21,6 +21,7 @@ const {
   problemPending,
   queueStatus,
   result,
+  resetToStarter,
   runError,
   running,
   selectLanguage,
@@ -58,6 +59,10 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
         @update:model-value="selectLanguage"
       />
       <p v-else class="muted">для задачи не настроен ни один доступный язык</p>
+
+      <AppButton size="sm" variant="quiet" :disabled="running" @click="resetToStarter">
+        решить заново
+      </AppButton>
 
       <span
         v-if="queueStatus"

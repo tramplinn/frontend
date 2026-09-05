@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import TemplateEditor from '@/components/algorithms/TemplateEditor.vue'
 import TestCaseRow from '@/components/algorithms/TestCaseRow.vue'
 import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
 import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue'
 import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
+import { listTags } from '@/api/tags'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
+import TagPicker from '@/components/ui/TagPicker.vue'
 import { ALL_LANGUAGES, useProblemEditor } from '@/features/algorithms/composables/useProblemEditor'
 import { DIFFICULTY_LABELS, DIFFICULTY_ORDER } from '@/lib/algorithms'
 import { renderMarkdown } from '@/lib/markdown'
@@ -62,6 +64,11 @@ const currentTemplateDraft = computed(
 
 const statementPreview = computed(() => renderMarkdown(fields.value?.statementMd ?? ''))
 
+const tagSuggestions = ref<string[]>([])
+onMounted(async () => {
+  tagSuggestions.value = (await listTags()).map((tag) => tag.name)
+})
+
 const assistantDocument = computed(() => {
   const current = fields.value
   return current
@@ -69,10 +76,7 @@ const assistantDocument = computed(() => {
         title: current.title,
         statementMd: current.statementMd,
         difficulty: current.difficulty,
-        topics: current.topics
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
+        tags: current.tags,
         timeLimitMs: current.timeLimitMs,
         memoryLimitKb: current.memoryLimitKb,
       }
@@ -85,7 +89,7 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
   if (patch.title !== null) current.title = patch.title
   if (patch.statementMd !== null) current.statementMd = patch.statementMd
   if (patch.difficulty !== null) current.difficulty = patch.difficulty
-  if (patch.topics !== null) current.topics = patch.topics.join(', ')
+  if (patch.tags !== null) current.tags = patch.tags
   if (patch.timeLimitMs !== null) current.timeLimitMs = patch.timeLimitMs
   if (patch.memoryLimitKb !== null) current.memoryLimitKb = patch.memoryLimitKb
 }
@@ -142,10 +146,14 @@ const canValidate = computed(() => {
             />
           </div>
 
-          <label class="field">
-            <span>темы через запятую</span>
-            <input v-model="fields.topics" type="text" placeholder="arrays, two pointers" />
-          </label>
+          <div class="field">
+            <span>темы</span>
+            <TagPicker
+              v-model="fields.tags"
+              :suggestions="tagSuggestions"
+              placeholder="arrays, two pointers"
+            />
+          </div>
 
           <label class="field">
             <span>лимит времени, мс</span>

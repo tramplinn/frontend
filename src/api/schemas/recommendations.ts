@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { uuidSchema } from './common'
 import { algorithmDifficultySchema } from './algorithms'
+import { tagSchema } from './tags'
 
 export const recommendedCourseSchema = z.object({
   id: uuidSchema,
@@ -9,14 +10,14 @@ export const recommendedCourseSchema = z.object({
   title: z.string(),
   summary: z.string().nullable(),
   estHours: z.number().int().nullable(),
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
 })
 
 export const recommendedAlgorithmSchema = z.object({
   id: uuidSchema,
   title: z.string(),
   difficulty: algorithmDifficultySchema,
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
 })
 
 export const recommendationsSchema = z.object({

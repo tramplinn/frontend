@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 
-type PanelId = 'assistant' | 'feedback'
+type PanelId = 'assistant' | 'feedback' | 'tutor'
 
 const active = ref<PanelId | null>(null)
 

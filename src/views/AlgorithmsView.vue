@@ -16,8 +16,8 @@ const {
   pending,
   search,
   solvedCount,
-  topic,
-  topics,
+  tagId,
+  tags,
   total,
 } = useAlgorithmCatalog()
 
@@ -25,8 +25,8 @@ function toggleDifficulty(value: AlgorithmDifficulty): void {
   difficulty.value = difficulty.value === value ? null : value
 }
 
-function toggleTopic(value: string): void {
-  topic.value = topic.value === value ? null : value
+function toggleTag(id: string): void {
+  tagId.value = tagId.value === id ? null : id
 }
 </script>
 
@@ -58,14 +58,14 @@ function toggleTopic(value: string): void {
         </FilterChip>
       </div>
 
-      <div v-if="topics.length > 0" class="chips" role="group" aria-label="Темы">
+      <div v-if="tags.length > 0" class="chips" role="group" aria-label="Темы">
         <FilterChip
-          v-for="value in topics"
-          :key="value"
-          :pressed="topic === value"
-          @click="toggleTopic(value)"
+          v-for="tag in tags"
+          :key="tag.id"
+          :pressed="tagId === tag.id"
+          @click="toggleTag(tag.id)"
         >
-          {{ value }}
+          {{ tag.name }}
         </FilterChip>
       </div>
     </div>
@@ -86,7 +86,7 @@ function toggleTopic(value: string): void {
               <span class="title">{{ item.title }}</span>
               <span class="meta">
                 <DifficultyChip :difficulty="item.difficulty" />
-                <span v-for="value in item.topics" :key="value" class="topic">{{ value }}</span>
+                <span v-for="tag in item.tags" :key="tag.id" class="topic">{{ tag.name }}</span>
                 <span v-if="item.languages.length > 0" class="langs">
                   {{ item.languages.map(languageLabel).join(' · ') }}
                 </span>
@@ -201,8 +201,8 @@ function toggleTopic(value: string): void {
 }
 
 .mark--solved {
-  background: var(--success);
   border-color: var(--success);
+  color: var(--success);
 }
 
 .body {

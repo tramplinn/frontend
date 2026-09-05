@@ -35,7 +35,7 @@ export interface ProblemFields {
   title: string
   statementMd: string
   difficulty: AlgorithmDifficulty
-  topics: string
+  tags: string[]
   timeLimitMs: number
   memoryLimitKb: number
 }
@@ -55,7 +55,7 @@ function toFields(problem: ProblemAuthor): ProblemFields {
     title: problem.title,
     statementMd: problem.statementMd,
     difficulty: problem.difficulty,
-    topics: problem.topics.join(', '),
+    tags: problem.tags.map((tag) => tag.name),
     timeLimitMs: problem.timeLimitMs,
     memoryLimitKb: problem.memoryLimitKb,
   }
@@ -68,13 +68,6 @@ function toCaseFields(item: TestCase): TestCaseFields {
     isSample: item.isSample,
     weight: item.weight,
   }
-}
-
-function topicsOf(value: string): string[] {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
 }
 
 function equalItems(left: string[], right: string[]): boolean {
@@ -124,7 +117,10 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
       draft.title !== problem.title ||
       draft.statementMd !== problem.statementMd ||
       draft.difficulty !== problem.difficulty ||
-      !equalItems(topicsOf(draft.topics), problem.topics) ||
+      !equalItems(
+        draft.tags,
+        problem.tags.map((tag) => tag.name),
+      ) ||
       draft.timeLimitMs !== problem.timeLimitMs ||
       draft.memoryLimitKb !== problem.memoryLimitKb
     )
@@ -276,7 +272,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
         title: submitted.title,
         statementMd: submitted.statementMd,
         difficulty: submitted.difficulty,
-        topics: topicsOf(submitted.topics),
+        tags: submitted.tags,
         timeLimitMs: submitted.timeLimitMs,
         memoryLimitKb: submitted.memoryLimitKb,
       })
@@ -286,7 +282,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
       current.statementMd = saved.statementMd
       current.statementHtml = saved.statementHtml
       current.difficulty = saved.difficulty
-      current.topics = saved.topics
+      current.tags = saved.tags
       current.timeLimitMs = saved.timeLimitMs
       current.memoryLimitKb = saved.memoryLimitKb
     })

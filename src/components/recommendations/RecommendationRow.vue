@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
 
-defineProps<{ to: RouteLocationRaw; title: string; topics: string[] }>()
+import type { Tag } from '@/api/schemas/tags'
+
+defineProps<{ to: RouteLocationRaw; title: string; tags: Tag[] }>()
 </script>
 
 <template>
@@ -9,7 +11,7 @@ defineProps<{ to: RouteLocationRaw; title: string; topics: string[] }>()
     <span class="title">{{ title }}</span>
     <span class="meta">
       <slot />
-      <span v-for="topic in topics.slice(0, 2)" :key="topic" class="topic">{{ topic }}</span>
+      <span v-for="tag in tags.slice(0, 2)" :key="tag.id" class="topic">{{ tag.name }}</span>
     </span>
   </RouterLink>
 </template>

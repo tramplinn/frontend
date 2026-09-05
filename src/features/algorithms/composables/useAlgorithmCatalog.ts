@@ -2,6 +2,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { listCatalog } from '@/api/algorithms'
 import type { AlgorithmDifficulty, ProblemCard } from '@/api/schemas/algorithms'
+import type { Tag } from '@/api/schemas/tags'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PAGE_SIZE = 50
@@ -9,13 +10,13 @@ const SEARCH_DEBOUNCE_MS = 300
 
 export function useAlgorithmCatalog() {
   const items = ref<ProblemCard[]>([])
-  const topics = ref<string[]>([])
+  const tags = ref<Tag[]>([])
   const total = ref(0)
   const pending = ref(true)
   const error = ref<unknown>(null)
 
   const difficulty = ref<AlgorithmDifficulty | null>(null)
-  const topic = ref<string | null>(null)
+  const tagId = ref<string | null>(null)
   const search = ref('')
   const page = ref(0)
 
@@ -32,14 +33,14 @@ export function useAlgorithmCatalog() {
     try {
       const catalog = await listCatalog({
         difficulty: difficulty.value ?? undefined,
-        topic: topic.value ?? undefined,
+        tagId: tagId.value ?? undefined,
         query: search.value.trim() || undefined,
         limit: PAGE_SIZE,
         offset: page.value * PAGE_SIZE,
       })
       if (!loadGuard.isCurrent(current)) return
       items.value = catalog.items
-      topics.value = catalog.topics
+      tags.value = catalog.tags
       total.value = catalog.total
     } catch (cause) {
       if (loadGuard.isCurrent(current)) error.value = cause
@@ -53,7 +54,7 @@ export function useAlgorithmCatalog() {
     void load()
   }
 
-  watch([difficulty, topic], resetPageAndLoad)
+  watch([difficulty, tagId], resetPageAndLoad)
   watch(page, () => void load())
 
   watch(search, () => {
@@ -76,8 +77,8 @@ export function useAlgorithmCatalog() {
     pending,
     search,
     solvedCount,
-    topic,
-    topics,
+    tagId,
+    tags,
     total,
   }
 }

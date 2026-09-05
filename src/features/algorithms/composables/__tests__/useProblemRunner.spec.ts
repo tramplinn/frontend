@@ -23,7 +23,7 @@ const problem: AlgorithmProblem = {
   title: 'Two sum',
   statementHtml: '<p>Solve</p>',
   difficulty: 'easy',
-  topics: ['arrays'],
+  tags: [{ id: '01910000-0000-7000-8000-000000000002', name: 'arrays' }],
   timeLimitMs: 1000,
   memoryLimitKb: 262144,
   samples: [],

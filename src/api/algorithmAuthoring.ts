@@ -24,7 +24,7 @@ export interface ProblemDraft {
   title: string
   difficulty: AlgorithmDifficulty
   statementMd?: string
-  topics?: string[]
+  tags?: string[]
   timeLimitMs?: number
   memoryLimitKb?: number
   status?: ContentStatus

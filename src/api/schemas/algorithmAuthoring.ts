@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { algorithmDifficultySchema, practiceModeSchema } from './algorithms'
 import { contentStatusSchema, uuidSchema } from './common'
+import { tagSchema } from './tags'
 
 /** Языки, которые принимает бэкенд (LANGUAGE_PATTERN в schemas/algorithms.py). */
 export const algorithmLanguageSchema = z.enum([
@@ -42,7 +43,7 @@ export const problemAuthorSchema = z.object({
   statementMd: z.string(),
   statementHtml: z.string(),
   difficulty: algorithmDifficultySchema,
-  topics: z.array(z.string()),
+  tags: z.array(tagSchema),
   timeLimitMs: z.number().int(),
   memoryLimitKb: z.number().int(),
   status: contentStatusSchema,

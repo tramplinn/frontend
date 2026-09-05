@@ -112,7 +112,14 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
       getAlgorithmProgress(id)
         .then((value) => {
-          if (requestGuard.isCurrent(version)) progress.value = value
+          if (!requestGuard.isCurrent(version)) return
+          progress.value = value
+          const solution = value.lastSolutionCode
+          const solutionLanguage = value.lastSolutionLanguage
+          if (solution && solutionLanguage && languages.value.includes(solutionLanguage)) {
+            drafts.set(draftKey(id, solutionLanguage), solution)
+            selectLanguage(solutionLanguage)
+          }
         })
         .catch(() => {})
     } catch (cause) {
@@ -165,6 +172,14 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     }
   }
 
+  function resetToStarter(): void {
+    const current = problem.value
+    if (!current) return
+    const template = current.templates.find((item) => item.language === language.value)
+    drafts.delete(draftKey(current.id, language.value))
+    sourceCode.value = template?.starterCode ?? ''
+  }
+
   async function saveReflection(draft: {
     complexityMd: string | null
     confidence: number | null
@@ -206,6 +221,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     progress,
     queueStatus,
     result,
+    resetToStarter,
     runError,
     running,
     saveReflection,

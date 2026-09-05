@@ -93,6 +93,7 @@ export interface CourseDraft {
   estHours?: number | null
   coverAssetId?: string | null
   status?: ContentStatus
+  tags?: string[]
 }
 
 export function createCourse(draft: CourseDraft): Promise<Course> {

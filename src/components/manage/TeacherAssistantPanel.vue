@@ -36,7 +36,7 @@ const fieldLabels: Record<keyof Omit<TeacherAssistantPatch, 'explanation'>, stri
   bodyMd: 'текст урока',
   statementMd: 'условие',
   difficulty: 'сложность',
-  topics: 'темы',
+  tags: 'темы',
   timeLimitMs: 'лимит времени',
   memoryLimitKb: 'лимит памяти',
 }
@@ -156,7 +156,7 @@ function patchFor(turn: AssistantTurn, fields: PatchField[]): TeacherAssistantPa
     bodyMd: has('bodyMd') ? current.bodyMd : null,
     statementMd: has('statementMd') ? current.statementMd : null,
     difficulty: has('difficulty') ? current.difficulty : null,
-    topics: has('topics') ? current.topics : null,
+    tags: has('tags') ? current.tags : null,
     timeLimitMs: has('timeLimitMs') ? current.timeLimitMs : null,
     memoryLimitKb: has('memoryLimitKb') ? current.memoryLimitKb : null,
   }

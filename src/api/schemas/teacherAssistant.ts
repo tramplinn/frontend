@@ -8,7 +8,7 @@ export const teacherAssistantPatchSchema = z.object({
   bodyMd: z.string().nullable(),
   statementMd: z.string().nullable(),
   difficulty: algorithmDifficultySchema.nullable(),
-  topics: z.array(z.string()).nullable(),
+  tags: z.array(z.string()).nullable(),
   timeLimitMs: z.number().int().nullable(),
   memoryLimitKb: z.number().int().nullable(),
 })
@@ -20,7 +20,7 @@ export interface TeacherAssistantDocument {
   bodyMd?: string
   statementMd?: string
   difficulty?: z.infer<typeof algorithmDifficultySchema>
-  topics?: string[]
+  tags?: string[]
   timeLimitMs?: number
   memoryLimitKb?: number
 }

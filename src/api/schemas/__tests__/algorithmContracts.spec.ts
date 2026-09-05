@@ -13,7 +13,7 @@ describe('algorithm API contracts', () => {
           id,
           title: 'Two sum',
           difficulty: 'easy',
-          topics: ['arrays'],
+          tags: [{ id, name: 'arrays' }],
           provider: 'internal',
           externalUrl: null,
           languages: ['python'],
@@ -22,7 +22,7 @@ describe('algorithm API contracts', () => {
           solved: true,
         },
       ],
-      topics: ['arrays'],
+      tags: [{ id, name: 'arrays' }],
       total: 1,
     })
 
@@ -55,7 +55,7 @@ describe('algorithm API contracts', () => {
       statementMd: '# Solve',
       statementHtml: '<h1>Solve</h1>',
       difficulty: 'easy',
-      topics: ['arrays'],
+      tags: [{ id, name: 'arrays' }],
       timeLimitMs: 1000,
       memoryLimitKb: 262144,
       status: 'draft',
@@ -85,7 +85,7 @@ describe('algorithm API contracts', () => {
   it('rejects a card that lost its progress fields', () => {
     const result = problemCatalogSchema.safeParse({
       items: [{ id, title: 'Two sum', difficulty: 'easy' }],
-      topics: [],
+      tags: [],
       total: 1,
     })
 
