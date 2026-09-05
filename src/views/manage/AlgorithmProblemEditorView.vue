@@ -9,19 +9,30 @@ import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { ALL_LANGUAGES, useProblemEditor } from '@/features/algorithms/composables/useProblemEditor'
 import { DIFFICULTY_LABELS, DIFFICULTY_ORDER } from '@/lib/algorithms'
+import { renderMarkdown } from '@/lib/markdown'
 
 const props = defineProps<{ problem: string }>()
 
 const {
   actionError,
   addCase,
+  assetError,
   busy,
   caseDrafts,
   checkTemplate,
+  dragging,
   editedLanguage,
   error,
   fields,
+  hasEmptyStatement,
+  hasNoHidden,
+  hasNoSample,
+  hasNoValidatedTemplate,
   loaded,
+  onDragLeave,
+  onDragOver,
+  onDrop,
+  onPaste,
   patchCase,
   patchTemplate,
   pending,
@@ -31,9 +42,11 @@ const {
   saveCase,
   saveProblem,
   saveTemplate,
+  setStatementField,
   templateDrafts,
   templateOf,
   togglePublished,
+  uploadingAsset,
   usedLanguages,
 } = useProblemEditor(() => props.problem)
 
@@ -45,6 +58,8 @@ const difficultyOptions = DIFFICULTY_ORDER.map((value) => ({
 const currentTemplateDraft = computed(
   () => templateDrafts.value.get(editedLanguage.value) ?? { starterCode: '', solutionCode: '' },
 )
+
+const statementPreview = computed(() => renderMarkdown(fields.value?.statementMd ?? ''))
 
 /** Прогон по тестам имеет смысл, только когда есть что прогонять и на чём. */
 const canValidate = computed(() => {
@@ -75,10 +90,6 @@ const canValidate = computed(() => {
       </header>
 
       <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
-
-      <ul v-if="loaded.status === 'draft' && publishBlockers.length > 0" class="blockers">
-        <li v-for="blocker in publishBlockers" :key="blocker">{{ blocker }}</li>
-      </ul>
 
       <section class="card meta">
         <h2>основное</h2>
@@ -121,7 +132,28 @@ const canValidate = computed(() => {
 
         <label class="field">
           <span>условие в markdown</span>
-          <textarea v-model="fields.statementMd" rows="10" spellcheck="false" />
+          <textarea
+            :ref="setStatementField"
+            v-model="fields.statementMd"
+            rows="10"
+            spellcheck="false"
+            :class="{ 'source--drop': dragging }"
+            @paste="onPaste"
+            @drop="onDrop"
+            @dragover="onDragOver"
+            @dragleave="onDragLeave"
+          />
+          <p class="muted">
+            {{
+              uploadingAsset
+                ? 'загружаю файл…'
+                : 'картинку можно вставить из буфера или перетащить в поле'
+            }}
+          </p>
+          <p v-if="assetError" class="error">{{ assetError }}</p>
+          <p v-if="loaded.status === 'draft' && hasEmptyStatement" class="hint">
+            пустое условие — без него нельзя опубликовать
+          </p>
         </label>
 
         <div class="row">
@@ -130,11 +162,12 @@ const canValidate = computed(() => {
           </AppButton>
         </div>
 
-        <details v-if="loaded.statementHtml" class="preview">
+        <details v-if="fields.statementMd.trim()" class="preview" open>
           <summary>предпросмотр условия</summary>
-          <!-- HTML санитизируется backend markdown renderer. -->
+          <!-- Рендерится тем же markdown-it, что и на бэкенде (html: false — сырой HTML
+               экранируется, а не исполняется), поэтому санитайзер не нужен. -->
           <!-- eslint-disable-next-line vue/no-v-html -->
-          <div class="prose" v-html="loaded.statementHtml" />
+          <div class="prose" v-html="statementPreview" />
         </details>
       </section>
 
@@ -145,24 +178,36 @@ const canValidate = computed(() => {
         </div>
 
         <p v-if="loaded.testCases.length === 0" class="muted">
-          Пока нет ни одного теста. Хотя бы один должен быть примером — его увидит студент.
+          Пока нет ни одного теста. Нужен минимум один пример (виден студенту) и один скрытый.
         </p>
+        <template v-else>
+          <p v-if="loaded.status === 'draft' && hasNoSample" class="hint">
+            нет ни одного примера для условия — студент должен видеть хотя бы один тест
+          </p>
+          <p v-if="loaded.status === 'draft' && hasNoHidden" class="hint">
+            нет ни одного скрытого теста
+          </p>
 
-        <ul v-else class="case-list">
-          <template v-for="(item, index) in loaded.testCases" :key="item.id">
-            <TestCaseRow
-              v-if="caseDrafts.get(item.id)"
-              :test-case="item"
-              :draft="caseDrafts.get(item.id)!"
-              :number="index + 1"
-              :busy="busy === `case:${item.id}`"
-              @patch="(changes) => patchCase(item.id, changes)"
-              @save="saveCase(item.id)"
-              @remove="removeCase(item.id)"
-            />
-          </template>
-        </ul>
+          <ul class="case-list">
+            <template v-for="(item, index) in loaded.testCases" :key="item.id">
+              <TestCaseRow
+                v-if="caseDrafts.get(item.id)"
+                :test-case="item"
+                :draft="caseDrafts.get(item.id)!"
+                :number="index + 1"
+                :busy="busy === `case:${item.id}`"
+                @patch="(changes) => patchCase(item.id, changes)"
+                @save="saveCase(item.id)"
+                @remove="removeCase(item.id)"
+              />
+            </template>
+          </ul>
+        </template>
       </section>
+
+      <p v-if="loaded.status === 'draft' && hasNoValidatedTemplate" class="hint">
+        ни одно эталонное решение не проверено — прогони по тестам хотя бы для одного языка
+      </p>
 
       <TemplateEditor
         v-model:language="editedLanguage"
@@ -217,13 +262,7 @@ const canValidate = computed(() => {
   font-size: var(--text-caption);
 }
 
-.blockers {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-8);
-  border: 1px solid var(--warning);
-  border-radius: var(--radius-card);
-  background: var(--warning-soft);
+.hint {
   color: var(--warning);
   font-size: var(--text-caption);
 }
@@ -269,6 +308,11 @@ textarea {
 textarea {
   resize: vertical;
   font-family: var(--font-mono);
+}
+
+.source--drop {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .row {

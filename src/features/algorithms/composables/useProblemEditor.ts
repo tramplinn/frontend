@@ -1,4 +1,13 @@
-import { computed, onMounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  ref,
+  toValue,
+  watch,
+  type ComponentPublicInstance,
+  type MaybeRefOrGetter,
+} from 'vue'
 
 import {
   addTestCase,
@@ -18,6 +27,7 @@ import type {
 } from '@/api/schemas/algorithmAuthoring'
 import { algorithmLanguageSchema } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
+import { useAssetInsert } from '@/composables/useAssetInsert'
 import { errorText } from '@/lib/errors'
 
 export interface ProblemFields {
@@ -64,6 +74,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const caseDrafts = ref(new Map<string, TestCaseFields>())
   const templateDrafts = ref(new Map<string, { starterCode: string; solutionCode: string }>())
   const editedLanguage = ref<AlgorithmLanguage>('python')
+  const statementField = ref<HTMLTextAreaElement | null>(null)
 
   const pending = ref(true)
   const error = ref<unknown>(null)
@@ -79,20 +90,60 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const sampleCount = computed(
     () => loaded.value?.testCases.filter((item) => item.isSample).length ?? 0,
   )
+  const hiddenCount = computed(
+    () => loaded.value?.testCases.filter((item) => !item.isSample).length ?? 0,
+  )
 
-  /** Публиковать можно только задачу с тестами и хотя бы одним проверенным решением. */
+  /** Каждый флаг относится к своей секции формы — сообщение показывается прямо там,
+      а не общим списком сверху, куда непонятно на что смотреть. */
+  const hasEmptyStatement = computed(() => !loaded.value?.statementMd.trim())
+  const hasNoSample = computed(() => sampleCount.value === 0)
+  const hasNoHidden = computed(() => hiddenCount.value === 0)
+  const hasNoValidatedTemplate = computed(
+    () => !(loaded.value?.templates.some((item) => item.validatedAt !== null) ?? false),
+  )
+
+  /** Публиковать можно только задачу с тестами (пример + скрытый) и проверенным решением. */
   const publishBlockers = computed(() => {
-    const problem = loaded.value
-    if (!problem) return []
+    if (!loaded.value) return []
     const blockers: string[] = []
-    if (problem.testCases.length === 0) blockers.push('нет ни одного теста')
-    if (sampleCount.value === 0) blockers.push('нет ни одного примера для условия')
-    if (!problem.statementMd.trim()) blockers.push('пустое условие')
-    if (!problem.templates.some((item) => item.validatedAt !== null)) {
-      blockers.push('ни одно эталонное решение не проверено')
-    }
+    if (hasEmptyStatement.value) blockers.push('пустое условие')
+    if (hasNoSample.value) blockers.push('нет ни одного примера для условия')
+    if (hasNoHidden.value) blockers.push('нет ни одного скрытого теста')
+    if (hasNoValidatedTemplate.value) blockers.push('ни одно эталонное решение не проверено')
     return blockers
   })
+
+  function insertAtCursor(text: string): void {
+    const current = fields.value
+    if (!current) return
+    const field = statementField.value
+    if (!field) {
+      current.statementMd += text
+      return
+    }
+    const start = field.selectionStart
+    const end = field.selectionEnd
+    current.statementMd =
+      current.statementMd.slice(0, start) + text + current.statementMd.slice(end)
+    void nextTick(() => {
+      const at = start + text.length
+      field.focus()
+      field.setSelectionRange(at, at)
+    })
+  }
+
+  function replacePlaceholder(placeholder: string, markdown: string): void {
+    const current = fields.value
+    if (!current) return
+    current.statementMd = current.statementMd.replace(placeholder, markdown)
+  }
+
+  function setStatementField(element: Element | ComponentPublicInstance | null): void {
+    statementField.value = element instanceof HTMLTextAreaElement ? element : null
+  }
+
+  const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
   function syncDrafts(problem: ProblemAuthor): void {
     loaded.value = problem
@@ -244,13 +295,23 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   return {
     actionError,
     addCase,
+    assetError: assetInsert.error,
     busy,
     caseDrafts,
     checkTemplate,
+    dragging: assetInsert.dragging,
     editedLanguage,
     error,
     fields,
+    hasEmptyStatement,
+    hasNoHidden,
+    hasNoSample,
+    hasNoValidatedTemplate,
     loaded,
+    onDragLeave: assetInsert.onDragLeave,
+    onDragOver: assetInsert.onDragOver,
+    onDrop: assetInsert.onDrop,
+    onPaste: assetInsert.onPaste,
     patchCase,
     patchTemplate,
     pending,
@@ -260,9 +321,11 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     saveCase,
     saveProblem,
     saveTemplate,
+    setStatementField,
     templateDrafts,
     templateOf,
     togglePublished,
+    uploadingAsset: assetInsert.uploading,
     usedLanguages,
   }
 }
