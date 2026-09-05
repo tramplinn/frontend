@@ -15,4 +15,5 @@
 
 .text-field:focus {
   border-color: var(--accent);
+  outline: none;
 }
