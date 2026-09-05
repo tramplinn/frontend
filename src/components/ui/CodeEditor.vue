@@ -127,9 +127,7 @@ onMounted(() => {
       doc: props.modelValue,
       extensions: [
         lineNumbers(),
-        ...(props.highlightActiveLine
-          ? [activeLineHighlight(), activeLineGutterHighlight()]
-          : []),
+        ...(props.highlightActiveLine ? [activeLineHighlight(), activeLineGutterHighlight()] : []),
         history(),
         drawSelection(),
         indentOnInput(),
