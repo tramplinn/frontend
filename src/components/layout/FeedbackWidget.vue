@@ -232,11 +232,14 @@ async function submit(): Promise<void> {
   box-shadow: var(--shadow-raised);
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--motion-fast) var(--ease);
+  transition:
+    width var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
 }
 
 .trigger:hover {
-  color: var(--text);
+  width: calc(var(--ctl-sm) + 4px);
+  background: var(--surface);
 }
 
 .panel {
