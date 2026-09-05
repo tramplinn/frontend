@@ -8,6 +8,7 @@ import type { DeveloperGrade, PublicProfile, Specialty } from '@/api/schemas/use
 import { getPublicProfile } from '@/api/users'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import { errorText } from '@/lib/errors'
 import { blankToNull } from '@/lib/forms'
@@ -30,6 +31,9 @@ const saving = ref(false)
 const signingOut = ref(false)
 const busy = ref(false)
 const error = ref<string | null>(null)
+
+const specialtyOptions = [{ value: '', label: 'не выбрано' }, ...SPECIALTIES]
+const gradeOptions = [{ value: '', label: 'не выбрано' }, ...GRADES]
 
 const identities = computed(() => auth.user?.identities ?? [])
 const canUnlink = computed(() => identities.value.length > 1)
@@ -131,22 +135,11 @@ async function unlink(provider: IdentityProvider): Promise<void> {
         <div class="pair">
           <label
             ><span>направление</span
-            ><select v-model="specialty" class="text-field">
-              <option value="">не выбрано</option>
-              <option v-for="item in SPECIALTIES" :key="item.value" :value="item.value">
-                {{ item.label }}
-              </option>
-            </select></label
-          >
+            ><AppSelect v-model="specialty" :options="specialtyOptions" label="Направление"
+          /></label>
           <label
-            ><span>грейд</span
-            ><select v-model="grade" class="text-field">
-              <option value="">не выбрано</option>
-              <option v-for="item in GRADES" :key="item.value" :value="item.value">
-                {{ item.label }}
-              </option>
-            </select></label
-          >
+            ><span>грейд</span><AppSelect v-model="grade" :options="gradeOptions" label="Грейд"
+          /></label>
         </div>
         <label
           ><span>опыт, лет</span
