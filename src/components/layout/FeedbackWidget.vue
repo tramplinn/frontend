@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { uploadAsset } from '@/api/assets'
 import { submitFeedback } from '@/api/feedback'
 import { assetMimeSchema, type Asset } from '@/api/schemas/assets'
+import FeedbackIcon from '@/components/layout/FeedbackIcon.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { errorText } from '@/lib/errors'
 import { useAuthStore } from '@/stores/auth'
@@ -37,10 +38,7 @@ function close(): void {
   }
 }
 
-async function pickFiles(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement
-  const files = [...(input.files ?? [])]
-  input.value = ''
+async function attachFiles(files: File[]): Promise<void> {
   if (files.length === 0) return
   if (files.length > MAX_ATTACHMENTS - attachments.value.length) {
     error.value = `Можно прикрепить не больше ${String(MAX_ATTACHMENTS)} файлов`
@@ -63,6 +61,29 @@ async function pickFiles(event: Event): Promise<void> {
   } finally {
     uploading.value = false
   }
+}
+
+async function pickFiles(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  await attachFiles(files)
+}
+
+async function pasteFiles(event: ClipboardEvent): Promise<void> {
+  const clipboard = event.clipboardData
+  if (!clipboard || uploading.value) return
+  const directFiles = [...clipboard.files].filter((file) => file.type.startsWith('image/'))
+  const files =
+    directFiles.length > 0
+      ? directFiles
+      : [...clipboard.items]
+          .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+          .map((item) => item.getAsFile())
+          .filter((file): file is File => file !== null)
+  if (files.length === 0) return
+  event.preventDefault()
+  await attachFiles(files)
 }
 
 function detach(assetId: string): void {
@@ -95,7 +116,7 @@ async function submit(): Promise<void> {
 <template>
   <div v-if="auth.isAuthenticated" class="feedback-widget">
     <button v-if="!open" type="button" class="trigger" @click="show">
-      <span aria-hidden="true">↗</span>
+      <FeedbackIcon />
       обратная связь
     </button>
 
@@ -135,6 +156,7 @@ async function submit(): Promise<void> {
             rows="5"
             :maxlength="MAX_MESSAGE"
             placeholder="Опишите коротко — страницу мы приложим сами"
+            @paste="pasteFiles"
           ></textarea>
         </label>
 

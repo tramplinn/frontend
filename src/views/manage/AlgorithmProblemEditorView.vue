@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import TemplateEditor from '@/components/algorithms/TemplateEditor.vue'
 import TestCaseRow from '@/components/algorithms/TestCaseRow.vue'
+import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import LoadState from '@/components/ui/LoadState.vue'
@@ -21,13 +22,12 @@ const {
   caseDrafts,
   checkTemplate,
   dragging,
+  dirty,
   editedLanguage,
   error,
   fields,
-  hasEmptyStatement,
   hasNoHidden,
   hasNoSample,
-  hasNoValidatedTemplate,
   loaded,
   onDragLeave,
   onDragOver,
@@ -75,6 +75,7 @@ const canValidate = computed(() => {
         <div class="head-main">
           <h1>{{ loaded.title }}</h1>
           <StatusChip :status="loaded.status" />
+          <span v-if="dirty" class="dirty">есть несохранённые правки</span>
         </div>
         <div class="head-actions">
           <AppButton
@@ -130,45 +131,27 @@ const canValidate = computed(() => {
           </label>
         </div>
 
-        <label class="field">
-          <span>условие в markdown</span>
-          <textarea
-            :ref="setStatementField"
-            v-model="fields.statementMd"
-            rows="10"
-            spellcheck="false"
-            :class="{ 'source--drop': dragging }"
-            @paste="onPaste"
-            @drop="onDrop"
-            @dragover="onDragOver"
-            @dragleave="onDragLeave"
-          />
-          <p class="muted">
-            {{
-              uploadingAsset
-                ? 'загружаю файл…'
-                : 'картинку можно вставить из буфера или перетащить в поле'
-            }}
-          </p>
-          <p v-if="assetError" class="error">{{ assetError }}</p>
-          <p v-if="loaded.status === 'draft' && hasEmptyStatement" class="hint">
-            пустое условие — без него нельзя опубликовать
-          </p>
-        </label>
+        <MarkdownEditor
+          v-model="fields.statementMd"
+          :html="statementPreview"
+          source-label="Условие задачи в Markdown"
+          empty-text="Начните писать условие"
+          min-height="420px"
+          :dragging="dragging"
+          :uploading="uploadingAsset"
+          :asset-error="assetError"
+          @source="setStatementField"
+          @paste="onPaste"
+          @drop="onDrop"
+          @dragover="onDragOver"
+          @dragleave="onDragLeave"
+        />
 
         <div class="row">
           <AppButton variant="primary" :loading="busy === 'problem'" @click="saveProblem">
             сохранить задачу
           </AppButton>
         </div>
-
-        <details v-if="fields.statementMd.trim()" class="preview" open>
-          <summary>предпросмотр условия</summary>
-          <!-- Рендерится тем же markdown-it, что и на бэкенде (html: false — сырой HTML
-               экранируется, а не исполняется), поэтому санитайзер не нужен. -->
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div class="prose" v-html="statementPreview" />
-        </details>
       </section>
 
       <section class="cases">
@@ -177,15 +160,10 @@ const canValidate = computed(() => {
           <AppButton size="sm" :loading="busy === 'new-case'" @click="addCase">+ тест</AppButton>
         </div>
 
-        <p v-if="loaded.testCases.length === 0" class="muted">
-          Пока нет ни одного теста. Нужен минимум один пример (виден студенту) и один скрытый.
-        </p>
+        <p v-if="loaded.testCases.length === 0" class="muted">Добавьте публичный и скрытый тест.</p>
         <template v-else>
-          <p v-if="loaded.status === 'draft' && hasNoSample" class="hint">
-            нет ни одного примера для условия — студент должен видеть хотя бы один тест
-          </p>
-          <p v-if="loaded.status === 'draft' && hasNoHidden" class="hint">
-            нет ни одного скрытого теста
+          <p v-if="loaded.status === 'draft' && (hasNoSample || hasNoHidden)" class="hint">
+            Для публикации нужен публичный и скрытый тест.
           </p>
 
           <ul class="case-list">
@@ -204,10 +182,6 @@ const canValidate = computed(() => {
           </ul>
         </template>
       </section>
-
-      <p v-if="loaded.status === 'draft' && hasNoValidatedTemplate" class="hint">
-        ни одно эталонное решение не проверено — прогони по тестам хотя бы для одного языка
-      </p>
 
       <TemplateEditor
         v-model:language="editedLanguage"
@@ -276,6 +250,11 @@ const canValidate = computed(() => {
   background: var(--card);
 }
 
+.dirty {
+  color: var(--warning);
+  font-size: var(--text-caption);
+}
+
 h2 {
   font-size: var(--text-title);
 }
@@ -305,25 +284,26 @@ textarea {
   font-size: var(--text-input);
 }
 
+.grid input,
+.grid :deep(.trigger) {
+  width: 100%;
+  min-height: 46px;
+  background: var(--bg);
+  font-size: var(--text-input);
+}
+
+.grid :deep(.trigger) {
+  justify-content: space-between;
+}
+
 textarea {
   resize: vertical;
   font-family: var(--font-mono);
 }
 
-.source--drop {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
 .row {
   display: flex;
   gap: var(--space-3);
-}
-
-.preview summary {
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-  cursor: pointer;
 }
 
 .cases {

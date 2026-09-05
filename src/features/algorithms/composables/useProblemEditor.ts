@@ -2,6 +2,7 @@ import {
   computed,
   nextTick,
   onMounted,
+  onUnmounted,
   ref,
   toValue,
   watch,
@@ -68,6 +69,17 @@ function toCaseFields(item: TestCase): TestCaseFields {
   }
 }
 
+function topicsOf(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function equalItems(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index])
+}
+
 export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const loaded = ref<ProblemAuthor | null>(null)
   const fields = ref<ProblemFields | null>(null)
@@ -93,6 +105,44 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const hiddenCount = computed(
     () => loaded.value?.testCases.filter((item) => !item.isSample).length ?? 0,
   )
+
+  const problemDirty = computed(() => {
+    const problem = loaded.value
+    const draft = fields.value
+    if (!problem || !draft) return false
+    return (
+      draft.title !== problem.title ||
+      draft.statementMd !== problem.statementMd ||
+      draft.difficulty !== problem.difficulty ||
+      !equalItems(topicsOf(draft.topics), problem.topics) ||
+      draft.timeLimitMs !== problem.timeLimitMs ||
+      draft.memoryLimitKb !== problem.memoryLimitKb
+    )
+  })
+
+  const dirty = computed(() => {
+    const problem = loaded.value
+    if (!problem) return false
+    if (problemDirty.value) return true
+    const changedCase = problem.testCases.some((item) => {
+      const draft = caseDrafts.value.get(item.id)
+      return (
+        draft !== undefined &&
+        (draft.input !== item.input ||
+          draft.expectedOutput !== item.expectedOutput ||
+          draft.isSample !== item.isSample ||
+          draft.weight !== item.weight)
+      )
+    })
+    if (changedCase) return true
+    return [...templateDrafts.value].some(([language, draft]) => {
+      const saved = problem.templates.find((item) => item.language === language)
+      return (
+        draft.starterCode !== (saved?.starterCode ?? '') ||
+        draft.solutionCode !== (saved?.solutionCode ?? '')
+      )
+    })
+  })
 
   /** Каждый флаг относится к своей секции формы — сообщение показывается прямо там,
       а не общим списком сверху, куда непонятно на что смотреть. */
@@ -172,13 +222,11 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     }
   }
 
-  async function run(key: string, action: () => Promise<ProblemAuthor | null>): Promise<void> {
+  async function run(key: string, action: () => Promise<void>): Promise<void> {
     busy.value = key
     actionError.value = null
     try {
-      const result = await action()
-      if (result) syncDrafts(result)
-      else await load()
+      await action()
     } catch (cause) {
       actionError.value = errorText(cause)
     } finally {
@@ -190,26 +238,26 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     const draft = fields.value
     const problem = loaded.value
     if (!draft || !problem) return
-    await run('problem', () =>
-      updateProblem(problem.id, {
+    await run('problem', async () => {
+      const saved = await updateProblem(problem.id, {
         title: draft.title,
         statementMd: draft.statementMd,
         difficulty: draft.difficulty,
-        topics: draft.topics
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
+        topics: topicsOf(draft.topics),
         timeLimitMs: draft.timeLimitMs,
         memoryLimitKb: draft.memoryLimitKb,
-      }),
-    )
+      })
+      loaded.value = saved
+    })
   }
 
   async function togglePublished(): Promise<void> {
     const problem = loaded.value
     if (!problem) return
     const next = problem.status === 'published' ? 'draft' : 'published'
-    await run('publish', () => updateProblem(problem.id, { status: next }))
+    await run('publish', async () => {
+      loaded.value = await updateProblem(problem.id, { status: next })
+    })
   }
 
   function patchCase(caseId: string, changes: Partial<TestCaseFields>): void {
@@ -224,8 +272,15 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     if (!problem) return
     const position = problem.testCases.length
     await run('new-case', async () => {
-      await addTestCase(problem.id, { position, input: '', expectedOutput: '', isSample: false })
-      return null
+      const created = await addTestCase(problem.id, {
+        position,
+        input: '',
+        expectedOutput: '',
+        isSample: false,
+      })
+      problem.testCases.push(created)
+      caseDrafts.value = new Map(caseDrafts.value).set(created.id, toCaseFields(created))
+      invalidateTemplates()
     })
   }
 
@@ -233,15 +288,25 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     const draft = caseDrafts.value.get(caseId)
     if (!draft) return
     await run(`case:${caseId}`, async () => {
-      await updateTestCase(caseId, draft)
-      return null
+      const saved = await updateTestCase(caseId, draft)
+      const problem = loaded.value
+      if (!problem) return
+      const index = problem.testCases.findIndex((item) => item.id === caseId)
+      if (index !== -1) problem.testCases.splice(index, 1, saved)
+      invalidateTemplates()
     })
   }
 
   async function removeCase(caseId: string): Promise<void> {
     await run(`case:${caseId}`, async () => {
       await deleteTestCase(caseId)
-      return null
+      const problem = loaded.value
+      if (!problem) return
+      problem.testCases = problem.testCases.filter((item) => item.id !== caseId)
+      const nextDrafts = new Map(caseDrafts.value)
+      nextDrafts.delete(caseId)
+      caseDrafts.value = nextDrafts
+      invalidateTemplates()
     })
   }
 
@@ -258,8 +323,8 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     const draft = templateDrafts.value.get(language) ?? { starterCode: '', solutionCode: '' }
     if (!problem) return
     await run(`template:${language}`, async () => {
-      await putTemplate(problem.id, language, draft.starterCode, draft.solutionCode)
-      return null
+      const saved = await putTemplate(problem.id, language, draft.starterCode, draft.solutionCode)
+      upsertTemplate(saved)
     })
   }
 
@@ -268,8 +333,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     const problem = loaded.value
     if (!problem) return
     await run(`template:${language}`, async () => {
-      await validateTemplate(problem.id, language)
-      return null
+      upsertTemplate(await validateTemplate(problem.id, language))
     })
   }
 
@@ -278,19 +342,46 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     if (!problem) return
     await run(`template:${language}`, async () => {
       await deleteTemplate(problem.id, language)
-      return null
+      problem.templates = problem.templates.filter((item) => item.language !== language)
+      const nextDrafts = new Map(templateDrafts.value)
+      nextDrafts.delete(language)
+      templateDrafts.value = nextDrafts
     })
+  }
+
+  function upsertTemplate(template: TemplateAuthor): void {
+    const problem = loaded.value
+    if (!problem) return
+    const index = problem.templates.findIndex((item) => item.language === template.language)
+    if (index === -1) problem.templates.push(template)
+    else problem.templates.splice(index, 1, template)
+  }
+
+  function invalidateTemplates(): void {
+    const problem = loaded.value
+    if (!problem) return
+    problem.templates = problem.templates.map((item) => ({ ...item, validatedAt: null }))
   }
 
   function templateOf(language: string): TemplateAuthor | undefined {
     return loaded.value?.templates.find((item) => item.language === language)
   }
 
+  function guard(event: BeforeUnloadEvent): void {
+    if (dirty.value) event.preventDefault()
+  }
+
   watch(
     () => toValue(problemId),
     () => void load(),
   )
-  onMounted(() => void load())
+  onMounted(() => {
+    void load()
+    window.addEventListener('beforeunload', guard)
+  })
+  onUnmounted(() => {
+    window.removeEventListener('beforeunload', guard)
+  })
 
   return {
     actionError,
@@ -300,6 +391,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     caseDrafts,
     checkTemplate,
     dragging: assetInsert.dragging,
+    dirty,
     editedLanguage,
     error,
     fields,

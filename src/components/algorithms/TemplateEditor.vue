@@ -62,6 +62,7 @@ const validatedLabel = computed(() => {
         <CodeEditor
           :model-value="props.draft.starterCode"
           :language="props.language"
+          :highlight-active-line="false"
           min-height="220px"
           aria-label="Заготовка кода"
           @update:model-value="(value) => emit('patch', { starterCode: value })"
@@ -73,6 +74,7 @@ const validatedLabel = computed(() => {
         <CodeEditor
           :model-value="props.draft.solutionCode"
           :language="props.language"
+          :highlight-active-line="false"
           min-height="220px"
           aria-label="Эталонное решение"
           @update:model-value="(value) => emit('patch', { solutionCode: value })"

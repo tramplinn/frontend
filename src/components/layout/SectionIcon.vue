@@ -49,7 +49,7 @@ defineProps<{ name: SectionKey }>()
       <circle class="accent" cx="7" cy="6.5" r="3" />
       <circle class="purple" cx="14.2" cy="7.5" r="2.5" />
       <path class="cyan" d="M1.8 17c.3-4 2.1-6 5.2-6s4.9 2 5.2 6z" />
-      <path class="soft-purple" d="M11.3 17c.2-3.1 1.3-4.7 3.3-4.7s3.2 1.6 3.6 4.7z" />
+      <path class="purple" d="M11.3 17c.2-3.1 1.3-4.7 3.3-4.7s3.2 1.6 3.6 4.7z" />
     </svg>
 
     <svg v-else viewBox="0 0 20 20">

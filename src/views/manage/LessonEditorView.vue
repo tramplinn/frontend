@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LessonBody from '@/components/lesson/LessonBody.vue'
+import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
@@ -48,46 +48,26 @@ const {
         </div>
       </header>
 
-      <div class="panes">
-        <div class="pane">
-          <div class="pane-head">
-            <h2 class="pane-title">markdown</h2>
-            <span v-if="cards.length > 0" class="pane-meta">
-              {{ withCount(cards.length, 'карточка', 'карточки', 'карточек') }}
-            </span>
-          </div>
-          <textarea
-            :ref="setSource"
-            v-model="bodyMd"
-            class="source"
-            :class="{ 'source--drop': dragging }"
-            spellcheck="false"
-            aria-label="Исходник урока"
-            @paste="onPaste"
-            @drop="onDrop"
-            @dragover="onDragOver"
-            @dragleave="onDragLeave"
-          ></textarea>
-          <p class="hint">
-            {{
-              uploadingAsset
-                ? 'загружаю файл…'
-                : 'картинку можно вставить из буфера или перетащить в поле'
-            }}
-          </p>
-          <p v-if="assetError" class="preview-error">{{ assetError }}</p>
-          <p v-if="previewError" class="preview-error">{{ previewError }}</p>
-        </div>
-
-        <div class="pane">
-          <div class="pane-head">
-            <h2 class="pane-title">предпросмотр</h2>
-          </div>
-          <div class="preview">
-            <LessonBody :html="html" />
-          </div>
-        </div>
-      </div>
+      <MarkdownEditor
+        v-model="bodyMd"
+        :html="html"
+        source-label="Исходник урока"
+        :dragging="dragging"
+        :uploading="uploadingAsset"
+        :asset-error="assetError"
+        :preview-error="previewError"
+        @source="setSource"
+        @paste="onPaste"
+        @drop="onDrop"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave"
+      >
+        <template #source-meta>
+          <span v-if="cards.length > 0" class="pane-meta">
+            {{ withCount(cards.length, 'карточка', 'карточки', 'карточек') }}
+          </span>
+        </template>
+      </MarkdownEditor>
 
       <p v-if="saveError" class="save-error" role="alert">{{ errorText(saveError) }}</p>
 
@@ -159,79 +139,9 @@ const {
   color: var(--warning);
 }
 
-.panes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-.pane {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.pane-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
-}
-
-.pane-title {
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  color: var(--text-muted);
-}
-
 .pane-meta {
-  margin-left: auto;
   font-size: var(--text-caption);
   color: var(--text-muted);
-}
-
-.source {
-  min-height: 60vh;
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--card);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  line-height: 1.7;
-  resize: vertical;
-}
-
-.source:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.source--drop {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.hint {
-  margin-top: var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.preview {
-  min-height: 60vh;
-  padding: var(--space-6);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--card);
-  overflow-x: auto;
-}
-
-.preview-error {
-  margin-top: var(--space-2);
-  color: var(--danger);
-  font-size: var(--text-caption);
 }
 
 .save-error {
@@ -255,11 +165,5 @@ const {
 
 .back:hover {
   color: var(--text);
-}
-
-@media (max-width: 1000px) {
-  .panes {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 </style>

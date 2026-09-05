@@ -17,8 +17,8 @@ import { Compartment, EditorState } from '@codemirror/state'
 import {
   EditorView,
   drawSelection,
-  highlightActiveLine,
-  highlightActiveLineGutter,
+  highlightActiveLine as activeLineHighlight,
+  highlightActiveLineGutter as activeLineGutterHighlight,
   keymap,
   lineNumbers,
 } from '@codemirror/view'
@@ -32,8 +32,15 @@ const props = withDefaults(
     readonly?: boolean
     minHeight?: string
     ariaLabel?: string
+    highlightActiveLine?: boolean
   }>(),
-  { language: 'python', readonly: false, minHeight: '420px', ariaLabel: 'Редактор кода' },
+  {
+    language: 'python',
+    readonly: false,
+    minHeight: '420px',
+    ariaLabel: 'Редактор кода',
+    highlightActiveLine: true,
+  },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -120,8 +127,9 @@ onMounted(() => {
       doc: props.modelValue,
       extensions: [
         lineNumbers(),
-        highlightActiveLine(),
-        highlightActiveLineGutter(),
+        ...(props.highlightActiveLine
+          ? [activeLineHighlight(), activeLineGutterHighlight()]
+          : []),
         history(),
         drawSelection(),
         indentOnInput(),
