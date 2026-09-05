@@ -2,6 +2,7 @@
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import FilterChip from '@/components/ui/FilterChip.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmCatalog } from '@/features/algorithms/composables/useAlgorithmCatalog'
 import { DIFFICULTY_LABELS, DIFFICULTY_ORDER, languageLabel } from '@/lib/algorithms'
@@ -48,31 +49,25 @@ function toggleTopic(value: string): void {
       </label>
 
       <div class="chips" role="group" aria-label="Сложность">
-        <button
+        <FilterChip
           v-for="value in DIFFICULTY_ORDER"
           :key="value"
-          type="button"
-          class="filter"
-          :class="{ 'filter--on': difficulty === value }"
-          :aria-pressed="difficulty === value"
+          :pressed="difficulty === value"
           @click="toggleDifficulty(value)"
         >
           {{ DIFFICULTY_LABELS[value] }}
-        </button>
+        </FilterChip>
       </div>
 
       <div v-if="topics.length > 0" class="chips" role="group" aria-label="Темы">
-        <button
+        <FilterChip
           v-for="value in topics"
           :key="value"
-          type="button"
-          class="filter"
-          :class="{ 'filter--on': topic === value }"
-          :aria-pressed="topic === value"
+          :pressed="topic === value"
           @click="toggleTopic(value)"
         >
           {{ value }}
-        </button>
+        </FilterChip>
       </div>
     </div>
 
@@ -167,30 +162,6 @@ function toggleTopic(value: string): void {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-.filter {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--card);
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-caption);
-  cursor: pointer;
-  transition:
-    background var(--motion-fast) var(--ease),
-    color var(--motion-fast) var(--ease);
-}
-
-.filter:hover {
-  background: var(--surface);
-}
-
-.filter--on {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .list {

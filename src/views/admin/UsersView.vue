@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { UserRole } from '@/api/schemas/common'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import FilterChip from '@/components/ui/FilterChip.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useUsers } from '@/features/admin/composables/useUsers'
 import { errorText } from '@/lib/errors'
@@ -31,24 +32,15 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
         placeholder="имя, логин или почта"
       />
       <div class="pills" role="group" aria-label="Роль">
-        <button
-          type="button"
-          class="pill"
-          :aria-pressed="roleFilter === ''"
-          @click="roleFilter = ''"
-        >
-          все
-        </button>
-        <button
+        <FilterChip :pressed="roleFilter === ''" @click="roleFilter = ''"> все </FilterChip>
+        <FilterChip
           v-for="role in ROLES"
           :key="role.value"
-          type="button"
-          class="pill"
-          :aria-pressed="roleFilter === role.value"
+          :pressed="roleFilter === role.value"
           @click="roleFilter = role.value"
         >
           {{ role.label }}
-        </button>
+        </FilterChip>
       </div>
     </div>
 
@@ -132,31 +124,6 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
 .pills {
   display: flex;
   gap: var(--space-2);
-}
-
-.pill {
-  height: var(--ctl-sm);
-  padding: 0 var(--space-4);
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--card);
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition:
-    background var(--motion-fast) var(--ease),
-    color var(--motion-fast) var(--ease);
-}
-
-.pill:hover {
-  color: var(--text);
-}
-
-.pill[aria-pressed='true'] {
-  background: var(--selected);
-  color: var(--on-selected);
 }
 
 .action-error {
@@ -254,7 +221,7 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
     padding-bottom: var(--space-1);
   }
 
-  .pill {
+  .pills :deep(.chip) {
     flex-shrink: 0;
   }
 
