@@ -14,8 +14,6 @@ default:
 
 variables:
   WEB_IMAGE: "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHORT_SHA"
-  SSH_USER: "user1"
-  SSH_PORT: "15945"
   PNPM_STORE: "$CI_PROJECT_DIR/.pnpm-store"
 
 quality:
@@ -137,7 +135,7 @@ build:
 deploy-stage:
   extends: .deploy
   variables:
-    DEPLOY_PATH: "/home/$SSH_USER/apps/frontend_stage"
+    DEPLOY_PATH: "/opt/tramplin/stage/frontend"
     DEPLOY_PROJECT: "tramplin-frontend-stage"
     DEPLOY_ENV: "$STAGE_ENV"
   environment:
@@ -149,7 +147,7 @@ deploy-stage:
 deploy-production:
   extends: .deploy
   variables:
-    DEPLOY_PATH: "/home/$SSH_USER/apps/frontend_prod"
+    DEPLOY_PATH: "/opt/tramplin/production/frontend"
     DEPLOY_PROJECT: "tramplin-frontend-prod"
     DEPLOY_ENV: "$PROD_ENV"
   environment:
