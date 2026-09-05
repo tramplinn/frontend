@@ -118,7 +118,8 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
           progress.value = value
           const solution = value.lastSolutionCode
           const solutionLanguage = value.lastSolutionLanguage
-          const untouched = language.value === languageAtLoad && sourceCode.value === sourceCodeAtLoad
+          const untouched =
+            language.value === languageAtLoad && sourceCode.value === sourceCodeAtLoad
           if (
             untouched &&
             solution &&
