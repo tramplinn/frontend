@@ -156,7 +156,9 @@ onMounted(() => void load())
 }
 
 .head h1 {
-  font-size: var(--text-display);
+  font-size: var(--text-hero);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.03em;
 }
 
 .muted,
