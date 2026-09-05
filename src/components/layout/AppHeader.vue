@@ -28,6 +28,8 @@ function param(name: string): string {
 const SIMPLE_LABELS: Record<string, string> = {
   sections: 'все разделы',
   learning: 'моё обучение',
+  algorithms: 'алгосы',
+  'manage-algorithms': 'алгозадачи',
   'news-item': 'новость',
   catalog: 'курсы',
   profile: 'профиль',
