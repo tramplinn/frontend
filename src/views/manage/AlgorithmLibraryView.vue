@@ -6,7 +6,7 @@ import { createProblem, deleteProblem, listProblems } from '@/api/algorithmAutho
 import type { ProblemAuthor } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
-import AppButton from '@/components/ui/AppButton.vue'
+import InlineCreate from '@/components/manage/InlineCreate.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
@@ -22,7 +22,6 @@ const error = ref<unknown>(null)
 const actionError = ref<string | null>(null)
 const busy = ref<string | null>(null)
 
-const title = ref('')
 const difficulty = ref<AlgorithmDifficulty>('easy')
 
 const difficultyOptions = DIFFICULTY_ORDER.map((value) => ({
@@ -46,13 +45,11 @@ async function load(): Promise<void> {
   }
 }
 
-async function create(): Promise<void> {
-  if (!title.value.trim()) return
+async function create(value: { title: string }): Promise<void> {
   busy.value = 'new'
   actionError.value = null
   try {
-    const created = await createProblem({ title: title.value.trim(), difficulty: difficulty.value })
-    title.value = ''
+    const created = await createProblem({ title: value.title, difficulty: difficulty.value })
     await router.push({ name: 'manage-algorithm', params: { problem: created.id } })
   } catch (cause) {
     actionError.value = errorText(cause)
@@ -82,32 +79,23 @@ onMounted(() => void load())
     <header class="head">
       <div>
         <h1>алгозадачи</h1>
-        <p class="muted">
-          Общая библиотека: одну задачу можно положить в любое число наборов практики.
-        </p>
       </div>
       <p v-if="problems.length > 0" class="muted">
         опубликовано {{ published }} из {{ problems.length }}
       </p>
     </header>
 
-    <form class="create" @submit.prevent="create">
-      <input
-        v-model="title"
-        type="text"
-        placeholder="название новой задачи"
-        aria-label="Название"
-      />
-      <AppSelect v-model="difficulty" :options="difficultyOptions" label="Сложность" />
-      <AppButton
-        type="submit"
-        variant="primary"
-        :loading="busy === 'new'"
-        :disabled="!title.trim()"
-      >
-        создать
-      </AppButton>
-    </form>
+    <InlineCreate
+      label="алгозадачу"
+      placeholder="название новой задачи"
+      :saving="busy === 'new'"
+      :show-slug="false"
+      @create="create"
+    >
+      <template #fields>
+        <AppSelect v-model="difficulty" :options="difficultyOptions" label="Сложность" />
+      </template>
+    </InlineCreate>
 
     <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
@@ -165,25 +153,6 @@ onMounted(() => void load())
 .counts {
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-.create {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.create input {
-  flex: 1;
-  min-width: 220px;
-  height: var(--ctl-sm);
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--card);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-input);
 }
 
 .error {

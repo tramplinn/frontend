@@ -5,8 +5,13 @@ import AppButton from '@/components/ui/AppButton.vue'
 import { slugify } from '@/lib/slug'
 
 const props = withDefaults(
-  defineProps<{ label: string; placeholder?: string; saving?: boolean }>(),
-  { placeholder: 'название', saving: false },
+  defineProps<{
+    label: string
+    placeholder?: string
+    saving?: boolean
+    showSlug?: boolean
+  }>(),
+  { placeholder: 'название', saving: false, showSlug: true },
 )
 
 const emit = defineEmits<{ create: [value: { title: string; slug: string }] }>()
@@ -52,8 +57,9 @@ function submit(): void {
           :aria-label="props.label"
           @keydown.esc="open = false"
         />
-        <span v-if="slug" class="slug">{{ slug }}</span>
+        <span v-if="slug && props.showSlug" class="slug">{{ slug }}</span>
       </div>
+      <slot name="fields" />
       <AppButton
         type="submit"
         size="sm"
