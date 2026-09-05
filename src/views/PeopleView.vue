@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { searchPeople } from '@/api/users'
 import type { PublicUser } from '@/api/schemas/users'
-import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { gradeName, specialtyName } from '@/lib/profile'
+
+const SEARCH_DEBOUNCE_MS = 250
 
 const query = ref('')
 const people = ref<PublicUser[]>([])
@@ -27,7 +28,17 @@ async function search(): Promise<void> {
   }
 }
 
+let debounce: ReturnType<typeof setTimeout> | undefined
+
+watch(query, () => {
+  clearTimeout(debounce)
+  debounce = setTimeout(() => void search(), SEARCH_DEBOUNCE_MS)
+})
+
 onMounted(() => void search())
+onUnmounted(() => {
+  clearTimeout(debounce)
+})
 
 function subtitle(person: PublicUser): string {
   const role = [specialtyName(person.specialty), gradeName(person.grade)]
@@ -45,15 +56,12 @@ function subtitle(person: PublicUser): string {
       </div>
       <p>{{ total }} профилей</p>
     </header>
-    <form class="search" @submit.prevent="search">
-      <input
-        v-model="query"
-        class="text-field"
-        type="search"
-        placeholder="имя, логин или направление"
-      />
-      <AppButton type="submit" size="sm" variant="primary">найти</AppButton>
-    </form>
+    <input
+      v-model="query"
+      class="text-field search"
+      type="search"
+      placeholder="имя, логин или направление"
+    />
     <LoadState :pending="pending" :error="error">
       <p v-if="people.length === 0" class="empty">никого не нашлось</p>
       <div v-else class="grid">
@@ -100,12 +108,8 @@ function subtitle(person: PublicUser): string {
   font-size: var(--text-caption);
 }
 .search {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-6);
-}
-.search input {
   width: min(440px, 100%);
+  margin-bottom: var(--space-6);
 }
 .grid {
   display: grid;
