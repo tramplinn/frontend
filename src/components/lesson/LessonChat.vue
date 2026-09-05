@@ -14,7 +14,7 @@ const STORAGE_KEY = 'tramplin:tutor-panel'
 const auth = useAuthStore()
 const tutor = useTutorStore()
 
-const { expanded, sheet, toggle: setExpanded } = useExpandablePanel(STORAGE_KEY)
+const { expanded, toggle: setExpanded } = useExpandablePanel(STORAGE_KEY)
 const {
   answers,
   canSend,
@@ -45,92 +45,130 @@ function toggle(): void {
 </script>
 
 <template>
-  <section
-    class="chat"
-    :class="{ 'chat--collapsed': !expanded, 'chat--sheet': sheet }"
-    aria-label="Ассистент урока"
-  >
-    <header class="head">
-      <button type="button" class="bar" :aria-expanded="expanded" @click="toggle">
-        <span class="chevron" aria-hidden="true"></span>
-        <span class="title">спросить</span>
-        <span v-if="expanded && !sheet" class="hint">про термин или непонятное место</span>
-      </button>
+  <div class="tutor-widget">
+    <button v-if="!expanded" type="button" class="tutor-tab" @click="toggle">
+      <span aria-hidden="true">✦</span>
+      спросить по уроку
+    </button>
 
-      <button
-        v-if="expanded && turns.length > 0 && !streaming"
-        type="button"
-        class="control"
-        @click="tutor.clear(props.lessonId)"
-      >
-        очистить
-      </button>
+    <Transition name="tutor-drawer">
+      <section v-if="expanded" class="chat" aria-label="Ассистент урока">
+        <header class="head">
+          <div class="bar">
+            <span aria-hidden="true">✦</span>
+            <span class="title">спросить</span>
+            <span class="hint">про термин или непонятное место</span>
+          </div>
 
-      <button v-if="sheet" type="button" class="control" @click="toggle">закрыть</button>
-    </header>
+          <button
+            v-if="turns.length > 0 && !streaming"
+            type="button"
+            class="control"
+            @click="tutor.clear(props.lessonId)"
+          >
+            очистить
+          </button>
 
-    <template v-if="expanded">
-      <div :ref="setLog" class="log">
-        <p v-if="turns.length === 0 && !streaming" class="blank">
-          Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст
-          этого урока.
-          <template v-if="!auth.isAuthenticated"> Без входа доступно несколько вопросов. </template>
-        </p>
+          <button type="button" class="control close" aria-label="Закрыть" @click="toggle">
+            ×
+          </button>
+        </header>
 
-        <template v-for="(turn, index) in turns" :key="index">
-          <div v-if="turn.role === 'user'" class="turn turn--user">{{ turn.content }}</div>
-          <!-- Ответ модели — markdown, отрендеренный с html=false: сырой html из него
-               экранирован, поэтому v-html здесь безопасен. -->
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-else-if="answers[index]" class="answer prose" v-html="answers[index]" />
-          <div v-else class="turn">{{ turn.content }}</div>
-        </template>
+        <div :ref="setLog" class="log">
+          <p v-if="turns.length === 0 && !streaming" class="blank">
+            Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст
+            этого урока.
+            <template v-if="!auth.isAuthenticated">
+              Без входа доступно несколько вопросов.
+            </template>
+          </p>
 
-        <template v-if="streamed">
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-if="streamedHtml" class="answer prose" v-html="streamedHtml" />
-          <div v-else class="turn">{{ streamed }}</div>
-        </template>
-        <p v-else-if="streaming" class="waiting">думает…</p>
-        <p v-if="error" class="error" role="alert">{{ error }}</p>
-      </div>
+          <template v-for="(turn, index) in turns" :key="index">
+            <div v-if="turn.role === 'user'" class="turn turn--user">{{ turn.content }}</div>
+            <!-- Ответ модели — markdown, отрендеренный с html=false: сырой html из него
+                 экранирован, поэтому v-html здесь безопасен. -->
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div v-else-if="answers[index]" class="answer prose" v-html="answers[index]" />
+            <div v-else class="turn">{{ turn.content }}</div>
+          </template>
 
-      <form class="composer" @submit.prevent="send">
-        <textarea
-          v-model="draft"
-          class="input"
-          rows="2"
-          placeholder="вопрос по уроку"
-          aria-label="Вопрос ассистенту"
-          @keydown.enter.exact.prevent="send"
-        ></textarea>
-        <AppButton v-if="streaming" size="sm" variant="quiet" @click="stop">остановить</AppButton>
-        <AppButton v-else type="submit" size="sm" variant="primary" :disabled="!canSend">
-          спросить
-        </AppButton>
-      </form>
-    </template>
-  </section>
+          <template v-if="streamed">
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div v-if="streamedHtml" class="answer prose" v-html="streamedHtml" />
+            <div v-else class="turn">{{ streamed }}</div>
+          </template>
+          <p v-else-if="streaming" class="waiting">думает…</p>
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
+        </div>
+
+        <form class="composer" @submit.prevent="send">
+          <textarea
+            v-model="draft"
+            class="input"
+            rows="2"
+            placeholder="вопрос по уроку"
+            aria-label="Вопрос ассистенту"
+            @keydown.enter.exact.prevent="send"
+          ></textarea>
+          <AppButton v-if="streaming" size="sm" variant="quiet" @click="stop">
+            остановить
+          </AppButton>
+          <AppButton v-else type="submit" size="sm" variant="primary" :disabled="!canSend">
+            спросить
+          </AppButton>
+        </form>
+      </section>
+    </Transition>
+  </div>
 </template>
 
 <style scoped>
+.tutor-widget {
+  position: fixed;
+  z-index: 50;
+  right: 0;
+  bottom: calc(var(--ctl-sm) + var(--space-3));
+}
+
+.tutor-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--ctl-sm);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: var(--radius-ctl) 0 0 var(--radius-ctl);
+  background: var(--card);
+  box-shadow: var(--shadow-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.tutor-tab span,
+.bar > span:first-child {
+  color: var(--accent);
+}
+
 .chat {
+  position: fixed;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  flex: var(--panel-grow, 1) 1 0;
-  /* Своя высота, чтобы на узком экране чат не делил её поровну с картой модуля. */
-  height: var(--chat-height, var(--panel-height, auto));
+  width: min(440px, 100vw);
+  height: min(720px, calc(100dvh - var(--space-8)));
   min-height: 0;
   container-type: inline-size;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: var(--radius-card) 0 0 0;
+  box-shadow: var(--shadow-raised);
   overflow: hidden;
-}
-
-.chat--collapsed {
-  flex: 0 0 auto;
-  height: auto;
 }
 
 .head {
@@ -147,28 +185,6 @@ function toggle(): void {
   gap: var(--space-3);
   flex: 1;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-ctl);
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--motion-fast) var(--ease);
-}
-
-.bar:hover {
-  background: var(--surface);
-}
-
-.chevron::before {
-  content: '+';
-  color: var(--text-muted);
-}
-
-.bar[aria-expanded='true'] .chevron::before {
-  content: '−';
 }
 
 .title {
@@ -205,6 +221,11 @@ function toggle(): void {
 .control:hover {
   background: var(--surface);
   color: var(--text);
+}
+
+.close {
+  padding: 0;
+  font-size: var(--text-title);
 }
 
 .log {
@@ -296,23 +317,33 @@ function toggle(): void {
   border-color: var(--accent);
 }
 
-/* Телефон: раскрытый чат уезжал бы под текст урока и перехватывал свайп
-   (см. overscroll-behavior у .log), поэтому раскрываем его на весь экран. */
+.tutor-drawer-enter-active,
+.tutor-drawer-leave-active {
+  transition:
+    transform var(--motion-base) var(--ease),
+    opacity var(--motion-fast) var(--ease);
+}
+
+.tutor-drawer-enter-from,
+.tutor-drawer-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
 @media (max-width: 800px) {
-  .chat--sheet {
-    position: fixed;
+  .chat {
     inset: 0;
-    z-index: 60;
+    width: 100vw;
     height: 100dvh;
     border: none;
     border-radius: 0;
   }
 
-  .chat--sheet .head {
+  .chat .head {
     padding-top: max(var(--space-2), env(safe-area-inset-top));
   }
 
-  .chat--sheet .composer {
+  .chat .composer {
     padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
   }
 }

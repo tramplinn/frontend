@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
+import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue'
+import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
@@ -32,6 +34,11 @@ const {
   setSource,
   title,
 } = useLessonEditor(() => props.lesson)
+
+function applyAssistantPatch(patch: TeacherAssistantPatch): void {
+  if (patch.title !== null) title.value = patch.title
+  if (patch.bodyMd !== null) bodyMd.value = patch.bodyMd
+}
 </script>
 
 <template>
@@ -86,6 +93,12 @@ const {
         </AppButton>
         <RouterLink :to="{ name: 'manage-content' }" class="back">← к списку</RouterLink>
       </footer>
+
+      <TeacherAssistantPanel
+        surface="lesson"
+        :document="{ title, bodyMd }"
+        @apply="applyAssistantPatch"
+      />
     </section>
   </LoadState>
 </template>

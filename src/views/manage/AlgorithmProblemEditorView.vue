@@ -4,6 +4,8 @@ import { computed } from 'vue'
 import TemplateEditor from '@/components/algorithms/TemplateEditor.vue'
 import TestCaseRow from '@/components/algorithms/TestCaseRow.vue'
 import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
+import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue'
+import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import LoadState from '@/components/ui/LoadState.vue'
@@ -59,6 +61,34 @@ const currentTemplateDraft = computed(
 )
 
 const statementPreview = computed(() => renderMarkdown(fields.value?.statementMd ?? ''))
+
+const assistantDocument = computed(() => {
+  const current = fields.value
+  return current
+    ? {
+        title: current.title,
+        statementMd: current.statementMd,
+        difficulty: current.difficulty,
+        topics: current.topics
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+        timeLimitMs: current.timeLimitMs,
+        memoryLimitKb: current.memoryLimitKb,
+      }
+    : { title: '' }
+})
+
+function applyAssistantPatch(patch: TeacherAssistantPatch): void {
+  const current = fields.value
+  if (!current) return
+  if (patch.title !== null) current.title = patch.title
+  if (patch.statementMd !== null) current.statementMd = patch.statementMd
+  if (patch.difficulty !== null) current.difficulty = patch.difficulty
+  if (patch.topics !== null) current.topics = patch.topics.join(', ')
+  if (patch.timeLimitMs !== null) current.timeLimitMs = patch.timeLimitMs
+  if (patch.memoryLimitKb !== null) current.memoryLimitKb = patch.memoryLimitKb
+}
 
 /** Прогон по тестам имеет смысл, только когда есть что прогонять и на чём. */
 const canValidate = computed(() => {
@@ -190,6 +220,12 @@ const canValidate = computed(() => {
         @patch="(changes) => patchTemplate(editedLanguage, changes)"
         @validate="checkTemplate(editedLanguage)"
         @remove="removeTemplate(editedLanguage)"
+      />
+
+      <TeacherAssistantPanel
+        surface="algorithm_problem"
+        :document="assistantDocument"
+        @apply="applyAssistantPatch"
       />
     </section>
   </LoadState>
