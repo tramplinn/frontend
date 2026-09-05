@@ -7,6 +7,7 @@ import { submitFeedback } from '@/api/feedback'
 import { assetMimeSchema, type Asset } from '@/api/schemas/assets'
 import FeedbackIcon from '@/components/layout/FeedbackIcon.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import { useFloatingPanel } from '@/composables/useFloatingPanel'
 import { errorText } from '@/lib/errors'
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,7 +17,7 @@ const ACCEPTED = assetMimeSchema.options.join(',')
 
 const auth = useAuthStore()
 const route = useRoute()
-const open = ref(false)
+const { isOpen: open, open: openPanel, close: closePanel } = useFloatingPanel('feedback')
 const message = ref('')
 const attachments = ref<Asset[]>([])
 const uploading = ref(false)
@@ -26,7 +27,7 @@ const error = ref<string | null>(null)
 const textarea = ref<HTMLTextAreaElement | null>(null)
 
 function show(): void {
-  open.value = true
+  openPanel()
   sent.value = false
   error.value = null
   void nextTick(() => textarea.value?.focus())
@@ -34,7 +35,7 @@ function show(): void {
 
 function close(): void {
   if (!uploading.value && !submitting.value) {
-    open.value = false
+    closePanel()
   }
 }
 
@@ -115,9 +116,15 @@ async function submit(): Promise<void> {
 
 <template>
   <div v-if="auth.isAuthenticated" class="feedback-widget">
-    <button v-if="!open" type="button" class="trigger" @click="show">
+    <button
+      v-if="!open"
+      type="button"
+      class="trigger"
+      aria-label="Обратная связь"
+      title="Обратная связь"
+      @click="show"
+    >
       <FeedbackIcon />
-      обратная связь
     </button>
 
     <Transition name="feedback-panel">
@@ -209,28 +216,23 @@ async function submit(): Promise<void> {
 </template>
 
 <style scoped>
-.feedback-widget {
+.trigger {
   position: fixed;
   z-index: 40;
-  right: var(--space-6);
-  bottom: 0;
-}
-
-.trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  right: 0;
+  bottom: calc(var(--ctl-sm) + var(--space-3));
+  display: grid;
+  place-items: center;
+  width: var(--ctl-sm);
   height: var(--ctl-sm);
-  padding: 0 var(--space-3);
   border: 1px solid var(--border);
-  border-bottom: 0;
-  border-radius: var(--radius-ctl) var(--radius-ctl) 0 0;
-  background: color-mix(in srgb, var(--card) 88%, transparent);
+  border-right: 0;
+  border-radius: var(--radius-ctl) 0 0 var(--radius-ctl);
+  background: var(--card);
   box-shadow: var(--shadow-raised);
   color: var(--text-muted);
-  font-size: var(--text-caption);
   cursor: pointer;
-  backdrop-filter: blur(12px);
+  transition: color var(--motion-fast) var(--ease);
 }
 
 .trigger:hover {
@@ -238,13 +240,17 @@ async function submit(): Promise<void> {
 }
 
 .panel {
+  position: fixed;
+  z-index: 40;
+  right: 0;
+  bottom: calc(var(--ctl-sm) + var(--space-3));
   width: min(380px, calc(100vw - var(--space-8)));
   max-height: calc(100dvh - var(--space-8));
   padding: var(--space-4);
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-bottom: 0;
-  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  border-right: 0;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
   background: var(--card);
   box-shadow: var(--shadow-raised);
 }
@@ -259,7 +265,7 @@ async function submit(): Promise<void> {
 .feedback-panel-enter-from,
 .feedback-panel-leave-to {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateX(100%);
 }
 
 .panel-header {
@@ -408,20 +414,12 @@ async function submit(): Promise<void> {
 }
 
 @media (max-width: 520px) {
-  .feedback-widget {
-    right: 0;
-  }
-
   .panel {
     width: 100vw;
-    max-height: calc(100dvh - var(--space-8));
+    max-height: 100dvh;
     padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
-  }
-
-  .trigger {
-    margin-right: var(--space-3);
-    padding-bottom: env(safe-area-inset-bottom);
-    height: calc(var(--ctl-sm) + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
   }
 }
 </style>
