@@ -125,7 +125,7 @@ function pick(name: string): void {
   align-items: center;
   gap: var(--space-1);
   padding: 0 var(--space-2);
-  height: calc(var(--ctl-sm) - 8px);
+  height: calc(var(--ctl-sm) - var(--space-2));
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-size: var(--text-caption);

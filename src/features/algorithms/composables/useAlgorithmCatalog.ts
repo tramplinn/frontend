@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { listCatalog } from '@/api/algorithms'
 import type { AlgorithmDifficulty, ProblemCard } from '@/api/schemas/algorithms'
 import type { Tag } from '@/api/schemas/tags'
+import { useDebounce } from '@/composables/useDebounce'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PAGE_SIZE = 50
@@ -21,7 +22,7 @@ export function useAlgorithmCatalog() {
   const page = ref(0)
 
   const loadGuard = useVersionedLoad()
-  let debounce: ReturnType<typeof setTimeout> | null = null
+  const searchDebounce = useDebounce(SEARCH_DEBOUNCE_MS)
 
   const solvedCount = computed(() => items.value.filter((item) => item.solved).length)
   const hasMore = computed(() => (page.value + 1) * PAGE_SIZE < total.value)
@@ -58,14 +59,13 @@ export function useAlgorithmCatalog() {
   watch(page, () => void load())
 
   watch(search, () => {
-    if (debounce) clearTimeout(debounce)
-    debounce = setTimeout(resetPageAndLoad, SEARCH_DEBOUNCE_MS)
+    searchDebounce.schedule(resetPageAndLoad)
   })
 
   onMounted(() => void load())
   onUnmounted(() => {
     loadGuard.cancel()
-    if (debounce) clearTimeout(debounce)
+    searchDebounce.cancel()
   })
 
   return {

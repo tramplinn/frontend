@@ -110,13 +110,21 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       supported.value = allowed
       language.value = ''
       selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
+      const languageAtLoad = language.value
+      const sourceCodeAtLoad = sourceCode.value
       getAlgorithmProgress(id)
         .then((value) => {
           if (!requestGuard.isCurrent(version)) return
           progress.value = value
           const solution = value.lastSolutionCode
           const solutionLanguage = value.lastSolutionLanguage
-          if (solution && solutionLanguage && languages.value.includes(solutionLanguage)) {
+          const untouched = language.value === languageAtLoad && sourceCode.value === sourceCodeAtLoad
+          if (
+            untouched &&
+            solution &&
+            solutionLanguage &&
+            languages.value.includes(solutionLanguage)
+          ) {
             drafts.set(draftKey(id, solutionLanguage), solution)
             selectLanguage(solutionLanguage)
           }

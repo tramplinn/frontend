@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import CodeEditor from '@/components/ui/CodeEditor.vue'
+import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
 import { isAccepted, languageLabel, verdictLabel } from '@/lib/algorithms'
 import { errorText } from '@/lib/errors'
@@ -60,9 +61,12 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       />
       <p v-else class="muted">для задачи не настроен ни один доступный язык</p>
 
-      <AppButton size="sm" variant="quiet" :disabled="running" @click="resetToStarter">
-        решить заново
-      </AppButton>
+      <ConfirmButton
+        label="решить заново"
+        confirm-label="точно стереть решение?"
+        :disabled="running"
+        @confirm="resetToStarter"
+      />
 
       <span
         v-if="queueStatus"

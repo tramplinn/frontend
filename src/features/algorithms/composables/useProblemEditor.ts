@@ -29,6 +29,7 @@ import { algorithmLanguageSchema } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import { useAssetInsert } from '@/composables/useAssetInsert'
 import { useCursorInsert } from '@/composables/useCursorInsert'
+import { useDebounce } from '@/composables/useDebounce'
 import { errorText } from '@/lib/errors'
 
 export interface ProblemFields {
@@ -91,7 +92,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
 
   let version = 0
   let syncing = false
-  let problemTimer: ReturnType<typeof setTimeout> | undefined
+  const problemSaveDebounce = useDebounce(AUTOSAVE_DEBOUNCE_MS)
   const caseTimers = new Map<string, ReturnType<typeof setTimeout>>()
   const templateTimers = new Map<AlgorithmLanguage, ReturnType<typeof setTimeout>>()
   let saveQueue: Promise<void> = Promise.resolve()
@@ -206,8 +207,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   function clearTimers(): void {
-    clearTimeout(problemTimer)
-    problemTimer = undefined
+    problemSaveDebounce.cancel()
     for (const timer of caseTimers.values()) clearTimeout(timer)
     for (const timer of templateTimers.values()) clearTimeout(timer)
     caseTimers.clear()
@@ -289,11 +289,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   function scheduleProblemSave(): void {
-    clearTimeout(problemTimer)
-    problemTimer = setTimeout(() => {
-      problemTimer = undefined
-      void saveProblem()
-    }, AUTOSAVE_DEBOUNCE_MS)
+    problemSaveDebounce.schedule(() => void saveProblem())
   }
 
   async function togglePublished(): Promise<void> {

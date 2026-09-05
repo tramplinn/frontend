@@ -1,10 +1,18 @@
 import { computed, ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 type PanelId = 'assistant' | 'feedback' | 'tutor'
 
 const active = ref<PanelId | null>(null)
 
-export function useFloatingPanel(id: PanelId) {
+export interface FloatingPanel {
+  isOpen: ComputedRef<boolean>
+  open: () => void
+  close: () => void
+  toggle: () => void
+}
+
+export function useFloatingPanel(id: PanelId): FloatingPanel {
   const isOpen = computed(() => active.value === id)
 
   function open(): void {

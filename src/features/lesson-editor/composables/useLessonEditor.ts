@@ -5,6 +5,7 @@ import { getDraftLesson, previewMarkdown, updateLesson } from '@/api/authoring'
 import type { InterviewCardPreview, Lesson } from '@/api/schemas/content'
 import { useAssetInsert } from '@/composables/useAssetInsert'
 import { useCursorInsert } from '@/composables/useCursorInsert'
+import { useDebounce } from '@/composables/useDebounce'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PREVIEW_DEBOUNCE_MS = 400
@@ -25,7 +26,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
 
   const loadGuard = useVersionedLoad()
   const previewGuard = useVersionedLoad()
-  let debounce: ReturnType<typeof setTimeout> | undefined
+  const previewDebounce = useDebounce(PREVIEW_DEBOUNCE_MS)
 
   const dirty = computed(
     () =>
@@ -36,7 +37,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   async function load(): Promise<void> {
     const version = loadGuard.start()
     previewGuard.cancel()
-    clearTimeout(debounce)
+    previewDebounce.cancel()
     pending.value = true
     error.value = null
     loaded.value = null
@@ -115,8 +116,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     () => void load(),
   )
   watch(bodyMd, () => {
-    clearTimeout(debounce)
-    debounce = setTimeout(() => void refreshPreview(), PREVIEW_DEBOUNCE_MS)
+    previewDebounce.schedule(() => void refreshPreview())
   })
 
   onMounted(() => {
@@ -124,7 +124,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     window.addEventListener('beforeunload', guard)
   })
   onUnmounted(() => {
-    clearTimeout(debounce)
+    previewDebounce.cancel()
     previewGuard.cancel()
     window.removeEventListener('beforeunload', guard)
   })

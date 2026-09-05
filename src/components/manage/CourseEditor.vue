@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 
 import type { CourseDraft } from '@/api/authoring'
 import type { Course } from '@/api/schemas/content'
-import { listTags } from '@/api/tags'
 import CoverField from '@/components/manage/CoverField.vue'
 import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
 import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
-import { blankToNull, numberOrNull } from '@/lib/forms'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import { ACCENT_COLOR_PLACEHOLDER, blankToNull, numberOrNull } from '@/lib/forms'
 
 const props = defineProps<{ course: Course; busy: boolean }>()
 
@@ -27,10 +27,7 @@ const estHours = ref(props.course.estHours === null ? '' : String(props.course.e
 const coverAssetId = ref(props.course.coverAssetId)
 const coverUrl = ref(props.course.coverUrl)
 const tags = ref(props.course.tags.map((tag) => tag.name))
-const tagSuggestions = ref<string[]>([])
-onMounted(async () => {
-  tagSuggestions.value = (await listTags()).map((tag) => tag.name)
-})
+const tagSuggestions = useTagSuggestions()
 
 const fields: EditorField<CourseDraft>[] = [
   { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
@@ -43,7 +40,13 @@ const fields: EditorField<CourseDraft>[] = [
     multiline: true,
     toValue: blankToNull,
   },
-  { key: 'color', label: 'цвет', model: color, placeholder: '#2B7FFF', toValue: blankToNull },
+  {
+    key: 'color',
+    label: 'цвет',
+    model: color,
+    placeholder: ACCENT_COLOR_PLACEHOLDER,
+    toValue: blankToNull,
+  },
   {
     key: 'estHours',
     label: 'часов',

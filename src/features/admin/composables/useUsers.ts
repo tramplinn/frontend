@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { listUsers, updateUser } from '@/api/admin'
 import type { User } from '@/api/schemas/auth'
 import type { UserRole } from '@/api/schemas/common'
+import { useDebounce } from '@/composables/useDebounce'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { runBusyAction } from '@/lib/asyncAction'
 
@@ -18,7 +19,7 @@ export function useUsers() {
   const actionError = ref<unknown>(null)
   const savingIds = ref(new Set<string>())
 
-  let debounce: ReturnType<typeof setTimeout> | undefined
+  const searchDebounce = useDebounce(SEARCH_DEBOUNCE_MS)
   const loadGuard = useVersionedLoad()
 
   async function load(): Promise<void> {
@@ -64,11 +65,10 @@ export function useUsers() {
 
   onMounted(() => void load())
   watch([query, roleFilter], () => {
-    clearTimeout(debounce)
-    debounce = setTimeout(() => void load(), SEARCH_DEBOUNCE_MS)
+    searchDebounce.schedule(() => void load())
   })
   onUnmounted(() => {
-    clearTimeout(debounce)
+    searchDebounce.cancel()
     loadGuard.cancel()
   })
 

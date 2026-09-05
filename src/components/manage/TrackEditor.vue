@@ -7,7 +7,7 @@ import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
-import { blankToNull } from '@/lib/forms'
+import { ACCENT_COLOR_PLACEHOLDER, blankToNull } from '@/lib/forms'
 
 const props = defineProps<{ track: Track; busy: boolean }>()
 
@@ -32,7 +32,13 @@ const fields: EditorField<TrackDraft>[] = [
     multiline: true,
     toValue: blankToNull,
   },
-  { key: 'color', label: 'цвет', model: color, placeholder: '#2B7FFF', toValue: blankToNull },
+  {
+    key: 'color',
+    label: 'цвет',
+    model: color,
+    placeholder: ACCENT_COLOR_PLACEHOLDER,
+    toValue: blankToNull,
+  },
 ]
 
 const { valid, buildPatch } = useEntityForm(title, slug, fields)

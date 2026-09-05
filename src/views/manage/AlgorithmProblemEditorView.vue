@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 
 import TemplateEditor from '@/components/algorithms/TemplateEditor.vue'
 import TestCaseRow from '@/components/algorithms/TestCaseRow.vue'
 import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
 import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue'
 import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
-import { listTags } from '@/api/tags'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
+import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { ALL_LANGUAGES, useProblemEditor } from '@/features/algorithms/composables/useProblemEditor'
 import { DIFFICULTY_LABELS, DIFFICULTY_ORDER } from '@/lib/algorithms'
 import { renderMarkdown } from '@/lib/markdown'
@@ -64,10 +64,7 @@ const currentTemplateDraft = computed(
 
 const statementPreview = computed(() => renderMarkdown(fields.value?.statementMd ?? ''))
 
-const tagSuggestions = ref<string[]>([])
-onMounted(async () => {
-  tagSuggestions.value = (await listTags()).map((tag) => tag.name)
-})
+const tagSuggestions = useTagSuggestions()
 
 const assistantDocument = computed(() => {
   const current = fields.value

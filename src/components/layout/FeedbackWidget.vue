@@ -238,7 +238,7 @@ async function submit(): Promise<void> {
 }
 
 .trigger:hover {
-  width: calc(var(--ctl-sm) + 4px);
+  width: calc(var(--ctl-sm) + var(--space-1));
   background: var(--surface);
 }
 

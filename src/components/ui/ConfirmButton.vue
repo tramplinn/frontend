@@ -8,9 +8,10 @@ const props = withDefaults(
     label?: string
     confirmLabel?: string
     loading?: boolean
+    disabled?: boolean
     size?: 'md' | 'sm'
   }>(),
-  { label: 'удалить', confirmLabel: 'точно удалить?', loading: false, size: 'sm' },
+  { label: 'удалить', confirmLabel: 'точно удалить?', loading: false, disabled: false, size: 'sm' },
 )
 
 const emit = defineEmits<{ confirm: [] }>()
@@ -39,6 +40,7 @@ onUnmounted(() => {
     :size="props.size"
     :variant="armed ? 'danger' : 'quiet'"
     :loading="props.loading"
+    :disabled="props.disabled"
     @click="press"
   >
     {{ armed ? props.confirmLabel : props.label }}
