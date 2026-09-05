@@ -23,7 +23,6 @@ const groups = computed(() => {
 <template>
   <section>
     <h1 class="heading">все разделы</h1>
-    <p class="lede">Здесь всё, к чему у вас есть доступ. Список растёт вместе с ролью.</p>
 
     <div v-for="[group, items] in groups" :key="group" class="block">
       <h2 class="block-title">{{ group }}</h2>
@@ -42,17 +41,10 @@ const groups = computed(() => {
 
 <style scoped>
 .heading {
+  margin-bottom: var(--space-8);
   font-size: var(--text-hero);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.03em;
-  margin-bottom: var(--space-2);
-}
-
-.lede {
-  max-width: var(--measure);
-  margin-bottom: var(--space-8);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
 }
 
 .block + .block {

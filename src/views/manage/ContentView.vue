@@ -66,9 +66,6 @@ const {
     <header class="head">
       <div>
         <h1 class="heading">контент</h1>
-        <p class="lede">
-          Здесь видны и черновики: публичные страницы отдают только опубликованное.
-        </p>
       </div>
       <InlineCreate label="трек" placeholder="название трека" :saving="busy" @create="addTrack" />
     </header>
@@ -206,13 +203,6 @@ const {
   font-size: var(--text-hero);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.03em;
-}
-
-.lede {
-  max-width: var(--measure);
-  margin-top: var(--space-1);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
 }
 
 .action-error {
