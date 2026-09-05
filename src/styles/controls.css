@@ -17,3 +17,15 @@
   border-color: var(--accent);
   outline: none;
 }
+
+.text-field[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.text-field[type='number']::-webkit-outer-spin-button,
+.text-field[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
