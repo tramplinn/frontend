@@ -79,23 +79,22 @@ onMounted(() => void load())
     <header class="head">
       <div>
         <h1>алгозадачи</h1>
+        <p v-if="problems.length > 0" class="muted">
+          опубликовано {{ published }} из {{ problems.length }}
+        </p>
       </div>
-      <p v-if="problems.length > 0" class="muted">
-        опубликовано {{ published }} из {{ problems.length }}
-      </p>
+      <InlineCreate
+        label="алгозадачу"
+        placeholder="название новой задачи"
+        :saving="busy === 'new'"
+        :show-slug="false"
+        @create="create"
+      >
+        <template #fields>
+          <AppSelect v-model="difficulty" :options="difficultyOptions" label="Сложность" />
+        </template>
+      </InlineCreate>
     </header>
-
-    <InlineCreate
-      label="алгозадачу"
-      placeholder="название новой задачи"
-      :saving="busy === 'new'"
-      :show-slug="false"
-      @create="create"
-    >
-      <template #fields>
-        <AppSelect v-model="difficulty" :options="difficultyOptions" label="Сложность" />
-      </template>
-    </InlineCreate>
 
     <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
@@ -138,9 +137,9 @@ onMounted(() => void load())
 .head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .head h1 {
@@ -153,6 +152,10 @@ onMounted(() => void load())
 .counts {
   color: var(--text-muted);
   font-size: var(--text-caption);
+}
+
+.head .muted {
+  margin-top: var(--space-1);
 }
 
 .error {
