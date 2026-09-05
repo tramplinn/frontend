@@ -174,7 +174,6 @@ router.beforeEach(async (to) => {
   if (to.meta.requiresAuth === true && !auth.isAuthenticated) {
     return { name: 'home', query: { login: to.fullPath } }
   }
-  // Роль проверяет и бэкенд; здесь — чтобы не показывать заведомо запретный экран.
   if (to.meta.requiresAdmin === true && !auth.isAdmin) {
     return { name: 'sections' }
   }

@@ -1,4 +1,3 @@
-/* Общая раскладка форм редактирования в админке контента. */
 .editor {
   display: flex;
   flex-direction: column;
@@ -35,8 +34,15 @@
   font-size: var(--text-caption);
 }
 
-.slug {
+.text-field.mono {
   font-family: var(--font-mono);
+}
+
+.text-field.auto {
+  height: auto;
+  padding: var(--space-2) var(--space-4);
+  line-height: 1.5;
+  resize: vertical;
 }
 
 .actions {

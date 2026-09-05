@@ -1,9 +1,11 @@
-import { computed, nextTick, onMounted, onUnmounted, ref, toValue, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, toValue, watch } from 'vue'
 import type { ComponentPublicInstance, MaybeRefOrGetter } from 'vue'
 
 import { getDraftLesson, previewMarkdown, updateLesson } from '@/api/authoring'
 import type { InterviewCardPreview, Lesson } from '@/api/schemas/content'
 import { useAssetInsert } from '@/composables/useAssetInsert'
+import { useCursorInsert } from '@/composables/useCursorInsert'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PREVIEW_DEBOUNCE_MS = 400
 
@@ -21,8 +23,8 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   const savedAt = ref<Date | null>(null)
   const source = ref<HTMLTextAreaElement | null>(null)
 
-  let loadVersion = 0
-  let previewVersion = 0
+  const loadGuard = useVersionedLoad()
+  const previewGuard = useVersionedLoad()
   let debounce: ReturnType<typeof setTimeout> | undefined
 
   const dirty = computed(
@@ -32,15 +34,15 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   )
 
   async function load(): Promise<void> {
-    const version = ++loadVersion
-    previewVersion += 1
+    const version = loadGuard.start()
+    previewGuard.cancel()
     clearTimeout(debounce)
     pending.value = true
     error.value = null
     loaded.value = null
     try {
       const fetched = await getDraftLesson(toValue(lessonId))
-      if (version !== loadVersion) return
+      if (!loadGuard.isCurrent(version)) return
       loaded.value = fetched
       title.value = fetched.title
       bodyMd.value = fetched.bodyMd
@@ -48,22 +50,22 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
       cards.value = []
       savedAt.value = null
     } catch (cause) {
-      if (version === loadVersion) error.value = cause
+      if (loadGuard.isCurrent(version)) error.value = cause
     } finally {
-      if (version === loadVersion) pending.value = false
+      if (loadGuard.isCurrent(version)) pending.value = false
     }
   }
 
   async function refreshPreview(): Promise<void> {
-    const version = ++previewVersion
+    const version = previewGuard.start()
     previewError.value = null
     try {
       const preview = await previewMarkdown(bodyMd.value)
-      if (version !== previewVersion) return
+      if (!previewGuard.isCurrent(version)) return
       html.value = preview.bodyHtml
       cards.value = preview.interviewCards
     } catch {
-      if (version === previewVersion) {
+      if (previewGuard.isCurrent(version)) {
         previewError.value = 'Блок :::interview не разобрался — проверьте разделитель ---'
       }
     }
@@ -92,29 +94,15 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     }
   }
 
-  function insertAtCursor(text: string): void {
-    const field = source.value
-    if (!field) {
-      bodyMd.value += text
-      return
-    }
-    const start = field.selectionStart
-    const end = field.selectionEnd
-    bodyMd.value = bodyMd.value.slice(0, start) + text + bodyMd.value.slice(end)
-    void nextTick(() => {
-      const at = start + text.length
-      field.focus()
-      field.setSelectionRange(at, at)
-    })
-  }
-
-  function replacePlaceholder(placeholder: string, markdown: string): void {
-    bodyMd.value = bodyMd.value.replace(placeholder, markdown)
-  }
-
   function setSource(element: Element | ComponentPublicInstance | null): void {
     source.value = element instanceof HTMLTextAreaElement ? element : null
   }
+
+  const { insertAtCursor, replacePlaceholder } = useCursorInsert(
+    source,
+    () => bodyMd.value,
+    (value) => (bodyMd.value = value),
+  )
 
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
@@ -137,7 +125,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   })
   onUnmounted(() => {
     clearTimeout(debounce)
-    previewVersion += 1
+    previewGuard.cancel()
     window.removeEventListener('beforeunload', guard)
   })
 

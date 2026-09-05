@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import type { CourseDraft } from '@/api/authoring'
 import type { Course } from '@/api/schemas/content'
 import CoverField from '@/components/manage/CoverField.vue'
+import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import type { EditorField } from '@/composables/useEntityForm'
+import { useEntityForm } from '@/composables/useEntityForm'
 import { blankToNull, numberOrNull } from '@/lib/forms'
 
 const props = defineProps<{ course: Course; busy: boolean }>()
@@ -22,51 +25,41 @@ const estHours = ref(props.course.estHours === null ? '' : String(props.course.e
 const coverAssetId = ref(props.course.coverAssetId)
 const coverUrl = ref(props.course.coverUrl)
 
-const valid = computed(() => title.value.trim().length > 0 && slug.value.trim().length > 0)
+const fields: EditorField<CourseDraft>[] = [
+  { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
+  { key: 'slug', label: 'адрес', model: slug, mono: true, toValue: (raw) => raw.trim() },
+  {
+    key: 'summary',
+    label: 'аннотация',
+    model: summary,
+    width: 'wide',
+    multiline: true,
+    toValue: blankToNull,
+  },
+  { key: 'color', label: 'цвет', model: color, placeholder: '#2B7FFF', toValue: blankToNull },
+  {
+    key: 'estHours',
+    label: 'часов',
+    model: estHours,
+    width: 'narrow',
+    inputmode: 'numeric',
+    toValue: numberOrNull,
+  },
+]
+
+const { valid, buildPatch } = useEntityForm(title, slug, fields)
 
 function save(): void {
   if (!valid.value) {
     return
   }
-  emit('save', {
-    title: title.value.trim(),
-    slug: slug.value.trim(),
-    summary: blankToNull(summary.value),
-    color: blankToNull(color.value),
-    estHours: numberOrNull(estHours.value),
-    coverAssetId: coverAssetId.value,
-  })
+  emit('save', { ...buildPatch(), coverAssetId: coverAssetId.value })
 }
 </script>
 
 <template>
   <form class="editor" @submit.prevent="save">
-    <div class="fields">
-      <label class="field">
-        <span class="label">название</span>
-        <input v-model="title" class="text-field" />
-      </label>
-
-      <label class="field">
-        <span class="label">адрес</span>
-        <input v-model="slug" class="text-field slug" />
-      </label>
-
-      <label class="field field--wide">
-        <span class="label">аннотация</span>
-        <textarea v-model="summary" class="text-field" rows="2"></textarea>
-      </label>
-
-      <label class="field">
-        <span class="label">цвет</span>
-        <input v-model="color" class="text-field" placeholder="#2B7FFF" />
-      </label>
-
-      <label class="field field--narrow">
-        <span class="label">часов</span>
-        <input v-model="estHours" class="text-field" inputmode="numeric" />
-      </label>
-    </div>
+    <EntityFieldset :fields="fields" />
 
     <CoverField
       v-model:asset-id="coverAssetId"

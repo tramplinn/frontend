@@ -51,7 +51,7 @@ const emit = defineEmits<{
       <StatusChip :status="props.module.status" />
       <span
         v-if="isPublishedModuleEmpty(props.module)"
-        class="warn-chip"
+        class="chip warn-chip"
         title="Все уроки и тесты модуля — черновики"
       >
         не видно студентам
@@ -167,12 +167,7 @@ const emit = defineEmits<{
 }
 
 .warn-chip {
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-pill);
   background: var(--warning-soft);
   color: var(--warning);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
 }
 </style>

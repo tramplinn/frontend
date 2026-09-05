@@ -1,6 +1,8 @@
 import { readonly, ref } from 'vue'
 import type { DeepReadonly, Ref } from 'vue'
 
+import { safeGet, safeSet } from '@/lib/safeStorage'
+
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type VisibleTheme = Exclude<ThemeChoice, 'system'>
 
@@ -10,13 +12,8 @@ const ORDER: ThemeChoice[] = ['system', 'light', 'dark']
 const choice = ref<ThemeChoice>(read())
 
 function read(): ThemeChoice {
-  // Приватный режим и заблокированное хранилище кидают на самом доступе.
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return ORDER.includes(stored as ThemeChoice) ? (stored as ThemeChoice) : 'system'
-  } catch {
-    return 'system'
-  }
+  const stored = safeGet('local', STORAGE_KEY)
+  return ORDER.includes(stored as ThemeChoice) ? (stored as ThemeChoice) : 'system'
 }
 
 const SWITCHING_ATTR = 'data-theme-switching'
@@ -30,17 +27,10 @@ function apply(value: ThemeChoice): void {
   }
 }
 
-/**
- * Смена темы переписывает все токены разом, но элементы с transition на цвете
- * доезжают до новой палитры на 120 мс позже соседей — это и читается как
- * отставание и мерцание. Гасим переходы ровно на время подмены.
- */
 function applyWithoutTransitions(value: ThemeChoice): void {
   const root = document.documentElement
   root.setAttribute(SWITCHING_ATTR, '')
   apply(value)
-  // Чтение геометрии заставляет браузер пересчитать стили с новыми цветами
-  // до снятия флага, иначе оба изменения схлопнутся в один кадр с переходом.
   root.getBoundingClientRect()
   root.removeAttribute(SWITCHING_ATTR)
 }
@@ -62,11 +52,7 @@ export function useTheme(): {
   function set(value: ThemeChoice): void {
     choice.value = value
     applyWithoutTransitions(value)
-    try {
-      localStorage.setItem(STORAGE_KEY, value)
-    } catch {
-      // Тема просто не переживёт перезагрузку — это не повод падать.
-    }
+    safeSet('local', STORAGE_KEY, value)
   }
 
   function cycle(): void {

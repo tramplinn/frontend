@@ -2,6 +2,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 import { listRecommendations } from '@/api/recommendations'
 import type { RecommendedAlgorithm, RecommendedCourse } from '@/api/schemas/recommendations'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 export function useRecommendations() {
   const courses = ref<RecommendedCourse[]>([])
@@ -9,29 +10,27 @@ export function useRecommendations() {
   const pending = ref(true)
   const error = ref<unknown>(null)
 
-  let alive = true
-  let version = 0
+  const loadGuard = useVersionedLoad()
 
   async function load(): Promise<void> {
-    const current = ++version
+    const current = loadGuard.start()
     pending.value = true
     error.value = null
     try {
       const recommendations = await listRecommendations()
-      if (!alive || current !== version) return
+      if (!loadGuard.isCurrent(current)) return
       courses.value = recommendations.courses
       algorithms.value = recommendations.algorithms
     } catch (cause) {
-      if (current === version) error.value = cause
+      if (loadGuard.isCurrent(current)) error.value = cause
     } finally {
-      if (current === version) pending.value = false
+      if (loadGuard.isCurrent(current)) pending.value = false
     }
   }
 
   onMounted(() => void load())
   onUnmounted(() => {
-    alive = false
-    version += 1
+    loadGuard.cancel()
   })
 
   return { courses, algorithms, pending, error }

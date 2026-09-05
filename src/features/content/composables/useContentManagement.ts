@@ -38,6 +38,7 @@ import {
   swapAdjacent,
   toggleContentStatus,
 } from '@/features/content/model/contentTree'
+import { runBusyAction } from '@/lib/asyncAction'
 
 export function useContentManagement() {
   const tracks = ref<Track[]>([])
@@ -52,8 +53,6 @@ export function useContentManagement() {
   const actionError = ref<unknown>(null)
   const courseError = ref<unknown>(null)
   const loadingCourse = ref(false)
-  // Открыт максимум один редактор: две формы на одну сущность разошлись бы
-  // в значениях, а третья кнопка «сохранить» на экране только мешает.
   const editing = ref<string | null>(null)
 
   function toggleEditing(id: string): void {
@@ -78,11 +77,6 @@ export function useContentManagement() {
     }
   }
 
-  /**
-   * Тянет дерево, не трогая экран: ошибку отдаёт наверх, старое содержимое
-   * оставляет на месте. Обновление после действия идёт только сюда — иначе
-   * дерево мигало бы «загружаем…» на каждое создание урока или теста.
-   */
   async function fetchTree(slug: string): Promise<void> {
     const [tree, moduleDependencies] = await Promise.all([
       getDraftCourse(slug),
@@ -92,7 +86,6 @@ export function useContentManagement() {
     dependencies.value = moduleDependencies
   }
 
-  /** Первое открытие курса: показывать пока нечего, поэтому и заглушка уместна. */
   async function openTree(slug: string): Promise<void> {
     loadingCourse.value = true
     courseError.value = null
@@ -152,8 +145,6 @@ export function useContentManagement() {
     await perform(action, refresh)
   }
 
-  /** Уроки, тесты и порядок живут только в дереве открытого курса: списки
-      треков и курсов перезапрашивать незачем. */
   async function runInTree(action: () => Promise<unknown>): Promise<void> {
     await perform(action, refreshTree)
   }
@@ -162,16 +153,17 @@ export function useContentManagement() {
     action: () => Promise<unknown>,
     reload: () => Promise<void>,
   ): Promise<void> {
-    busy.value = true
-    actionError.value = null
-    try {
-      await action()
-      await reload()
-    } catch (cause) {
-      actionError.value = cause
-    } finally {
-      busy.value = false
-    }
+    await runBusyAction(
+      {
+        setBusy: (active) => (busy.value = active),
+        clearError: () => (actionError.value = null),
+        setError: (cause) => (actionError.value = cause),
+      },
+      async () => {
+        await action()
+        await reload()
+      },
+    )
   }
 
   function addTrack(draft: { title: string; slug: string }): void {
@@ -221,7 +213,6 @@ export function useContentManagement() {
     if (ids) void runInTree(() => reorderModules(course.id, ids))
   }
 
-  /** Модуль всегда двигают внутри открытого курса, но узнать это из шаблона нельзя. */
   function moveOpenModule(index: number, delta: number): void {
     if (openCourse.value) {
       moveModule(openCourse.value, index, delta)

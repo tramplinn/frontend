@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import type { TrackDraft } from '@/api/authoring'
 import type { Track } from '@/api/schemas/content'
+import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import type { EditorField } from '@/composables/useEntityForm'
+import { useEntityForm } from '@/composables/useEntityForm'
 import { blankToNull } from '@/lib/forms'
 
 const props = defineProps<{ track: Track; busy: boolean }>()
@@ -18,44 +21,33 @@ const slug = ref(props.track.slug)
 const description = ref(props.track.description ?? '')
 const color = ref(props.track.color ?? '')
 
-const valid = computed(() => title.value.trim().length > 0 && slug.value.trim().length > 0)
+const fields: EditorField<TrackDraft>[] = [
+  { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
+  { key: 'slug', label: 'адрес', model: slug, mono: true, toValue: (raw) => raw.trim() },
+  {
+    key: 'description',
+    label: 'описание',
+    model: description,
+    width: 'wide',
+    multiline: true,
+    toValue: blankToNull,
+  },
+  { key: 'color', label: 'цвет', model: color, placeholder: '#2B7FFF', toValue: blankToNull },
+]
+
+const { valid, buildPatch } = useEntityForm(title, slug, fields)
 
 function save(): void {
   if (!valid.value) {
     return
   }
-  emit('save', {
-    title: title.value.trim(),
-    slug: slug.value.trim(),
-    description: blankToNull(description.value),
-    color: blankToNull(color.value),
-  })
+  emit('save', buildPatch())
 }
 </script>
 
 <template>
   <form class="editor" @submit.prevent="save">
-    <div class="fields">
-      <label class="field">
-        <span class="label">название</span>
-        <input v-model="title" class="text-field" />
-      </label>
-
-      <label class="field">
-        <span class="label">адрес</span>
-        <input v-model="slug" class="text-field slug" />
-      </label>
-
-      <label class="field field--wide">
-        <span class="label">описание</span>
-        <textarea v-model="description" class="text-field" rows="2"></textarea>
-      </label>
-
-      <label class="field">
-        <span class="label">цвет</span>
-        <input v-model="color" class="text-field" placeholder="#2B7FFF" />
-      </label>
-    </div>
+    <EntityFieldset :fields="fields" />
 
     <div class="actions">
       <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="props.busy">

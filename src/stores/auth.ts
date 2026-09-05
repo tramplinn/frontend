@@ -33,6 +33,8 @@ export const useAuthStore = defineStore('auth', () => {
     status.value = 'restoring'
     try {
       user.value = await restoreSession()
+    } catch {
+      user.value = null
     } finally {
       status.value = 'ready'
     }

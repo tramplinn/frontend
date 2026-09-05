@@ -1,6 +1,5 @@
 import {
   computed,
-  nextTick,
   onMounted,
   onUnmounted,
   ref,
@@ -29,6 +28,7 @@ import type {
 import { algorithmLanguageSchema } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import { useAssetInsert } from '@/composables/useAssetInsert'
+import { useCursorInsert } from '@/composables/useCursorInsert'
 import { errorText } from '@/lib/errors'
 
 export interface ProblemFields {
@@ -164,8 +164,6 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     )
   })
 
-  /** Каждый флаг относится к своей секции формы — сообщение показывается прямо там,
-      а не общим списком сверху, куда непонятно на что смотреть. */
   const hasEmptyStatement = computed(() => !loaded.value?.statementMd.trim())
   const hasNoSample = computed(() => sampleCount.value === 0)
   const hasNoHidden = computed(() => hiddenCount.value === 0)
@@ -173,7 +171,6 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     () => !(loaded.value?.templates.some((item) => item.validatedAt !== null) ?? false),
   )
 
-  /** Публиковать можно только задачу с тестами (пример + скрытый) и проверенным решением. */
   const publishBlockers = computed(() => {
     if (!loaded.value) return []
     const blockers: string[] = []
@@ -184,34 +181,17 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     return blockers
   })
 
-  function insertAtCursor(text: string): void {
-    const current = fields.value
-    if (!current) return
-    const field = statementField.value
-    if (!field) {
-      current.statementMd += text
-      return
-    }
-    const start = field.selectionStart
-    const end = field.selectionEnd
-    current.statementMd =
-      current.statementMd.slice(0, start) + text + current.statementMd.slice(end)
-    void nextTick(() => {
-      const at = start + text.length
-      field.focus()
-      field.setSelectionRange(at, at)
-    })
-  }
-
-  function replacePlaceholder(placeholder: string, markdown: string): void {
-    const current = fields.value
-    if (!current) return
-    current.statementMd = current.statementMd.replace(placeholder, markdown)
-  }
-
   function setStatementField(element: Element | ComponentPublicInstance | null): void {
     statementField.value = element instanceof HTMLTextAreaElement ? element : null
   }
+
+  const { insertAtCursor, replacePlaceholder } = useCursorInsert(
+    statementField,
+    () => fields.value?.statementMd ?? null,
+    (value) => {
+      if (fields.value) fields.value.statementMd = value
+    },
+  )
 
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 

@@ -73,14 +73,6 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
   margin-top: var(--space-2);
 }
 
-.topic {
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: var(--text-micro);
-}
-
 .limits {
   display: flex;
   flex-wrap: wrap;

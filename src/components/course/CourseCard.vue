@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import type { Course } from '@/api/schemas/content'
-import { withCount } from '@/lib/plural'
+import { hours } from '@/lib/hours'
 
 const props = defineProps<{ course: Course }>()
-
-function hours(value: number | null): string {
-  return value === null ? '' : withCount(value, 'час', 'часа', 'часов')
-}
 </script>
 
 <template>

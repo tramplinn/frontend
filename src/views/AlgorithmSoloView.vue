@@ -14,7 +14,7 @@ const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
     <article class="solo">
       <header class="head">
         <RouterLink :to="{ name: 'algorithms' }" class="back">← ко всем задачам</RouterLink>
-        <span v-if="solved" class="solved">решена</span>
+        <span v-if="solved" class="chip solved">решена</span>
       </header>
 
       <div v-if="runner.problem.value" class="workspace">
@@ -51,12 +51,8 @@ const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
 }
 
 .solved {
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-pill);
   background: var(--success-soft);
   color: var(--success);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
 }
 
 .workspace {

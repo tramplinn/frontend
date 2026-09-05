@@ -2,8 +2,6 @@ import { computed, ref } from 'vue'
 
 type PanelId = 'assistant' | 'feedback'
 
-/** Модуль — не Pinia: два независимых плавающих виджета делят один слот,
-    чтобы не открывались друг на друге сразу. Персистентность не нужна. */
 const active = ref<PanelId | null>(null)
 
 export function useFloatingPanel(id: PanelId) {

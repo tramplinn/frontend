@@ -1,6 +1,8 @@
 import { computed, onBeforeUnmount, readonly, ref } from 'vue'
 import type { ComputedRef, DeepReadonly, Ref } from 'vue'
 
+import { safeGet, safeSet } from '@/lib/safeStorage'
+
 /** Тот же порог, на котором вёрстка сворачивается в одну колонку. */
 const PHONE = '(max-width: 800px)'
 
@@ -18,14 +20,6 @@ function releasePageScroll(): void {
   }
 }
 
-/**
- * Раскрывающаяся панель боковой колонки (карта курса, чат-ассистент).
- *
- * На телефоне колонка уезжает под длинный текст урока, поэтому раскрытая
- * панель показывается шторкой на весь экран: иначе она разворачивается ниже
- * сгиба — непонятно, где именно, — и перехватывает вертикальный свайп,
- * из-за чего страница перестаёт прокручиваться.
- */
 export function useExpandablePanel(storageKey: string): {
   expanded: DeepReadonly<Ref<boolean>>
   sheet: ComputedRef<boolean>
@@ -40,12 +34,7 @@ export function useExpandablePanel(storageKey: string): {
   let locked = false
 
   function read(): boolean {
-    // Приватный режим и заблокированное хранилище кидают на самом доступе.
-    try {
-      return localStorage.getItem(storageKey) === 'expanded'
-    } catch {
-      return false
-    }
+    return safeGet('local', storageKey) === 'expanded'
   }
 
   function syncLock(): void {
@@ -61,11 +50,7 @@ export function useExpandablePanel(storageKey: string): {
   function set(value: boolean): void {
     expanded.value = value
     syncLock()
-    try {
-      localStorage.setItem(storageKey, value ? 'expanded' : 'collapsed')
-    } catch {
-      // Состояние просто не переживёт перезагрузку — падать из-за этого незачем.
-    }
+    safeSet('local', storageKey, value ? 'expanded' : 'collapsed')
   }
 
   function toggle(): void {

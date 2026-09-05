@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import type { ModuleDraft } from '@/api/authoring'
 import type { Module } from '@/api/schemas/content'
+import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import type { EditorField } from '@/composables/useEntityForm'
+import { useEntityForm } from '@/composables/useEntityForm'
 import { blankToNull } from '@/lib/forms'
 
 const props = defineProps<{ module: Module; busy: boolean }>()
@@ -17,38 +20,32 @@ const title = ref(props.module.title)
 const slug = ref(props.module.slug)
 const summary = ref(props.module.summary ?? '')
 
-const valid = computed(() => title.value.trim().length > 0 && slug.value.trim().length > 0)
+const fields: EditorField<ModuleDraft>[] = [
+  { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
+  { key: 'slug', label: 'адрес', model: slug, mono: true, toValue: (raw) => raw.trim() },
+  {
+    key: 'summary',
+    label: 'аннотация',
+    model: summary,
+    width: 'wide',
+    multiline: true,
+    toValue: blankToNull,
+  },
+]
+
+const { valid, buildPatch } = useEntityForm(title, slug, fields)
 
 function save(): void {
   if (!valid.value) {
     return
   }
-  emit('save', {
-    title: title.value.trim(),
-    slug: slug.value.trim(),
-    summary: blankToNull(summary.value),
-  })
+  emit('save', buildPatch())
 }
 </script>
 
 <template>
   <form class="editor" @submit.prevent="save">
-    <div class="fields">
-      <label class="field">
-        <span class="label">название</span>
-        <input v-model="title" class="text-field" />
-      </label>
-
-      <label class="field">
-        <span class="label">адрес</span>
-        <input v-model="slug" class="text-field slug" />
-      </label>
-
-      <label class="field field--wide">
-        <span class="label">аннотация</span>
-        <textarea v-model="summary" class="text-field" rows="2"></textarea>
-      </label>
-    </div>
+    <EntityFieldset :fields="fields" />
 
     <div class="actions">
       <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="props.busy">

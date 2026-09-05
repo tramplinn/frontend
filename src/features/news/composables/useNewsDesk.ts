@@ -6,6 +6,7 @@ import type { NewsDraft } from '@/api/news'
 import type { Asset } from '@/api/schemas/assets'
 import { assetMimeSchema } from '@/api/schemas/assets'
 import type { News } from '@/api/schemas/news'
+import { runBusyAction } from '@/lib/asyncAction'
 import { errorText } from '@/lib/errors'
 
 const IMAGE_MIMES = assetMimeSchema.options.filter((mime) => mime.startsWith('image/'))
@@ -34,19 +35,18 @@ export function useNewsDesk() {
     }
   }
 
-  /** Список перечитывается, но с экрана не убирается: правка одной новости
-      не повод показывать заглушку вместо всей ленты. */
   async function run(action: () => Promise<unknown>): Promise<void> {
-    busy.value = true
-    actionError.value = null
-    try {
-      await action()
-      await reload()
-    } catch (cause) {
-      actionError.value = errorText(cause)
-    } finally {
-      busy.value = false
-    }
+    await runBusyAction(
+      {
+        setBusy: (active) => (busy.value = active),
+        clearError: () => (actionError.value = null),
+        setError: (cause) => (actionError.value = errorText(cause)),
+      },
+      async () => {
+        await action()
+        await reload()
+      },
+    )
   }
 
   function add(draft: NewsDraft): void {
@@ -74,7 +74,6 @@ export function useNewsDesk() {
     editing.value = editing.value === newsId ? null : newsId
   }
 
-  /** Фото прикрепляются к уже созданной новости: её id нужен раньше файлов. */
   function attachPhotos(news: News, files: File[]): void {
     void run(async () => {
       const accepted: Asset[] = []

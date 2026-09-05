@@ -7,6 +7,8 @@ import {
   startPracticeSession,
 } from '@/api/algorithms'
 import type { PracticeSession, PracticeSet } from '@/api/schemas/algorithms'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
+import { readSessionValue, writeSessionValue } from '@/lib/sessionKeyStorage'
 
 import { useProblemRunner } from './useProblemRunner'
 
@@ -17,20 +19,11 @@ function storageKey(setId: string): string {
 }
 
 function readSessionId(setId: string): string | null {
-  try {
-    return sessionStorage.getItem(storageKey(setId))
-  } catch {
-    return null
-  }
+  return readSessionValue(storageKey(setId))
 }
 
 function rememberSession(setId: string, sessionId: string | null): void {
-  try {
-    if (sessionId) sessionStorage.setItem(storageKey(setId), sessionId)
-    else sessionStorage.removeItem(storageKey(setId))
-  } catch {
-    // Практика продолжит работать, но сессия не восстановится после перезагрузки.
-  }
+  writeSessionValue(storageKey(setId), sessionId)
 }
 
 export function useAlgorithmPractice(setId: () => string) {
@@ -48,9 +41,8 @@ export function useAlgorithmPractice(setId: () => string) {
     active: () => session.value?.status === 'active',
   })
 
-  let alive = true
   let clock: ReturnType<typeof setInterval> | null = null
-  let version = 0
+  const loadGuard = useVersionedLoad()
 
   const secondsLeft = computed(() => {
     if (!session.value?.deadlineAt) return null
@@ -85,7 +77,7 @@ export function useAlgorithmPractice(setId: () => string) {
   }
 
   async function load(): Promise<void> {
-    const current = ++version
+    const current = loadGuard.start()
     const targetSetId = setId()
     pending.value = true
     error.value = null
@@ -97,14 +89,14 @@ export function useAlgorithmPractice(setId: () => string) {
         getPracticeSet(targetSetId),
         restoreOrStartSession(targetSetId),
       ])
-      if (!alive || current !== version) return
+      if (!loadGuard.isCurrent(current)) return
       practiceSet.value = loadedSet
       session.value = loadedSession
       selectedId.value = loadedSet.problems[0]?.problemId ?? ''
     } catch (cause) {
-      if (current === version) error.value = cause
+      if (loadGuard.isCurrent(current)) error.value = cause
     } finally {
-      if (current === version) pending.value = false
+      if (loadGuard.isCurrent(current)) pending.value = false
     }
   }
 
@@ -133,8 +125,7 @@ export function useAlgorithmPractice(setId: () => string) {
   })
 
   onUnmounted(() => {
-    alive = false
-    version += 1
+    loadGuard.cancel()
     runner.dispose()
     if (clock) clearInterval(clock)
   })

@@ -46,7 +46,6 @@ describe('useProblemRunner', () => {
   beforeEach(() => {
     vi.mocked(getAlgorithmProblem).mockResolvedValue(problem)
     vi.mocked(getAlgorithmProgress).mockRejectedValue(new Error('no progress'))
-    // Раннер умеет меньше языков, чем заведено шаблонов у задачи.
     vi.mocked(listAlgorithmLanguages).mockResolvedValue([
       { key: 'python', name: 'Python' },
       { key: 'cpp', name: 'C++' },

@@ -3,6 +3,8 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { listUsers, updateUser } from '@/api/admin'
 import type { User } from '@/api/schemas/auth'
 import type { UserRole } from '@/api/schemas/common'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
+import { runBusyAction } from '@/lib/asyncAction'
 
 const SEARCH_DEBOUNCE_MS = 250
 
@@ -17,10 +19,10 @@ export function useUsers() {
   const savingIds = ref(new Set<string>())
 
   let debounce: ReturnType<typeof setTimeout> | undefined
-  let loadVersion = 0
+  const loadGuard = useVersionedLoad()
 
   async function load(): Promise<void> {
-    const version = ++loadVersion
+    const version = loadGuard.start()
     const filters = { query: query.value, role: roleFilter.value }
     pending.value = true
     error.value = null
@@ -29,29 +31,35 @@ export function useUsers() {
         ...(filters.query ? { q: filters.query } : {}),
         ...(filters.role ? { role: filters.role } : {}),
       })
-      if (version !== loadVersion) return
+      if (!loadGuard.isCurrent(version)) return
       users.value = page.items
       total.value = page.total
     } catch (cause) {
-      if (version === loadVersion) error.value = cause
+      if (loadGuard.isCurrent(version)) error.value = cause
     } finally {
-      if (version === loadVersion) pending.value = false
+      if (loadGuard.isCurrent(version)) pending.value = false
     }
   }
 
   async function patch(user: User, changes: Parameters<typeof updateUser>[1]): Promise<void> {
-    savingIds.value = new Set(savingIds.value).add(user.id)
-    actionError.value = null
-    try {
-      const updated = await updateUser(user.id, changes)
-      users.value = users.value.map((item) => (item.id === updated.id ? updated : item))
-    } catch (cause) {
-      actionError.value = cause
-    } finally {
-      const next = new Set(savingIds.value)
-      next.delete(user.id)
-      savingIds.value = next
-    }
+    await runBusyAction(
+      {
+        setBusy: (active) => {
+          if (active) savingIds.value = new Set(savingIds.value).add(user.id)
+          else {
+            const next = new Set(savingIds.value)
+            next.delete(user.id)
+            savingIds.value = next
+          }
+        },
+        clearError: () => (actionError.value = null),
+        setError: (cause) => (actionError.value = cause),
+      },
+      async () => {
+        const updated = await updateUser(user.id, changes)
+        users.value = users.value.map((item) => (item.id === updated.id ? updated : item))
+      },
+    )
   }
 
   onMounted(() => void load())
@@ -61,7 +69,7 @@ export function useUsers() {
   })
   onUnmounted(() => {
     clearTimeout(debounce)
-    loadVersion += 1
+    loadGuard.cancel()
   })
 
   return {

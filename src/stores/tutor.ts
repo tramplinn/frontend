@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+import { safeGet, safeSet } from '@/lib/safeStorage'
 import type { TutorTurn } from '@/api/tutor'
 
 const STORAGE_KEY = 'tramplin:tutor'
 
 type Threads = Record<string, TutorTurn[]>
 
-/** Приватный режим и заблокированное хранилище кидают на самом доступе. */
 function read(): Threads {
   try {
-    const stored: unknown = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? '{}')
+    const stored: unknown = JSON.parse(safeGet('session', STORAGE_KEY) ?? '{}')
     return stored !== null && typeof stored === 'object' ? (stored as Threads) : {}
   } catch {
     return {}
@@ -26,11 +26,7 @@ export const useTutorStore = defineStore('tutor', () => {
 
   function setTurns(lessonId: string, next: TutorTurn[]): void {
     threads.value = { ...threads.value, [lessonId]: next }
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(threads.value))
-    } catch {
-      // Переписка просто не переживёт перезагрузку — падать из-за этого незачем.
-    }
+    safeSet('session', STORAGE_KEY, JSON.stringify(threads.value))
   }
 
   function clear(lessonId: string): void {

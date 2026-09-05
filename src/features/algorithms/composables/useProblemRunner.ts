@@ -14,10 +14,10 @@ import type {
   AlgorithmProgress,
   AlgorithmSubmission,
 } from '@/api/schemas/algorithms'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const POLL_DELAYS_MS = [1000, 2000, 3000] as const
 
-/** Кэш на модуль: список языков раннера один на всё приложение и почти не меняется. */
 let runnerLanguages: Promise<string[]> | null = null
 
 function loadRunnerLanguages(): Promise<string[]> {
@@ -30,7 +30,6 @@ function loadRunnerLanguages(): Promise<string[]> {
 export interface ProblemRunnerOptions {
   problemId: () => string
   sessionId: () => string | null
-  /** Пока false, отправка блокируется: сессия завершена или ещё не создана. */
   active: () => boolean
 }
 
@@ -48,11 +47,8 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   const supported = ref<string[]>([])
 
   const drafts = new Map<string, string>()
-  let alive = true
-  let requestId = 0
+  const requestGuard = useVersionedLoad()
 
-  /** Язык предлагается, только если он есть и в шаблонах задачи, и в раннере:
-      иначе про отказ пользователь узнавал бы уже после отправки. */
   const languages = computed(() => {
     const templates = problem.value?.templates.map((item) => item.language) ?? []
     if (supported.value.length === 0) {
@@ -92,8 +88,6 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   function selectLanguage(next: string): void {
     const current = problem.value
     if (!current) return
-    /* Черновик прежнего языка сохраняем синхронно: watch отработал бы только
-       на следующем тике, и при быстром переключении правки терялись бы. */
     if (language.value) {
       drafts.set(draftKey(current.id, language.value), sourceCode.value)
     }
@@ -105,27 +99,26 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   async function load(): Promise<void> {
     const id = options.problemId()
     if (!id) return
-    const version = ++requestId
+    const version = requestGuard.start()
     problemPending.value = true
     runError.value = null
     result.value = null
     try {
       const [loaded, allowed] = await Promise.all([getAlgorithmProblem(id), loadRunnerLanguages()])
-      if (!alive || version !== requestId) return
+      if (!requestGuard.isCurrent(version)) return
       problem.value = loaded
       supported.value = allowed
       language.value = ''
       selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
-      // Прогресс не критичен для решения — его отсутствие не должно ломать экран.
       getAlgorithmProgress(id)
         .then((value) => {
-          if (alive && version === requestId) progress.value = value
+          if (requestGuard.isCurrent(version)) progress.value = value
         })
         .catch(() => {})
     } catch (cause) {
-      if (version === requestId) runError.value = cause
+      if (requestGuard.isCurrent(version)) runError.value = cause
     } finally {
-      if (version === requestId) problemPending.value = false
+      if (requestGuard.isCurrent(version)) problemPending.value = false
     }
   }
 
@@ -137,9 +130,9 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       const delay = POLL_DELAYS_MS[Math.min(attempt, POLL_DELAYS_MS.length - 1)]
       attempt += 1
       await new Promise((resolve) => setTimeout(resolve, delay))
-      if (!alive || version !== requestId) return
+      if (!requestGuard.isCurrent(version)) return
       current = await getAlgorithmSubmission(initial.id)
-      if (version === requestId) result.value = current
+      if (requestGuard.isCurrent(version)) result.value = current
     }
   }
 
@@ -147,7 +140,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     const currentProblem = problem.value
     const sessionId = options.sessionId()
     if (!canExecute.value || !currentProblem || !sessionId) return
-    const version = requestId
+    const version = requestGuard.peek()
     running.value = true
     runError.value = null
     try {
@@ -161,14 +154,14 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
         kind === 'run'
           ? await runAlgorithm(currentProblem.id, payload)
           : await submitAlgorithm(currentProblem.id, payload)
-      if (version === requestId) await poll(initial, version)
-      if (kind === 'submit' && alive && version === requestId) {
+      if (requestGuard.isCurrent(version)) await poll(initial, version)
+      if (kind === 'submit' && requestGuard.isCurrent(version)) {
         progress.value = await getAlgorithmProgress(currentProblem.id).catch(() => progress.value)
       }
     } catch (cause) {
-      if (version === requestId) runError.value = cause
+      if (requestGuard.isCurrent(version)) runError.value = cause
     } finally {
-      if (version === requestId) running.value = false
+      if (requestGuard.isCurrent(version)) running.value = false
     }
   }
 
@@ -191,8 +184,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   }
 
   function dispose(): void {
-    alive = false
-    requestId += 1
+    requestGuard.cancel()
   }
 
   watch(sourceCode, (value) => {

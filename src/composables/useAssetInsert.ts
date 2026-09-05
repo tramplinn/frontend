@@ -80,7 +80,7 @@ export function useAssetInsert(insert: Insert, replace: Replace): AssetInsert {
     if (event.dataTransfer?.types.includes('Files') !== true) {
       return
     }
-    // Без preventDefault браузер откроет файл вместо вставки.
+
     event.preventDefault()
     dragging.value = true
   }

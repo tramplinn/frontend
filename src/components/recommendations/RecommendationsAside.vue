@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import LoadState from '@/components/ui/LoadState.vue'
+import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import { useRecommendations } from '@/features/recommendations/composables/useRecommendations'
-import RecommendedAlgorithmRow from './RecommendedAlgorithmRow.vue'
-import RecommendedCourseRow from './RecommendedCourseRow.vue'
+import { hours } from '@/lib/hours'
+import RecommendationRow from './RecommendationRow.vue'
 
 const { courses, algorithms, pending, error } = useRecommendations()
 </script>
@@ -13,14 +14,30 @@ const { courses, algorithms, pending, error } = useRecommendations()
       <div v-if="algorithms.length > 0" class="block">
         <h2 class="heading">рекомендуем алгосы</h2>
         <div class="list">
-          <RecommendedAlgorithmRow v-for="item in algorithms" :key="item.id" :item="item" />
+          <RecommendationRow
+            v-for="item in algorithms"
+            :key="item.id"
+            :to="{ name: 'algorithm-solo', params: { problem: item.id } }"
+            :title="item.title"
+            :topics="item.topics"
+          >
+            <DifficultyChip :difficulty="item.difficulty" />
+          </RecommendationRow>
         </div>
       </div>
 
       <div v-if="courses.length > 0" class="block">
         <h2 class="heading">рекомендуем курсы</h2>
         <div class="list">
-          <RecommendedCourseRow v-for="item in courses" :key="item.id" :item="item" />
+          <RecommendationRow
+            v-for="item in courses"
+            :key="item.id"
+            :to="{ name: 'course', params: { course: item.slug } }"
+            :title="item.title"
+            :topics="item.topics"
+          >
+            <span v-if="item.estHours !== null" class="hours">{{ hours(item.estHours) }}</span>
+          </RecommendationRow>
         </div>
       </div>
     </LoadState>
@@ -51,5 +68,10 @@ const { courses, algorithms, pending, error } = useRecommendations()
 .list {
   display: grid;
   gap: var(--space-1);
+}
+
+.hours {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
 }
 </style>

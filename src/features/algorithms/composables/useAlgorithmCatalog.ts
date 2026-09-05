@@ -2,6 +2,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { listCatalog } from '@/api/algorithms'
 import type { AlgorithmDifficulty, ProblemCard } from '@/api/schemas/algorithms'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PAGE_SIZE = 50
 const SEARCH_DEBOUNCE_MS = 300
@@ -18,15 +19,14 @@ export function useAlgorithmCatalog() {
   const search = ref('')
   const page = ref(0)
 
-  let alive = true
-  let version = 0
+  const loadGuard = useVersionedLoad()
   let debounce: ReturnType<typeof setTimeout> | null = null
 
   const solvedCount = computed(() => items.value.filter((item) => item.solved).length)
   const hasMore = computed(() => (page.value + 1) * PAGE_SIZE < total.value)
 
   async function load(): Promise<void> {
-    const current = ++version
+    const current = loadGuard.start()
     pending.value = true
     error.value = null
     try {
@@ -37,14 +37,14 @@ export function useAlgorithmCatalog() {
         limit: PAGE_SIZE,
         offset: page.value * PAGE_SIZE,
       })
-      if (!alive || current !== version) return
+      if (!loadGuard.isCurrent(current)) return
       items.value = catalog.items
       topics.value = catalog.topics
       total.value = catalog.total
     } catch (cause) {
-      if (current === version) error.value = cause
+      if (loadGuard.isCurrent(current)) error.value = cause
     } finally {
-      if (current === version) pending.value = false
+      if (loadGuard.isCurrent(current)) pending.value = false
     }
   }
 
@@ -56,7 +56,6 @@ export function useAlgorithmCatalog() {
   watch([difficulty, topic], resetPageAndLoad)
   watch(page, () => void load())
 
-  // Поиск печатают посимвольно — без задержки это запрос на каждую букву.
   watch(search, () => {
     if (debounce) clearTimeout(debounce)
     debounce = setTimeout(resetPageAndLoad, SEARCH_DEBOUNCE_MS)
@@ -64,8 +63,7 @@ export function useAlgorithmCatalog() {
 
   onMounted(() => void load())
   onUnmounted(() => {
-    alive = false
-    version += 1
+    loadGuard.cancel()
     if (debounce) clearTimeout(debounce)
   })
 

@@ -2,27 +2,18 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { getPracticeSession, startFreeSession } from '@/api/algorithms'
 import type { PracticeSession } from '@/api/schemas/algorithms'
+import { readSessionValue, writeSessionValue } from '@/lib/sessionKeyStorage'
 
 import { useProblemRunner } from './useProblemRunner'
 
-/** Одна свободная сессия на вкладку: она без дедлайна и переживает переход между задачами. */
 const STORAGE_KEY = 'tramplin:free-session'
 
 function readSessionId(): string | null {
-  try {
-    return sessionStorage.getItem(STORAGE_KEY)
-  } catch {
-    return null
-  }
+  return readSessionValue(STORAGE_KEY)
 }
 
 function rememberSessionId(value: string | null): void {
-  try {
-    if (value) sessionStorage.setItem(STORAGE_KEY, value)
-    else sessionStorage.removeItem(STORAGE_KEY)
-  } catch {
-    // Решать можно и без запоминания — просто создастся новая сессия.
-  }
+  writeSessionValue(STORAGE_KEY, value)
 }
 
 async function restoreOrStart(): Promise<PracticeSession> {

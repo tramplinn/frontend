@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import type { RecommendedAlgorithm } from '@/api/schemas/recommendations'
-import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
+import type { RouteLocationRaw } from 'vue-router'
 
-defineProps<{ item: RecommendedAlgorithm }>()
+defineProps<{ to: RouteLocationRaw; title: string; topics: string[] }>()
 </script>
 
 <template>
-  <RouterLink :to="{ name: 'algorithm-solo', params: { problem: item.id } }" class="row">
-    <span class="title">{{ item.title }}</span>
+  <RouterLink :to="to" class="row">
+    <span class="title">{{ title }}</span>
     <span class="meta">
-      <DifficultyChip :difficulty="item.difficulty" />
-      <span v-for="topic in item.topics.slice(0, 2)" :key="topic" class="topic">{{ topic }}</span>
+      <slot />
+      <span v-for="topic in topics.slice(0, 2)" :key="topic" class="topic">{{ topic }}</span>
     </span>
   </RouterLink>
 </template>
@@ -43,13 +42,5 @@ defineProps<{ item: RecommendedAlgorithm }>()
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
-}
-
-.topic {
-  padding: 1px var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: var(--text-micro);
 }
 </style>
