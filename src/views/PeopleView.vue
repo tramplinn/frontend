@@ -41,7 +41,6 @@ function subtitle(person: PublicUser): string {
   <section class="people">
     <header class="head">
       <div>
-        <p class="eyebrow">сообщество</p>
         <h1>люди</h1>
       </div>
       <p>{{ total }} профилей</p>
@@ -93,15 +92,12 @@ function subtitle(person: PublicUser): string {
 }
 .head h1 {
   font-size: var(--text-hero);
+  font-weight: var(--weight-semibold);
   letter-spacing: -0.03em;
 }
-.head > p,
-.eyebrow {
+.head > p {
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-.eyebrow {
-  color: var(--accent);
 }
 .search {
   display: flex;
