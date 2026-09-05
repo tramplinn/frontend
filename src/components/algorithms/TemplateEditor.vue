@@ -21,7 +21,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:language': [value: AlgorithmLanguage]
   patch: [changes: Partial<{ starterCode: string; solutionCode: string }>]
-  save: []
   validate: []
   remove: []
 }>()
@@ -34,7 +33,7 @@ const options = computed(() =>
 )
 
 const validatedLabel = computed(() => {
-  if (!props.saved) return 'язык ещё не добавлен к задаче'
+  if (!props.saved) return 'сохранится автоматически'
   if (!props.saved.validatedAt) return 'эталонное решение не проверено'
   return `проверено ${new Date(props.saved.validatedAt).toLocaleString('ru-RU')}`
 })
@@ -83,7 +82,6 @@ const validatedLabel = computed(() => {
     </div>
 
     <div class="actions">
-      <AppButton :loading="props.busy" @click="emit('save')">сохранить шаблон</AppButton>
       <AppButton
         variant="primary"
         :loading="props.busy"
@@ -101,9 +99,7 @@ const validatedLabel = computed(() => {
       />
     </div>
 
-    <p v-if="!props.canValidate" class="hint">
-      Проверка доступна, когда у задачи есть тесты и сохранённое эталонное решение.
-    </p>
+    <p v-if="!props.canValidate" class="hint">Добавьте хотя бы один тест и эталонное решение.</p>
   </section>
 </template>
 

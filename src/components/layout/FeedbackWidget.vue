@@ -120,89 +120,91 @@ async function submit(): Promise<void> {
       обратная связь
     </button>
 
-    <aside v-else class="panel" aria-label="Обратная связь">
-      <header class="panel-header">
-        <div>
-          <h2>обратная связь</h2>
-          <p>Идея, ошибка или вопрос — всё сюда.</p>
-        </div>
-        <button
-          type="button"
-          class="close"
-          :disabled="uploading || submitting"
-          aria-label="Закрыть"
-          @click="close"
-        >
-          ×
-        </button>
-      </header>
-
-      <div v-if="sent" class="success" role="status">
-        <span aria-hidden="true">✓</span>
-        <div>
-          <strong>Спасибо!</strong>
-          <p>Сообщение отправлено.</p>
-        </div>
-        <AppButton size="sm" variant="quiet" @click="close">закрыть</AppButton>
-      </div>
-
-      <form v-else class="form" @submit.prevent="submit">
-        <label class="field">
-          <span class="label">что случилось?</span>
-          <textarea
-            ref="textarea"
-            v-model="message"
-            class="message"
-            rows="5"
-            :maxlength="MAX_MESSAGE"
-            placeholder="Опишите коротко — страницу мы приложим сами"
-            @paste="pasteFiles"
-          ></textarea>
-        </label>
-
-        <ul v-if="attachments.length" class="attachments">
-          <li v-for="asset in attachments" :key="asset.id">
-            <span :title="asset.filename">{{ asset.filename }}</span>
-            <button
-              type="button"
-              :aria-label="`Убрать ${asset.filename}`"
-              :disabled="uploading"
-              @click="detach(asset.id)"
-            >
-              ×
-            </button>
-          </li>
-        </ul>
-
-        <div class="footer">
-          <label
-            class="attach"
-            :class="{ disabled: uploading || attachments.length >= MAX_ATTACHMENTS }"
+    <Transition name="feedback-panel">
+      <aside v-if="open" class="panel" aria-label="Обратная связь">
+        <header class="panel-header">
+          <div>
+            <h2>обратная связь</h2>
+            <p>Идея, ошибка или вопрос — всё сюда.</p>
+          </div>
+          <button
+            type="button"
+            class="close"
+            :disabled="uploading || submitting"
+            aria-label="Закрыть"
+            @click="close"
           >
-            {{ uploading ? 'загружаю…' : 'прикрепить файл' }}
-            <input
-              class="visually-hidden"
-              type="file"
-              multiple
-              :accept="ACCEPTED"
-              :disabled="uploading || attachments.length >= MAX_ATTACHMENTS"
-              @change="pickFiles"
-            />
+            ×
+          </button>
+        </header>
+
+        <div v-if="sent" class="success" role="status">
+          <span aria-hidden="true">✓</span>
+          <div>
+            <strong>Спасибо!</strong>
+            <p>Сообщение отправлено.</p>
+          </div>
+          <AppButton size="sm" variant="quiet" @click="close">закрыть</AppButton>
+        </div>
+
+        <form v-else class="form" @submit.prevent="submit">
+          <label class="field">
+            <span class="label">что случилось?</span>
+            <textarea
+              ref="textarea"
+              v-model="message"
+              class="message"
+              rows="5"
+              :maxlength="MAX_MESSAGE"
+              placeholder="Опишите коротко — страницу мы приложим сами"
+              @paste="pasteFiles"
+            ></textarea>
           </label>
-          <AppButton
-            type="submit"
-            size="sm"
-            variant="primary"
-            :disabled="message.trim().length === 0 || uploading"
-            :loading="submitting"
-          >
-            отправить
-          </AppButton>
-        </div>
 
-        <p v-if="error" class="error" role="alert">{{ error }}</p>
-      </form>
-    </aside>
+          <ul v-if="attachments.length" class="attachments">
+            <li v-for="asset in attachments" :key="asset.id">
+              <span :title="asset.filename">{{ asset.filename }}</span>
+              <button
+                type="button"
+                :aria-label="`Убрать ${asset.filename}`"
+                :disabled="uploading"
+                @click="detach(asset.id)"
+              >
+                ×
+              </button>
+            </li>
+          </ul>
+
+          <div class="footer">
+            <label
+              class="attach"
+              :class="{ disabled: uploading || attachments.length >= MAX_ATTACHMENTS }"
+            >
+              {{ uploading ? 'загружаю…' : 'прикрепить файл' }}
+              <input
+                class="visually-hidden"
+                type="file"
+                multiple
+                :accept="ACCEPTED"
+                :disabled="uploading || attachments.length >= MAX_ATTACHMENTS"
+                @change="pickFiles"
+              />
+            </label>
+            <AppButton
+              type="submit"
+              size="sm"
+              variant="primary"
+              :disabled="message.trim().length === 0 || uploading"
+              :loading="submitting"
+            >
+              отправить
+            </AppButton>
+          </div>
+
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
+        </form>
+      </aside>
+    </Transition>
   </div>
 </template>
 
@@ -211,7 +213,7 @@ async function submit(): Promise<void> {
   position: fixed;
   z-index: 40;
   right: var(--space-6);
-  bottom: var(--space-6);
+  bottom: 0;
 }
 
 .trigger {
@@ -221,7 +223,8 @@ async function submit(): Promise<void> {
   height: var(--ctl-sm);
   padding: 0 var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
+  border-bottom: 0;
+  border-radius: var(--radius-ctl) var(--radius-ctl) 0 0;
   background: color-mix(in srgb, var(--card) 88%, transparent);
   box-shadow: var(--shadow-raised);
   color: var(--text-muted);
@@ -240,9 +243,23 @@ async function submit(): Promise<void> {
   padding: var(--space-4);
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-bottom: 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
   background: var(--card);
   box-shadow: var(--shadow-raised);
+}
+
+.feedback-panel-enter-active,
+.feedback-panel-leave-active {
+  transition:
+    transform var(--motion-base) var(--ease),
+    opacity var(--motion-fast) var(--ease);
+}
+
+.feedback-panel-enter-from,
+.feedback-panel-leave-to {
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .panel-header {
@@ -392,13 +409,19 @@ async function submit(): Promise<void> {
 
 @media (max-width: 520px) {
   .feedback-widget {
-    right: var(--space-3);
-    bottom: var(--space-3);
+    right: 0;
   }
 
   .panel {
-    width: calc(100vw - var(--space-6));
-    max-height: calc(100dvh - var(--space-6));
+    width: 100vw;
+    max-height: calc(100dvh - var(--space-8));
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+
+  .trigger {
+    margin-right: var(--space-3);
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(var(--ctl-sm) + env(safe-area-inset-bottom));
   }
 }
 </style>

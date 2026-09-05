@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { TestCase } from '@/api/schemas/algorithmAuthoring'
 import type { TestCaseFields } from '@/features/algorithms/composables/useProblemEditor'
-import AppButton from '@/components/ui/AppButton.vue'
 import AppCheckbox from '@/components/ui/AppCheckbox.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 
@@ -14,7 +13,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   patch: [changes: Partial<TestCaseFields>]
-  save: []
   remove: []
 }>()
 </script>
@@ -42,7 +40,6 @@ const emit = defineEmits<{
         />
       </label>
       <div class="actions">
-        <AppButton size="sm" :loading="props.busy" @click="emit('save')">сохранить</AppButton>
         <ConfirmButton :loading="props.busy" @confirm="emit('remove')" />
       </div>
     </header>

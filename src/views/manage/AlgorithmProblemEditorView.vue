@@ -18,6 +18,7 @@ const {
   actionError,
   addCase,
   assetError,
+  autosaving,
   busy,
   caseDrafts,
   checkTemplate,
@@ -39,9 +40,7 @@ const {
   publishBlockers,
   removeCase,
   removeTemplate,
-  saveCase,
-  saveProblem,
-  saveTemplate,
+  savedAt,
   setStatementField,
   templateDrafts,
   templateOf,
@@ -63,8 +62,10 @@ const statementPreview = computed(() => renderMarkdown(fields.value?.statementMd
 
 /** Прогон по тестам имеет смысл, только когда есть что прогонять и на чём. */
 const canValidate = computed(() => {
-  const saved = templateOf(editedLanguage.value)
-  return (loaded.value?.testCases.length ?? 0) > 0 && Boolean(saved?.solutionCode.trim())
+  return (
+    (loaded.value?.testCases.length ?? 0) > 0 &&
+    Boolean(currentTemplateDraft.value.solutionCode.trim())
+  )
 })
 </script>
 
@@ -75,7 +76,9 @@ const canValidate = computed(() => {
         <div class="head-main">
           <h1>{{ loaded.title }}</h1>
           <StatusChip :status="loaded.status" />
-          <span v-if="dirty" class="dirty">есть несохранённые правки</span>
+          <span v-if="autosaving" class="save-state">сохраняю…</span>
+          <span v-else-if="dirty" class="save-state">сохранится автоматически</span>
+          <span v-else-if="savedAt" class="saved">сохранено</span>
         </div>
         <div class="head-actions">
           <AppButton
@@ -146,12 +149,6 @@ const canValidate = computed(() => {
           @dragover="onDragOver"
           @dragleave="onDragLeave"
         />
-
-        <div class="row">
-          <AppButton variant="primary" :loading="busy === 'problem'" @click="saveProblem">
-            сохранить задачу
-          </AppButton>
-        </div>
       </section>
 
       <section class="cases">
@@ -175,7 +172,6 @@ const canValidate = computed(() => {
                 :number="index + 1"
                 :busy="busy === `case:${item.id}`"
                 @patch="(changes) => patchCase(item.id, changes)"
-                @save="saveCase(item.id)"
                 @remove="removeCase(item.id)"
               />
             </template>
@@ -192,7 +188,6 @@ const canValidate = computed(() => {
         :busy="busy === `template:${editedLanguage}`"
         :can-validate="canValidate"
         @patch="(changes) => patchTemplate(editedLanguage, changes)"
-        @save="saveTemplate(editedLanguage)"
         @validate="checkTemplate(editedLanguage)"
         @remove="removeTemplate(editedLanguage)"
       />
@@ -250,9 +245,17 @@ const canValidate = computed(() => {
   background: var(--card);
 }
 
-.dirty {
-  color: var(--warning);
+.save-state,
+.saved {
   font-size: var(--text-caption);
+}
+
+.save-state {
+  color: var(--text-muted);
+}
+
+.saved {
+  color: var(--success);
 }
 
 h2 {
@@ -301,11 +304,6 @@ textarea {
   font-family: var(--font-mono);
 }
 
-.row {
-  display: flex;
-  gap: var(--space-3);
-}
-
 .cases {
   display: grid;
   gap: var(--space-3);
@@ -321,5 +319,34 @@ textarea {
   display: grid;
   gap: var(--space-3);
   list-style: none;
+}
+
+@media (max-width: 600px) {
+  .head {
+    align-items: stretch;
+  }
+
+  .head-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    width: 100%;
+  }
+
+  .head h1 {
+    min-width: 0;
+    font-size: var(--text-hero);
+    overflow-wrap: anywhere;
+  }
+
+  .head-main .save-state,
+  .head-main .saved {
+    grid-column: 1 / -1;
+  }
+
+  .head-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

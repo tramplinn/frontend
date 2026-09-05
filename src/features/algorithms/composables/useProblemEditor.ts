@@ -48,6 +48,7 @@ export interface TestCaseFields {
 }
 
 export const ALL_LANGUAGES = algorithmLanguageSchema.options
+const AUTOSAVE_DEBOUNCE_MS = 700
 
 function toFields(problem: ProblemAuthor): ProblemFields {
   return {
@@ -92,8 +93,17 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const error = ref<unknown>(null)
   const actionError = ref<string | null>(null)
   const busy = ref<string | null>(null)
+  const autosaveCount = ref(0)
+  const savedAt = ref<Date | null>(null)
 
   let version = 0
+  let syncing = false
+  let problemTimer: ReturnType<typeof setTimeout> | undefined
+  const caseTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  const templateTimers = new Map<AlgorithmLanguage, ReturnType<typeof setTimeout>>()
+  let saveQueue: Promise<void> = Promise.resolve()
+
+  const autosaving = computed(() => autosaveCount.value > 0)
 
   const usedLanguages = computed(
     () => new Set(loaded.value?.templates.map((item) => item.language) ?? []),
@@ -120,28 +130,38 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     )
   })
 
+  function caseDirty(caseId: string): boolean {
+    const problem = loaded.value
+    const saved = problem?.testCases.find((item) => item.id === caseId)
+    const draft = caseDrafts.value.get(caseId)
+    return Boolean(
+      saved &&
+      draft &&
+      (draft.input !== saved.input ||
+        draft.expectedOutput !== saved.expectedOutput ||
+        draft.isSample !== saved.isSample ||
+        draft.weight !== saved.weight),
+    )
+  }
+
+  function templateDirty(language: AlgorithmLanguage): boolean {
+    const draft = templateDrafts.value.get(language)
+    if (!draft) return false
+    const saved = loaded.value?.templates.find((item) => item.language === language)
+    return (
+      draft.starterCode !== (saved?.starterCode ?? '') ||
+      draft.solutionCode !== (saved?.solutionCode ?? '')
+    )
+  }
+
   const dirty = computed(() => {
     const problem = loaded.value
     if (!problem) return false
-    if (problemDirty.value) return true
-    const changedCase = problem.testCases.some((item) => {
-      const draft = caseDrafts.value.get(item.id)
-      return (
-        draft !== undefined &&
-        (draft.input !== item.input ||
-          draft.expectedOutput !== item.expectedOutput ||
-          draft.isSample !== item.isSample ||
-          draft.weight !== item.weight)
-      )
-    })
-    if (changedCase) return true
-    return [...templateDrafts.value].some(([language, draft]) => {
-      const saved = problem.templates.find((item) => item.language === language)
-      return (
-        draft.starterCode !== (saved?.starterCode ?? '') ||
-        draft.solutionCode !== (saved?.solutionCode ?? '')
-      )
-    })
+    return (
+      problemDirty.value ||
+      problem.testCases.some((item) => caseDirty(item.id)) ||
+      ALL_LANGUAGES.some((language) => templateDirty(language))
+    )
   })
 
   /** Каждый флаг относится к своей секции формы — сообщение показывается прямо там,
@@ -196,6 +216,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
   function syncDrafts(problem: ProblemAuthor): void {
+    syncing = true
     loaded.value = problem
     fields.value = toFields(problem)
     caseDrafts.value = new Map(problem.testCases.map((item) => [item.id, toCaseFields(item)]))
@@ -205,9 +226,20 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
         { starterCode: item.starterCode, solutionCode: item.solutionCode },
       ]),
     )
+    syncing = false
+  }
+
+  function clearTimers(): void {
+    clearTimeout(problemTimer)
+    problemTimer = undefined
+    for (const timer of caseTimers.values()) clearTimeout(timer)
+    for (const timer of templateTimers.values()) clearTimeout(timer)
+    caseTimers.clear()
+    templateTimers.clear()
   }
 
   async function load(): Promise<void> {
+    clearTimers()
     const current = ++version
     pending.value = true
     error.value = null
@@ -234,24 +266,62 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     }
   }
 
-  async function saveProblem(): Promise<void> {
-    const draft = fields.value
-    const problem = loaded.value
-    if (!draft || !problem) return
-    await run('problem', async () => {
+  function enqueueSave(action: () => Promise<void>): Promise<boolean> {
+    let succeeded = false
+    const task = saveQueue.then(async () => {
+      autosaveCount.value += 1
+      actionError.value = null
+      try {
+        await action()
+        savedAt.value = new Date()
+        succeeded = true
+      } catch (cause) {
+        actionError.value = errorText(cause)
+      } finally {
+        autosaveCount.value -= 1
+      }
+    })
+    saveQueue = task
+    return task.then(() => succeeded)
+  }
+
+  async function saveProblem(): Promise<boolean> {
+    if (!problemDirty.value) return true
+    return enqueueSave(async () => {
+      const draft = fields.value
+      const problem = loaded.value
+      if (!draft || !problem || !problemDirty.value) return
+      const submitted = { ...draft }
       const saved = await updateProblem(problem.id, {
-        title: draft.title,
-        statementMd: draft.statementMd,
-        difficulty: draft.difficulty,
-        topics: topicsOf(draft.topics),
-        timeLimitMs: draft.timeLimitMs,
-        memoryLimitKb: draft.memoryLimitKb,
+        title: submitted.title,
+        statementMd: submitted.statementMd,
+        difficulty: submitted.difficulty,
+        topics: topicsOf(submitted.topics),
+        timeLimitMs: submitted.timeLimitMs,
+        memoryLimitKb: submitted.memoryLimitKb,
       })
-      loaded.value = saved
+      const current = loaded.value
+      if (!current || current.id !== saved.id) return
+      current.title = saved.title
+      current.statementMd = saved.statementMd
+      current.statementHtml = saved.statementHtml
+      current.difficulty = saved.difficulty
+      current.topics = saved.topics
+      current.timeLimitMs = saved.timeLimitMs
+      current.memoryLimitKb = saved.memoryLimitKb
     })
   }
 
+  function scheduleProblemSave(): void {
+    clearTimeout(problemTimer)
+    problemTimer = setTimeout(() => {
+      problemTimer = undefined
+      void saveProblem()
+    }, AUTOSAVE_DEBOUNCE_MS)
+  }
+
   async function togglePublished(): Promise<void> {
+    if (!(await flushAutosaves())) return
     const problem = loaded.value
     if (!problem) return
     const next = problem.status === 'published' ? 'draft' : 'published'
@@ -264,6 +334,14 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     const current = caseDrafts.value.get(caseId)
     if (current) {
       caseDrafts.value = new Map(caseDrafts.value).set(caseId, { ...current, ...changes })
+      clearTimeout(caseTimers.get(caseId))
+      caseTimers.set(
+        caseId,
+        setTimeout(() => {
+          caseTimers.delete(caseId)
+          void saveCase(caseId)
+        }, AUTOSAVE_DEBOUNCE_MS),
+      )
     }
   }
 
@@ -284,11 +362,12 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     })
   }
 
-  async function saveCase(caseId: string): Promise<void> {
-    const draft = caseDrafts.value.get(caseId)
-    if (!draft) return
-    await run(`case:${caseId}`, async () => {
-      const saved = await updateTestCase(caseId, draft)
+  async function saveCase(caseId: string): Promise<boolean> {
+    if (!caseDirty(caseId)) return true
+    return enqueueSave(async () => {
+      const draft = caseDrafts.value.get(caseId)
+      if (!draft || !caseDirty(caseId)) return
+      const saved = await updateTestCase(caseId, { ...draft })
       const problem = loaded.value
       if (!problem) return
       const index = problem.testCases.findIndex((item) => item.id === caseId)
@@ -298,6 +377,9 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   async function removeCase(caseId: string): Promise<void> {
+    clearTimeout(caseTimers.get(caseId))
+    caseTimers.delete(caseId)
+    await saveQueue
     await run(`case:${caseId}`, async () => {
       await deleteTestCase(caseId)
       const problem = loaded.value
@@ -311,25 +393,44 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   function patchTemplate(
-    language: string,
+    language: AlgorithmLanguage,
     changes: Partial<{ starterCode: string; solutionCode: string }>,
   ): void {
     const current = templateDrafts.value.get(language) ?? { starterCode: '', solutionCode: '' }
     templateDrafts.value = new Map(templateDrafts.value).set(language, { ...current, ...changes })
+    clearTimeout(templateTimers.get(language))
+    templateTimers.set(
+      language,
+      setTimeout(() => {
+        templateTimers.delete(language)
+        void saveTemplate(language)
+      }, AUTOSAVE_DEBOUNCE_MS),
+    )
   }
 
-  async function saveTemplate(language: AlgorithmLanguage): Promise<void> {
-    const problem = loaded.value
-    const draft = templateDrafts.value.get(language) ?? { starterCode: '', solutionCode: '' }
-    if (!problem) return
-    await run(`template:${language}`, async () => {
+  async function saveTemplate(language: AlgorithmLanguage): Promise<boolean> {
+    if (!templateDirty(language)) return true
+    return enqueueSave(async () => {
+      const problem = loaded.value
+      const draft = templateDrafts.value.get(language)
+      if (!problem || !draft || !templateDirty(language)) return
       const saved = await putTemplate(problem.id, language, draft.starterCode, draft.solutionCode)
       upsertTemplate(saved)
     })
   }
 
+  async function flushAutosaves(): Promise<boolean> {
+    clearTimers()
+    const results = [await saveProblem()]
+    for (const item of loaded.value?.testCases ?? []) results.push(await saveCase(item.id))
+    for (const item of ALL_LANGUAGES) results.push(await saveTemplate(item))
+    await saveQueue
+    return results.every(Boolean)
+  }
+
   /** Прогоняет solutionCode по всем тестам: без этого задачу нельзя опубликовать. */
   async function checkTemplate(language: AlgorithmLanguage): Promise<void> {
+    if (!(await flushAutosaves())) return
     const problem = loaded.value
     if (!problem) return
     await run(`template:${language}`, async () => {
@@ -338,6 +439,9 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   async function removeTemplate(language: AlgorithmLanguage): Promise<void> {
+    clearTimeout(templateTimers.get(language))
+    templateTimers.delete(language)
+    await saveQueue
     const problem = loaded.value
     if (!problem) return
     await run(`template:${language}`, async () => {
@@ -375,11 +479,19 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     () => toValue(problemId),
     () => void load(),
   )
+  watch(
+    fields,
+    () => {
+      if (!syncing) scheduleProblemSave()
+    },
+    { deep: true, flush: 'sync' },
+  )
   onMounted(() => {
     void load()
     window.addEventListener('beforeunload', guard)
   })
   onUnmounted(() => {
+    clearTimers()
     window.removeEventListener('beforeunload', guard)
   })
 
@@ -387,6 +499,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     actionError,
     addCase,
     assetError: assetInsert.error,
+    autosaving,
     busy,
     caseDrafts,
     checkTemplate,
@@ -413,6 +526,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     saveCase,
     saveProblem,
     saveTemplate,
+    savedAt,
     setStatementField,
     templateDrafts,
     templateOf,

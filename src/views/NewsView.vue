@@ -46,7 +46,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section>
+  <section class="news-page">
     <h1 class="heading">новости</h1>
 
     <LoadState :pending="pending" :error="error">
@@ -95,5 +95,32 @@ onMounted(async () => {
 
 .more {
   margin-top: var(--space-6);
+}
+
+@media (max-width: 600px) {
+  .heading {
+    margin-bottom: var(--space-5);
+  }
+
+  .feed {
+    width: calc(100% + var(--space-3));
+    max-width: none;
+    padding-right: var(--space-3);
+    overflow-x: auto;
+    flex-direction: row;
+    gap: var(--space-3);
+    scroll-padding-inline: 0 var(--space-3);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .feed::-webkit-scrollbar {
+    display: none;
+  }
+
+  .feed > * {
+    flex: 0 0 min(88%, 420px);
+    scroll-snap-align: start;
+  }
 }
 </style>
