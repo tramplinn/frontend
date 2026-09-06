@@ -29,7 +29,10 @@ const SIMPLE_LABELS: Record<string, string> = {
   sections: 'все разделы',
   learning: 'моё обучение',
   algorithms: 'алгосы',
+  'algorithm-solo': 'алгосы',
   'manage-algorithms': 'алгозадачи',
+  'manage-algorithm': 'алгозадачи',
+  'manage-practice-set': 'практика',
   'news-item': 'новость',
   catalog: 'курсы',
   profile: 'профиль',
@@ -66,11 +69,18 @@ const crumbs = computed<Crumb[]>(() => {
       ? content.findLesson(courseSlug, param('module'), param('lesson'))
       : route.name === 'quiz'
         ? content.findQuiz(courseSlug, param('module'), param('quiz'))
-        : null
+        : route.name === 'algorithm-practice'
+          ? content.findPracticeSet(courseSlug, param('module'), param('set'))
+          : null
   if (found) {
     trail.push({ label: found.module.title.toLowerCase(), to: null })
     trail.push({
-      label: ('lesson' in found ? found.lesson.title : found.quiz.title).toLowerCase(),
+      label: ('lesson' in found
+        ? found.lesson.title
+        : 'quiz' in found
+          ? found.quiz.title
+          : found.practiceSet.title
+      ).toLowerCase(),
       to: null,
     })
   }
@@ -90,7 +100,7 @@ const crumbs = computed<Crumb[]>(() => {
 
     <div class="side">
       <ThemeToggle />
-      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" />
+      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" float-error />
     </div>
   </header>
 </template>
@@ -142,25 +152,9 @@ a.crumb:hover {
   margin-left: auto;
 }
 
-.sign-in-error {
-  color: var(--danger);
-  font-size: var(--text-caption);
-  white-space: nowrap;
-}
-
 @media (max-width: 520px) {
   .header {
     padding-inline: var(--space-4);
-  }
-
-  .sign-in-error {
-    position: absolute;
-    z-index: 10;
-    top: calc(100% + var(--space-2));
-    right: var(--space-4);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-ctl);
-    background: var(--danger-soft);
   }
 }
 </style>

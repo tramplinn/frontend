@@ -85,6 +85,7 @@
   --map-height-compact: 280px;
 
   --motion-fast: 120ms;
+  --motion-base: 200ms;
   --ease: ease-out;
 
   /* Редактор кода (CodeMirror). Палитра совпадает с подсветкой уроков

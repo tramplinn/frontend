@@ -8,6 +8,7 @@ import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue
 import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
@@ -120,7 +121,7 @@ const canValidate = computed(() => {
           >
             {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
           </AppButton>
-          <RouterLink :to="{ name: 'manage-algorithms' }" class="back">← к библиотеке</RouterLink>
+          <BackLink :to="{ name: 'manage-algorithms' }">к библиотеке</BackLink>
         </div>
       </header>
 
@@ -261,7 +262,6 @@ const canValidate = computed(() => {
   font-size: var(--text-display);
 }
 
-.back,
 .muted {
   color: var(--text-muted);
   font-size: var(--text-caption);

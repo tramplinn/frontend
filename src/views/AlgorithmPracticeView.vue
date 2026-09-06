@@ -7,6 +7,7 @@ import ProblemEditorPanel from '@/components/algorithms/ProblemEditorPanel.vue'
 import ProblemStatement from '@/components/algorithms/ProblemStatement.vue'
 import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmPractice } from '@/features/algorithms/composables/useAlgorithmPractice'
 
@@ -40,9 +41,7 @@ const SESSION_LABELS: Record<string, string> = {
     <article v-if="practiceSet && session" class="practice">
       <header class="head">
         <div>
-          <RouterLink :to="{ name: 'course', params: { course: props.course } }" class="back">
-            ← к курсу
-          </RouterLink>
+          <BackLink :to="{ name: 'course', params: { course: props.course } }">к курсу</BackLink>
           <h1>{{ practiceSet.title }}</h1>
           <p v-if="practiceSet.description" class="muted">{{ practiceSet.description }}</p>
         </div>
@@ -125,7 +124,6 @@ const SESSION_LABELS: Record<string, string> = {
   font-size: var(--text-display);
 }
 
-.back,
 .muted,
 .status {
   color: var(--text-muted);

@@ -6,6 +6,7 @@ import type {
   CourseTree,
   Lesson,
   ModuleDependency,
+  ModuleItem,
   ModuleTree,
   Quiz,
   Track,
@@ -19,6 +20,11 @@ export interface LessonLocation {
 export interface QuizLocation {
   module: ModuleTree
   quiz: Quiz
+}
+
+export interface PracticeSetLocation {
+  module: ModuleTree
+  practiceSet: Extract<ModuleItem, { kind: 'practice' }>['practiceSet']
 }
 
 export const useContentStore = defineStore('content', () => {
@@ -96,6 +102,20 @@ export const useContentStore = defineStore('content', () => {
     return module && quiz ? { module, quiz } : null
   }
 
+  function findPracticeSet(
+    courseSlug: string,
+    moduleSlug: string,
+    practiceSetId: string,
+  ): PracticeSetLocation | null {
+    const course = courses.value.get(courseSlug)
+    const module = course?.modules.find((item) => item.slug === moduleSlug)
+    const item = module?.items.find(
+      (item) => item.kind === 'practice' && item.practiceSet.id === practiceSetId,
+    )
+    const practiceSet = item?.kind === 'practice' ? item.practiceSet : undefined
+    return module && practiceSet ? { module, practiceSet } : null
+  }
+
   return {
     tracks,
     courses,
@@ -104,5 +124,6 @@ export const useContentStore = defineStore('content', () => {
     courseDependencies,
     findLesson,
     findQuiz,
+    findPracticeSet,
   }
 })

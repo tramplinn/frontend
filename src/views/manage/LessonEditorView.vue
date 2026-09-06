@@ -3,6 +3,7 @@ import MarkdownEditor from '@/components/manage/MarkdownEditor.vue'
 import TeacherAssistantPanel from '@/components/manage/TeacherAssistantPanel.vue'
 import type { TeacherAssistantPatch } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useLessonEditor } from '@/features/lesson-editor/composables/useLessonEditor'
@@ -52,6 +53,7 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
           <span v-else-if="savedAt" class="saved">
             сохранено в {{ savedAt.toLocaleTimeString('ru-RU', { timeStyle: 'short' }) }}
           </span>
+          <BackLink :to="{ name: 'manage-content' }">к списку</BackLink>
         </div>
       </header>
 
@@ -91,7 +93,6 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
         <AppButton v-else variant="quiet" :loading="saving" @click="save('draft')">
           снять с публикации
         </AppButton>
-        <RouterLink :to="{ name: 'manage-content' }" class="back">← к списку</RouterLink>
       </footer>
 
       <TeacherAssistantPanel
@@ -168,15 +169,5 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
   align-items: center;
   gap: var(--space-3);
   margin-top: var(--space-6);
-}
-
-.back {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.back:hover {
-  color: var(--text);
 }
 </style>

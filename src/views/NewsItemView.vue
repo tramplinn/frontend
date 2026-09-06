@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getNews } from '@/api/news'
 import type { News } from '@/api/schemas/news'
 import NewsPhotos from '@/components/news/NewsPhotos.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatNewsDate } from '@/lib/newsDate'
@@ -42,7 +43,7 @@ watch(
 <template>
   <LoadState :pending="pending" :error="error">
     <article v-if="news" class="post">
-      <RouterLink :to="{ name: 'home' }" class="back">← все новости</RouterLink>
+      <BackLink :to="{ name: 'home' }" class="back">все новости</BackLink>
 
       <h1 class="title">{{ news.title }}</h1>
       <p v-if="date" class="date">{{ date }}</p>
@@ -64,14 +65,7 @@ watch(
 }
 
 .back {
-  display: inline-block;
   margin-bottom: var(--space-6);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.back:hover {
-  color: var(--text);
 }
 
 .title {

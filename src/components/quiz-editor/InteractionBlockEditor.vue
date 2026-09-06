@@ -88,6 +88,20 @@ function removeItem(groupIndex: number, itemIndex: number): void {
     ),
   )
 }
+
+function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
+  writeGroups(
+    groups.value.map((group, at) => {
+      if (at !== groupIndex) return group
+      const target = itemIndex + delta
+      if (target < 0 || target >= group.items.length) return group
+      const items = [...group.items]
+      const [moved] = items.splice(itemIndex, 1)
+      items.splice(target, 0, moved as string)
+      return { ...group, items }
+    }),
+  )
+}
 </script>
 
 <template>
@@ -145,7 +159,24 @@ function removeItem(groupIndex: number, itemIndex: number): void {
         </div>
         <div class="items">
           <div v-for="(item, itemIndex) in group.items" :key="itemIndex" class="item-row">
-            <span class="grip" aria-hidden="true">·</span>
+            <button
+              type="button"
+              class="move"
+              aria-label="Переместить элемент выше"
+              :disabled="itemIndex === 0"
+              @click="moveItem(groupIndex, itemIndex, -1)"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="move"
+              aria-label="Переместить элемент ниже"
+              :disabled="itemIndex === group.items.length - 1"
+              @click="moveItem(groupIndex, itemIndex, 1)"
+            >
+              ↓
+            </button>
             <input
               :value="item"
               :aria-label="`Элемент блока ${group.name}`"
@@ -153,6 +184,7 @@ function removeItem(groupIndex: number, itemIndex: number): void {
             />
             <button
               type="button"
+              class="remove"
               aria-label="Убрать элемент"
               @click="removeItem(groupIndex, itemIndex)"
             >
@@ -252,14 +284,11 @@ input:focus {
   align-items: center;
   gap: var(--space-2);
 }
-.grip {
-  color: var(--text-muted);
-  font-size: var(--text-title);
-}
 .item-row input {
   flex: 1;
 }
 .item-row button {
+  flex-shrink: 0;
   width: var(--ctl-sm);
   height: var(--ctl-sm);
   border: 0;
@@ -270,6 +299,15 @@ input:focus {
 }
 .item-row button:hover {
   background: var(--surface);
+  color: var(--text);
+}
+.item-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+  color: var(--text-muted);
+}
+.remove:hover {
   color: var(--danger);
 }
 @media (max-width: 680px) {

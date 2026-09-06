@@ -3,6 +3,7 @@ import AlgorithmChat from '@/components/algorithms/AlgorithmChat.vue'
 import ProblemEditorPanel from '@/components/algorithms/ProblemEditorPanel.vue'
 import ProblemStatement from '@/components/algorithms/ProblemStatement.vue'
 import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmSolo } from '@/features/algorithms/composables/useAlgorithmSolo'
 
@@ -14,7 +15,7 @@ const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
   <LoadState :pending="pending" :error="error">
     <article class="solo">
       <header class="head">
-        <RouterLink :to="{ name: 'algorithms' }" class="back">← ко всем задачам</RouterLink>
+        <BackLink :to="{ name: 'algorithms' }">ко всем задачам</BackLink>
         <span v-if="solved" class="chip solved">решена</span>
       </header>
 
@@ -42,11 +43,6 @@ const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-}
-
-.back {
-  color: var(--text-muted);
-  font-size: var(--text-caption);
 }
 
 .solved {

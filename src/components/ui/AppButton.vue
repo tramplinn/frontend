@@ -25,6 +25,7 @@ const isBlocked = computed(() => props.disabled || props.loading)
     :disabled="isBlocked"
     :aria-busy="props.loading"
   >
+    <span v-if="props.loading" class="spinner" aria-hidden="true" />
     <slot />
   </button>
 </template>
@@ -93,5 +94,22 @@ const isBlocked = computed(() => props.disabled || props.loading)
 
 .btn--quiet:not(:disabled):hover {
   color: var(--text);
+}
+
+.spinner {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  opacity: 0.7;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

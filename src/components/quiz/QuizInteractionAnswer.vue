@@ -87,6 +87,7 @@ function place(targetId: string): void {
         @drop.prevent="place(group.id)"
         @click="place(group.id)"
         @keydown.enter.prevent="place(group.id)"
+        @keydown.space.prevent="place(group.id)"
       >
         <strong>{{ group.label }}</strong>
         <button

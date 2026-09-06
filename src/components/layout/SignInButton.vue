@@ -7,8 +7,8 @@ import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 
 const props = withDefaults(
-  defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md' }>(),
-  { label: 'войти', size: 'md' },
+  defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md'; floatError?: boolean }>(),
+  { label: 'войти', size: 'md', floatError: false },
 )
 
 const auth = useAuthStore()
@@ -58,12 +58,29 @@ function start(): void {
   <AppButton v-else :size="props.size" variant="primary" :loading="signingIn" @click="start">
     {{ props.label }}
   </AppButton>
-  <span v-if="failed" class="error" role="alert">не удалось войти</span>
+  <span v-if="failed" class="error" :class="{ 'error--float': props.floatError }" role="alert">
+    не удалось войти
+  </span>
 </template>
 
 <style scoped>
 .error {
   color: var(--danger);
   font-size: var(--text-caption);
+}
+
+/* Только в хедере: там достаточно места лишь под кнопкой входа, и текст
+   иначе может обрезаться шапкой фиксированной высоты. */
+@media (max-width: 520px) {
+  .error--float {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + var(--space-2));
+    right: var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-ctl);
+    background: var(--danger-soft);
+    white-space: nowrap;
+  }
 }
 </style>

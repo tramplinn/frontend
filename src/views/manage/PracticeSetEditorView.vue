@@ -13,6 +13,7 @@ import type { PracticeSetAuthor, ProblemAuthor } from '@/api/schemas/algorithmAu
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
@@ -173,7 +174,7 @@ onMounted(() => void load())
           >
             {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
           </AppButton>
-          <RouterLink :to="{ name: 'manage-content' }" class="back">← к контенту</RouterLink>
+          <BackLink :to="{ name: 'manage-content' }">к контенту</BackLink>
         </div>
       </header>
 
@@ -296,7 +297,6 @@ onMounted(() => void load())
   font-size: var(--text-display);
 }
 
-.back,
 .muted {
   color: var(--text-muted);
   font-size: var(--text-caption);

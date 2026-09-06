@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { DropdownMenuItem } from 'reka-ui'
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{ danger?: boolean; disabled?: boolean; confirmLabel?: string }>(),
@@ -10,16 +10,25 @@ const props = withDefaults(
 const emit = defineEmits<{ select: [] }>()
 
 const armed = ref(false)
+let timer: ReturnType<typeof setTimeout> | undefined
 
+/** Как в ConfirmButton: взведённое состояние само гаснет через 4с, иначе
+    пункт остаётся готов удалить с одного клика, пока меню не закрыто. */
 function select(event: Event): void {
   if (!props.danger || armed.value) {
+    clearTimeout(timer)
     armed.value = false
     emit('select')
     return
   }
   event.preventDefault()
   armed.value = true
+  timer = setTimeout(() => (armed.value = false), 4000)
 }
+
+onUnmounted(() => {
+  clearTimeout(timer)
+})
 </script>
 
 <template>

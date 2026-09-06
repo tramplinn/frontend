@@ -2,6 +2,7 @@
 import QuizQuestionEditor from '@/components/quiz-editor/QuizQuestionEditor.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useQuizEditor } from '@/features/quiz-editor/composables/useQuizEditor'
@@ -48,7 +49,7 @@ const {
           <AppButton size="sm" :loading="busy === 'quiz'" @click="togglePublished">
             {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
           </AppButton>
-          <RouterLink :to="{ name: 'manage-content' }" class="back">← к списку</RouterLink>
+          <BackLink :to="{ name: 'manage-content' }">к списку</BackLink>
         </div>
       </header>
 
@@ -101,14 +102,9 @@ const {
   margin-left: auto;
 }
 
-.back,
 .empty {
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-.back:hover {
-  color: var(--text);
 }
 
 .questions {
