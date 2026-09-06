@@ -31,15 +31,15 @@ export interface ProblemDraft {
 }
 
 export function listProblems(): Promise<ProblemAuthor[]> {
-  return request(`${BASE}/algorithm-problems`, { schema: z.array(problemAuthorSchema) })
+  return request(`${BASE}/algorithms/problems`, { schema: z.array(problemAuthorSchema) })
 }
 
 export function getProblem(problemId: string): Promise<ProblemAuthor> {
-  return request(`${BASE}/algorithm-problems/${problemId}`, { schema: problemAuthorSchema })
+  return request(`${BASE}/algorithms/problems/${problemId}`, { schema: problemAuthorSchema })
 }
 
 export function createProblem(draft: ProblemDraft): Promise<ProblemAuthor> {
-  return request(`${BASE}/algorithm-problems`, {
+  return request(`${BASE}/algorithms/problems`, {
     method: 'POST',
     body: snakeBody({ ...draft }),
     schema: problemAuthorSchema,
@@ -50,7 +50,7 @@ export function updateProblem(
   problemId: string,
   changes: Partial<ProblemDraft>,
 ): Promise<ProblemAuthor> {
-  return request(`${BASE}/algorithm-problems/${problemId}`, {
+  return request(`${BASE}/algorithms/problems/${problemId}`, {
     method: 'PATCH',
     body: snakeBody({ ...changes }),
     schema: problemAuthorSchema,
@@ -58,7 +58,7 @@ export function updateProblem(
 }
 
 export async function deleteProblem(problemId: string): Promise<void> {
-  await request(`${BASE}/algorithm-problems/${problemId}`, { method: 'DELETE' })
+  await request(`${BASE}/algorithms/problems/${problemId}`, { method: 'DELETE' })
 }
 
 export interface TestCaseDraft {
@@ -70,7 +70,7 @@ export interface TestCaseDraft {
 }
 
 export function addTestCase(problemId: string, draft: TestCaseDraft): Promise<TestCase> {
-  return request(`${BASE}/algorithm-problems/${problemId}/test-cases`, {
+  return request(`${BASE}/algorithms/problems/${problemId}/test-cases`, {
     method: 'POST',
     body: snakeBody({ ...draft }),
     schema: testCaseSchema,
@@ -78,7 +78,7 @@ export function addTestCase(problemId: string, draft: TestCaseDraft): Promise<Te
 }
 
 export function updateTestCase(caseId: string, changes: Partial<TestCaseDraft>): Promise<TestCase> {
-  return request(`${BASE}/algorithm-test-cases/${caseId}`, {
+  return request(`${BASE}/algorithms/test-cases/${caseId}`, {
     method: 'PATCH',
     body: snakeBody({ ...changes }),
     schema: testCaseSchema,
@@ -86,7 +86,7 @@ export function updateTestCase(caseId: string, changes: Partial<TestCaseDraft>):
 }
 
 export async function deleteTestCase(caseId: string): Promise<void> {
-  await request(`${BASE}/algorithm-test-cases/${caseId}`, { method: 'DELETE' })
+  await request(`${BASE}/algorithms/test-cases/${caseId}`, { method: 'DELETE' })
 }
 
 export function putTemplate(
@@ -95,7 +95,7 @@ export function putTemplate(
   starterCode: string,
   solutionCode: string,
 ): Promise<TemplateAuthor> {
-  return request(`${BASE}/algorithm-problems/${problemId}/templates/${language}`, {
+  return request(`${BASE}/algorithms/problems/${problemId}/templates/${language}`, {
     method: 'PUT',
     body: snakeBody({ language, starterCode, solutionCode }),
     schema: templateAuthorSchema,
@@ -107,7 +107,7 @@ export function validateTemplate(
   problemId: string,
   language: AlgorithmLanguage,
 ): Promise<TemplateAuthor> {
-  return request(`${BASE}/algorithm-problems/${problemId}/templates/${language}/validate`, {
+  return request(`${BASE}/algorithms/problems/${problemId}/templates/${language}/validate`, {
     method: 'POST',
     body: {},
     schema: templateAuthorSchema,
@@ -118,7 +118,7 @@ export async function deleteTemplate(
   problemId: string,
   language: AlgorithmLanguage,
 ): Promise<void> {
-  await request(`${BASE}/algorithm-problems/${problemId}/templates/${language}`, {
+  await request(`${BASE}/algorithms/problems/${problemId}/templates/${language}`, {
     method: 'DELETE',
   })
 }

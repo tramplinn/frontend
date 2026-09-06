@@ -59,6 +59,7 @@ interface RequestOptions<T extends z.ZodType> {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   rawBody?: { data: BodyInit; contentType: string }
+  formData?: FormData
   query?: Record<string, string | number | boolean | undefined>
   schema?: T
   withCookies?: boolean
@@ -88,6 +89,7 @@ async function send(path: string, options: RequestOptions<z.ZodType>): Promise<R
   } else if (options.body !== undefined) {
     headers.set('Content-Type', 'application/json')
   }
+  // Content-Type для FormData ставит сам fetch — в нём boundary, который нельзя задать вручную.
   if (session && !isExpired(session)) {
     headers.set('Authorization', `Bearer ${session.token}`)
   }
@@ -97,11 +99,13 @@ async function send(path: string, options: RequestOptions<z.ZodType>): Promise<R
     headers,
     ...(options.signal ? { signal: options.signal } : {}),
     ...(options.withCookies === true ? { credentials: 'include' as const } : {}),
-    ...(options.rawBody
-      ? { body: options.rawBody.data }
-      : options.body === undefined
-        ? {}
-        : { body: JSON.stringify(options.body) }),
+    ...(options.formData
+      ? { body: options.formData }
+      : options.rawBody
+        ? { body: options.rawBody.data }
+        : options.body === undefined
+          ? {}
+          : { body: JSON.stringify(options.body) }),
   }
 
   try {

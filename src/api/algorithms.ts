@@ -36,7 +36,7 @@ export interface CatalogFilters {
 
 /** Каталог тренажёра: только опубликованные задачи плюс прогресс текущего пользователя. */
 export function listCatalog(filters: CatalogFilters = {}): Promise<ProblemCatalog> {
-  return request('/algorithm-problems', {
+  return request('/algorithms/problems', {
     query: {
       difficulty: filters.difficulty,
       tag_id: filters.tagId,
@@ -58,7 +58,7 @@ export function startFreeSession(): Promise<PracticeSession> {
 }
 
 export function getAlgorithmProgress(problemId: string): Promise<AlgorithmProgress> {
-  return request(`/algorithm-problems/${problemId}/progress`, {
+  return request(`/algorithms/problems/${problemId}/progress`, {
     schema: algorithmProgressSchema,
   })
 }
@@ -73,7 +73,7 @@ export function saveAlgorithmReflection(
   problemId: string,
   draft: ReflectionDraft,
 ): Promise<AlgorithmProgress> {
-  return request(`/algorithm-problems/${problemId}/reflection`, {
+  return request(`/algorithms/problems/${problemId}/reflection`, {
     method: 'PUT',
     body: snakeBody({ ...draft }),
     schema: algorithmProgressSchema,
@@ -108,11 +108,11 @@ export function completePracticeSession(
 }
 
 export function getAlgorithmProblem(id: string): Promise<AlgorithmProblem> {
-  return request(`/algorithm-problems/${id}`, { schema: algorithmProblemSchema })
+  return request(`/algorithms/problems/${id}`, { schema: algorithmProblemSchema })
 }
 
 export function listAlgorithmLanguages(): Promise<RunnerLanguage[]> {
-  return request('/algorithm-languages', { schema: z.array(runnerLanguageSchema) })
+  return request('/algorithms/languages', { schema: z.array(runnerLanguageSchema) })
 }
 
 interface SubmitPayload {
@@ -123,7 +123,7 @@ interface SubmitPayload {
 }
 
 export function runAlgorithm(id: string, payload: SubmitPayload): Promise<AlgorithmSubmission> {
-  return request(`/algorithm-problems/${id}/runs`, {
+  return request(`/algorithms/problems/${id}/runs`, {
     method: 'POST',
     body: {
       session_id: payload.sessionId,
@@ -136,7 +136,7 @@ export function runAlgorithm(id: string, payload: SubmitPayload): Promise<Algori
 }
 
 export function submitAlgorithm(id: string, payload: SubmitPayload): Promise<AlgorithmSubmission> {
-  return request(`/algorithm-problems/${id}/submissions`, {
+  return request(`/algorithms/problems/${id}/submissions`, {
     method: 'POST',
     body: {
       session_id: payload.sessionId,
@@ -148,12 +148,12 @@ export function submitAlgorithm(id: string, payload: SubmitPayload): Promise<Alg
 }
 
 export function getAlgorithmSubmission(id: string): Promise<AlgorithmSubmission> {
-  return request(`/algorithm-submissions/${id}`, { schema: submissionSchema })
+  return request(`/algorithms/submissions/${id}`, { schema: submissionSchema })
 }
 
 /** Все принятые посылки студента по задаче, от новых к старым. */
 export function listAlgorithmSolutions(problemId: string): Promise<AlgorithmSolution[]> {
-  return request(`/algorithm-problems/${problemId}/solutions`, {
+  return request(`/algorithms/problems/${problemId}/solutions`, {
     schema: z.array(solutionSchema),
   })
 }

@@ -163,9 +163,8 @@ export async function deleteModule(moduleId: string): Promise<void> {
 }
 
 export async function addModuleDependency(moduleId: string, dependsOnId: string): Promise<void> {
-  await request(`/authoring/modules/${moduleId}/dependencies`, {
+  await request(`/authoring/modules/${moduleId}/dependencies/${dependsOnId}`, {
     method: 'PUT',
-    body: { depends_on_id: dependsOnId },
   })
 }
 
