@@ -20,6 +20,7 @@ const {
   language,
   languages,
   problemPending,
+  progress,
   queueStatus,
   result,
   resetToStarter,
@@ -33,6 +34,8 @@ const {
 const languageOptions = computed(() =>
   languages.value.map((key) => ({ value: key, label: languageLabel(key) })),
 )
+
+const solved = computed(() => progress.value?.status === 'solved')
 
 const verdict = computed(() => result.value?.verdict ?? null)
 
@@ -98,12 +101,12 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
     </details>
 
     <div class="actions">
-      <AppButton :disabled="!canExecute" :loading="running" @click="execute('run')">
+      <AppButton :disabled="!canExecute || solved" :loading="running" @click="execute('run')">
         запустить
       </AppButton>
       <AppButton
         variant="primary"
-        :disabled="!canExecute"
+        :disabled="!canExecute || solved"
         :loading="running"
         @click="execute('submit')"
       >

@@ -78,6 +78,31 @@ describe('useProblemRunner', () => {
     expect(runner.sourceCode.value).toBe('int main() {}')
   })
 
+  it('restores the last accepted solution even when it is in the default language', async () => {
+    vi.mocked(getAlgorithmProgress).mockResolvedValue({
+      problemId: problem.id,
+      status: 'solved',
+      attempts: 3,
+      hintsUsed: 0,
+      firstSolvedAt: '2026-09-05T18:33:33.922Z',
+      lastAttemptAt: '2026-09-05T22:26:36.083Z',
+      complexityMd: null,
+      confidence: null,
+      reflectionMd: null,
+      lastSolutionLanguage: 'python',
+      lastSolutionCode: 'print("solved")',
+    })
+
+    const runner = makeRunner()
+    await runner.load()
+    // the progress restore runs in a microtask queued after load() resolves
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(runner.language.value).toBe('python')
+    expect(runner.sourceCode.value).toBe('print("solved")')
+  })
+
   it('blocks execution while the code is empty', async () => {
     const runner = makeRunner()
     await runner.load()

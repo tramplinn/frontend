@@ -88,7 +88,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   function selectLanguage(next: string): void {
     const current = problem.value
     if (!current) return
-    if (language.value) {
+    if (language.value && language.value !== next) {
       drafts.set(draftKey(current.id, language.value), sourceCode.value)
     }
     language.value = next

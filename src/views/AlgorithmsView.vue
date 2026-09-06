@@ -77,11 +77,11 @@ function toggleTag(id: string): void {
 
       <ul v-else class="list">
         <li v-for="item in items" :key="item.id">
-          <RouterLink :to="{ name: 'algorithm-solo', params: { problem: item.id } }" class="card">
-            <span class="mark" :class="{ 'mark--solved': item.solved }" aria-hidden="true">
-              {{ item.solved ? '✓' : '' }}
-            </span>
-
+          <RouterLink
+            :to="{ name: 'algorithm-solo', params: { problem: item.id } }"
+            class="card"
+            :class="{ 'card--solved': item.solved }"
+          >
             <span class="body">
               <span class="title">{{ item.title }}</span>
               <span class="meta">
@@ -188,21 +188,8 @@ function toggleTag(id: string): void {
   background: var(--card-hover);
 }
 
-.mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: var(--space-6);
-  height: var(--space-6);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  color: var(--on-success);
-  font-size: var(--text-caption);
-}
-
-.mark--solved {
+.card--solved {
   border-color: var(--success);
-  color: var(--success);
 }
 
 .body {
