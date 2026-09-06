@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -24,6 +24,7 @@ const {
   queueStatus,
   result,
   resetToStarter,
+  restarted,
   runError,
   running,
   selectLanguage,
@@ -35,15 +36,7 @@ const languageOptions = computed(() =>
   languages.value.map((key) => ({ value: key, label: languageLabel(key) })),
 )
 
-/* progress.status остаётся 'solved' и после сброса — блокируем кнопки только
-   до тех пор, пока не решили начать заново. */
-const restarted = ref(false)
 const solved = computed(() => progress.value?.status === 'solved' && !restarted.value)
-
-function restart(): void {
-  resetToStarter()
-  restarted.value = true
-}
 
 const verdict = computed(() => result.value?.verdict ?? null)
 
@@ -76,7 +69,7 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
         label="решить заново"
         confirm-label="точно стереть решение?"
         :disabled="running"
-        @confirm="restart"
+        @confirm="resetToStarter"
       />
 
       <span

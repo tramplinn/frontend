@@ -139,6 +139,13 @@ export const algorithmProgressSchema = z.object({
   lastSolutionCode: z.string().nullable(),
 })
 
+export const solutionSchema = z.object({
+  id: uuidSchema,
+  language: z.string(),
+  sourceCode: z.string(),
+  finishedAt: z.string().nullable(),
+})
+
 export type PracticeSet = z.infer<typeof practiceSetSchema>
 export type PracticeSession = z.infer<typeof practiceSessionSchema>
 export type AlgorithmProblem = z.infer<typeof algorithmProblemSchema>
@@ -148,4 +155,5 @@ export type AlgorithmDifficulty = z.infer<typeof algorithmDifficultySchema>
 export type ProblemCard = z.infer<typeof problemCardSchema>
 export type ProblemCatalog = z.infer<typeof problemCatalogSchema>
 export type AlgorithmProgress = z.infer<typeof algorithmProgressSchema>
+export type AlgorithmSolution = z.infer<typeof solutionSchema>
 export type AlgorithmVerdict = z.infer<typeof verdictSchema>

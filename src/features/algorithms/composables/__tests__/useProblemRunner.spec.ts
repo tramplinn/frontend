@@ -103,6 +103,18 @@ describe('useProblemRunner', () => {
     expect(runner.sourceCode.value).toBe('print("solved")')
   })
 
+  it('marks restarted after resetToStarter and clears it again on reload', async () => {
+    const runner = makeRunner()
+    await runner.load()
+    expect(runner.restarted.value).toBe(false)
+
+    runner.resetToStarter()
+    expect(runner.restarted.value).toBe(true)
+
+    await runner.load()
+    expect(runner.restarted.value).toBe(false)
+  })
+
   it('blocks execution while the code is empty', async () => {
     const runner = makeRunner()
     await runner.load()

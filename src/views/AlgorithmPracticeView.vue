@@ -91,11 +91,7 @@ const SESSION_LABELS: Record<string, string> = {
           <ProblemStatement :problem="runner.problem.value" />
           <div class="right">
             <ProblemEditorPanel :runner="runner" />
-            <ReflectionPanel
-              :progress="runner.progress.value"
-              :saving="runner.savingReflection.value"
-              @save="runner.saveReflection"
-            />
+            <ReflectionPanel :runner="runner" @save="runner.saveReflection" />
           </div>
         </main>
 

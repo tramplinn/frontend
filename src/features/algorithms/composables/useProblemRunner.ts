@@ -45,6 +45,9 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   const savingReflection = ref(false)
   const runError = ref<unknown>(null)
   const supported = ref<string[]>([])
+  /* После решить-заново статус progress остаётся 'solved' — этот флаг снимает
+     блокировку запустить/отправить и историю решений до следующего захода. */
+  const restarted = ref(false)
 
   const drafts = new Map<string, string>()
   const requestGuard = useVersionedLoad()
@@ -103,6 +106,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     problemPending.value = true
     runError.value = null
     result.value = null
+    restarted.value = false
     try {
       const [loaded, allowed] = await Promise.all([getAlgorithmProblem(id), loadRunnerLanguages()])
       if (!requestGuard.isCurrent(version)) return
@@ -187,6 +191,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     const template = current.templates.find((item) => item.language === language.value)
     drafts.delete(draftKey(current.id, language.value))
     sourceCode.value = template?.starterCode ?? ''
+    restarted.value = true
   }
 
   async function saveReflection(draft: {
@@ -231,6 +236,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     queueStatus,
     result,
     resetToStarter,
+    restarted,
     runError,
     running,
     saveReflection,

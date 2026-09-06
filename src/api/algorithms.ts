@@ -9,12 +9,14 @@ import {
   practiceSetSchema,
   problemCatalogSchema,
   runnerLanguageSchema,
+  solutionSchema,
   submissionSchema,
 } from './schemas/algorithms'
 import type {
   AlgorithmDifficulty,
   AlgorithmProblem,
   AlgorithmProgress,
+  AlgorithmSolution,
   AlgorithmSubmission,
   PracticeSession,
   PracticeSet,
@@ -147,4 +149,11 @@ export function submitAlgorithm(id: string, payload: SubmitPayload): Promise<Alg
 
 export function getAlgorithmSubmission(id: string): Promise<AlgorithmSubmission> {
   return request(`/algorithm-submissions/${id}`, { schema: submissionSchema })
+}
+
+/** Все принятые посылки студента по задаче, от новых к старым. */
+export function listAlgorithmSolutions(problemId: string): Promise<AlgorithmSolution[]> {
+  return request(`/algorithm-problems/${problemId}/solutions`, {
+    schema: z.array(solutionSchema),
+  })
 }
