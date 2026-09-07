@@ -5,7 +5,6 @@ import {
   coursePageSchema,
   courseTreeSchema,
   interviewCardSchema,
-  lessonSchema,
   moduleDependencySchema,
   quizSchema,
   trackPageSchema,
@@ -14,7 +13,6 @@ import type {
   Course,
   CourseTree,
   InterviewCard,
-  Lesson,
   ModuleDependency,
   Quiz,
   Track,
@@ -36,10 +34,6 @@ export function listModuleDependencies(courseSlug: string): Promise<ModuleDepend
   return request(`/courses/${encodeURIComponent(courseSlug)}/module-dependencies`, {
     schema: z.array(moduleDependencySchema),
   })
-}
-
-export function getLesson(lessonId: string): Promise<Lesson> {
-  return request(`/lessons/${lessonId}`, { schema: lessonSchema })
 }
 
 export function listInterviewCards(lessonId: string): Promise<InterviewCard[]> {

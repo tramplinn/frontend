@@ -72,8 +72,6 @@ export const practiceSetAuthorSchema = z.object({
   problems: z.array(setProblemAuthorSchema),
 })
 
-export const practiceSetAuthorPageSchema = pageSchema(practiceSetAuthorSchema)
-
 export type AlgorithmLanguage = z.infer<typeof algorithmLanguageSchema>
 export type AlgorithmProvider = z.infer<typeof algorithmProviderSchema>
 export type TestCase = z.infer<typeof testCaseSchema>

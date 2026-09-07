@@ -1,7 +1,6 @@
 import { snakeBody } from './case'
 import { fetchAllPages, request } from './client'
 import {
-  practiceSetAuthorPageSchema,
   practiceSetAuthorSchema,
   problemAuthorPageSchema,
   problemAuthorSchema,
@@ -129,10 +128,6 @@ export interface PracticeSetDraft {
   mode?: 'practice' | 'mock_interview'
   durationMinutes?: number | null
   status?: ContentStatus
-}
-
-export function listPracticeSets(): Promise<PracticeSetAuthor[]> {
-  return fetchAllPages(`${BASE}/practice-sets`, practiceSetAuthorPageSchema)
 }
 
 export function getPracticeSet(setId: string): Promise<PracticeSetAuthor> {
