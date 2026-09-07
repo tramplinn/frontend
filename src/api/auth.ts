@@ -58,20 +58,20 @@ export function updateProfile(changes: ProfileChanges): Promise<Me> {
 }
 
 export function getMcpAuthorizationRequest(requestId: string): Promise<McpAuthorizationRequest> {
-  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}`, {
+  return request(`/oauth/requests/${encodeURIComponent(requestId)}`, {
     schema: mcpAuthorizationRequestSchema,
   })
 }
 
 export function approveMcpAuthorization(requestId: string): Promise<{ redirectUrl: string }> {
-  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}/approve`, {
+  return request(`/oauth/requests/${encodeURIComponent(requestId)}/approve`, {
     method: 'POST',
     schema: mcpAuthorizationApprovalSchema,
   })
 }
 
 export function denyMcpAuthorization(requestId: string): Promise<{ redirectUrl: string }> {
-  return request(`/auth/mcp/requests/${encodeURIComponent(requestId)}/deny`, {
+  return request(`/oauth/requests/${encodeURIComponent(requestId)}/deny`, {
     method: 'POST',
     schema: mcpAuthorizationApprovalSchema,
   })
