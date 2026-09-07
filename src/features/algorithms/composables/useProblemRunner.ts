@@ -5,6 +5,7 @@ import {
   getAlgorithmProgress,
   getAlgorithmSubmission,
   listAlgorithmLanguages,
+  listAlgorithmSolutions,
   runAlgorithm,
   saveAlgorithmReflection,
   submitAlgorithm,
@@ -12,6 +13,7 @@ import {
 import type {
   AlgorithmProblem,
   AlgorithmProgress,
+  AlgorithmSolution,
   AlgorithmSubmission,
 } from '@/api/schemas/algorithms'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
@@ -45,27 +47,19 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   const savingReflection = ref(false)
   const runError = ref<unknown>(null)
   const supported = ref<string[]>([])
-  /* После решить-заново статус progress остаётся 'solved' — этот флаг снимает
-     блокировку запустить/отправить и историю решений до следующего захода. */
-  const restarted = ref(false)
+  const solutions = ref<AlgorithmSolution[]>([])
 
   const drafts = new Map<string, string>()
   const requestGuard = useVersionedLoad()
 
+  /* Как на LeetCode: студент может решать на любом языке раннера, а не только
+     на тех, для которых автор задачи завёл стартовый шаблон. Список шаблонов —
+     это только источник стартового кода, а не ограничение выбора. */
   const languages = computed(() => {
-    const templates = problem.value?.templates.map((item) => item.language) ?? []
-    if (supported.value.length === 0) {
-      return templates
+    if (supported.value.length > 0) {
+      return supported.value
     }
-    const allowed = new Set(supported.value)
-    return templates.filter((item) => allowed.has(item))
-  })
-
-  const unavailableLanguages = computed(() => {
-    const offered = new Set(languages.value)
-    return (problem.value?.templates.map((item) => item.language) ?? []).filter(
-      (item) => !offered.has(item),
-    )
+    return problem.value?.templates.map((item) => item.language) ?? []
   })
 
   const queueStatus = computed(() => {
@@ -88,6 +82,13 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     return `${problemId}:${lang}`
   }
 
+  /* Раз выбор языков больше не сводится к шаблонам задачи, по умолчанию всё
+     равно предпочитаем язык, для которого автор оставил стартовый код. */
+  function defaultLanguage(): string {
+    const withTemplate = problem.value?.templates.map((item) => item.language) ?? []
+    return withTemplate.find((item) => languages.value.includes(item)) ?? languages.value[0] ?? ''
+  }
+
   function selectLanguage(next: string): void {
     const current = problem.value
     if (!current) return
@@ -106,14 +107,14 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     problemPending.value = true
     runError.value = null
     result.value = null
-    restarted.value = false
+    solutions.value = []
     try {
       const [loaded, allowed] = await Promise.all([getAlgorithmProblem(id), loadRunnerLanguages()])
       if (!requestGuard.isCurrent(version)) return
       problem.value = loaded
       supported.value = allowed
       language.value = ''
-      selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
+      selectLanguage(defaultLanguage())
       const languageAtLoad = language.value
       const sourceCodeAtLoad = sourceCode.value
       getAlgorithmProgress(id)
@@ -133,6 +134,12 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
             drafts.set(draftKey(id, solutionLanguage), solution)
             selectLanguage(solutionLanguage)
           }
+        })
+        .catch(() => {})
+      listAlgorithmSolutions(id)
+        .then((value) => {
+          if (!requestGuard.isCurrent(version)) return
+          solutions.value = value
         })
         .catch(() => {})
     } catch (cause) {
@@ -177,6 +184,9 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       if (requestGuard.isCurrent(version)) await poll(initial, version)
       if (kind === 'submit' && requestGuard.isCurrent(version)) {
         progress.value = await getAlgorithmProgress(currentProblem.id).catch(() => progress.value)
+        solutions.value = await listAlgorithmSolutions(currentProblem.id).catch(
+          () => solutions.value,
+        )
       }
     } catch (cause) {
       if (requestGuard.isCurrent(version)) runError.value = cause
@@ -191,7 +201,15 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     const template = current.templates.find((item) => item.language === language.value)
     drafts.delete(draftKey(current.id, language.value))
     sourceCode.value = template?.starterCode ?? ''
-    restarted.value = true
+  }
+
+  /** Подставляет код одного из прошлых принятых решений как черновик — LeetCode-style restore. */
+  function loadSolution(id: string): void {
+    const current = problem.value
+    const target = solutions.value.find((item) => item.id === id)
+    if (!current || !target || !languages.value.includes(target.language)) return
+    drafts.set(draftKey(current.id, target.language), target.sourceCode)
+    selectLanguage(target.language)
   }
 
   async function saveReflection(draft: {
@@ -230,19 +248,19 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     language,
     languages,
     load,
+    loadSolution,
     problem,
     problemPending,
     progress,
     queueStatus,
     result,
     resetToStarter,
-    restarted,
     runError,
     running,
     saveReflection,
     savingReflection,
     selectLanguage,
+    solutions,
     sourceCode,
-    unavailableLanguages,
   }
 }

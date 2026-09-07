@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -19,24 +19,34 @@ const {
   execute,
   language,
   languages,
+  loadSolution,
   problemPending,
-  progress,
   queueStatus,
   result,
   resetToStarter,
-  restarted,
   runError,
   running,
   selectLanguage,
+  solutions,
   sourceCode,
-  unavailableLanguages,
 } = props.runner
 
 const languageOptions = computed(() =>
   languages.value.map((key) => ({ value: key, label: languageLabel(key) })),
 )
 
-const solved = computed(() => progress.value?.status === 'solved' && !restarted.value)
+/* Пункт истории — не состояние редактора, а разовое действие «подставить этот
+   код», поэтому после выбора селект возвращается к плейсхолдеру. */
+const historyPick = ref('')
+
+function formatSolvedAt(value: string | null): string {
+  return value ? new Date(value).toLocaleString() : ''
+}
+
+function applyHistoryPick(id: string): void {
+  if (id) loadSolution(id)
+  historyPick.value = ''
+}
 
 const verdict = computed(() => result.value?.verdict ?? null)
 
@@ -65,6 +75,16 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       />
       <p v-else class="muted">для задачи не настроен ни один доступный язык</p>
 
+      <label v-if="solutions.length > 0" class="history">
+        <span class="sr-only">прошлые решения</span>
+        <select v-model="historyPick" @change="applyHistoryPick(historyPick)">
+          <option value="" disabled>прошлые решения ({{ solutions.length }})</option>
+          <option v-for="item in solutions" :key="item.id" :value="item.id">
+            {{ formatSolvedAt(item.finishedAt) }} · {{ languageLabel(item.language) }}
+          </option>
+        </select>
+      </label>
+
       <ConfirmButton
         label="решить заново"
         confirm-label="точно стереть решение?"
@@ -84,11 +104,6 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       </span>
     </div>
 
-    <p v-if="unavailableLanguages.length > 0" class="hint">
-      недоступны в раннере:
-      {{ unavailableLanguages.map(languageLabel).join(', ') }}
-    </p>
-
     <CodeEditor
       v-model="sourceCode"
       :language="language"
@@ -102,12 +117,12 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
     </details>
 
     <div class="actions">
-      <AppButton :disabled="!canExecute || solved" :loading="running" @click="execute('run')">
+      <AppButton :disabled="!canExecute" :loading="running" @click="execute('run')">
         запустить
       </AppButton>
       <AppButton
         variant="primary"
-        :disabled="!canExecute || solved"
+        :disabled="!canExecute"
         :loading="running"
         @click="execute('submit')"
       >
@@ -158,6 +173,27 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
   justify-content: space-between;
 }
 
+.history select {
+  height: var(--ctl-sm);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .verdict {
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);
@@ -174,8 +210,7 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
   color: var(--danger);
 }
 
-.muted,
-.hint {
+.muted {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }

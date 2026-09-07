@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
-import { listAlgorithmSolutions } from '@/api/algorithms'
-import type { AlgorithmSolution } from '@/api/schemas/algorithms'
 import AppButton from '@/components/ui/AppButton.vue'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
-import { languageLabel } from '@/lib/algorithms'
 
 const props = defineProps<{ runner: ReturnType<typeof useProblemRunner> }>()
 
@@ -15,7 +12,7 @@ const emit = defineEmits<{
   ]
 }>()
 
-const { problem, progress, restarted, savingReflection } = props.runner
+const { progress, savingReflection } = props.runner
 
 const complexity = ref('')
 const confidence = ref<number | null>(null)
@@ -38,46 +35,6 @@ function save(): void {
     confidence: confidence.value,
     reflectionMd: notes.value.trim() || null,
   })
-}
-
-/* Решить-заново прячет историю до следующего захода: старые решения не должны
-   отвлекать от чистого повторного прохождения задачи. */
-const showHistory = computed(() => progress.value?.status === 'solved' && !restarted.value)
-
-const solutions = ref<AlgorithmSolution[]>([])
-const solutionsLoaded = ref(false)
-const loadingSolutions = ref(false)
-const selectedId = ref('')
-
-const selectedSolution = computed(
-  () => solutions.value.find((item) => item.id === selectedId.value) ?? null,
-)
-
-async function loadSolutions(): Promise<void> {
-  const current = problem.value
-  if (!current || loadingSolutions.value || solutionsLoaded.value) return
-  loadingSolutions.value = true
-  try {
-    solutions.value = await listAlgorithmSolutions(current.id)
-    selectedId.value = solutions.value[0]?.id ?? ''
-  } catch {
-    solutions.value = []
-  } finally {
-    solutionsLoaded.value = true
-    loadingSolutions.value = false
-  }
-}
-
-watch(showHistory, (value) => {
-  if (!value) {
-    solutions.value = []
-    solutionsLoaded.value = false
-    selectedId.value = ''
-  }
-})
-
-function formatFinishedAt(value: string | null): string {
-  return value ? new Date(value).toLocaleString() : ''
 }
 </script>
 
@@ -115,26 +72,6 @@ function formatFinishedAt(value: string | null): string {
       </label>
 
       <AppButton :loading="savingReflection" @click="save">сохранить разбор</AppButton>
-
-      <details v-if="showHistory" class="history" @toggle="loadSolutions">
-        <summary>прошлые решения</summary>
-
-        <p v-if="loadingSolutions" class="muted">загрузка…</p>
-        <p v-else-if="solutionsLoaded && solutions.length === 0" class="muted">
-          принятых решений не нашлось
-        </p>
-        <template v-else-if="solutions.length > 0">
-          <label class="field">
-            <span>выбрать</span>
-            <select v-model="selectedId">
-              <option v-for="item in solutions" :key="item.id" :value="item.id">
-                {{ formatFinishedAt(item.finishedAt) }} · {{ languageLabel(item.language) }}
-              </option>
-            </select>
-          </label>
-          <pre v-if="selectedSolution" class="code">{{ selectedSolution.sourceCode }}</pre>
-        </template>
-      </details>
     </div>
   </details>
 </template>
@@ -169,7 +106,6 @@ function formatFinishedAt(value: string | null): string {
 }
 
 input,
-select,
 textarea {
   width: 100%;
   padding: var(--space-3);
@@ -205,37 +141,5 @@ textarea {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent);
-}
-
-.history {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
-}
-
-.history summary {
-  font-size: var(--text-caption);
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.history .field {
-  margin-top: var(--space-3);
-}
-
-.muted {
-  margin-top: var(--space-3);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.code {
-  overflow: auto;
-  margin-top: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  white-space: pre-wrap;
 }
 </style>

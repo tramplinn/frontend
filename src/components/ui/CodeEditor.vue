@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import {
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+  autocompletion as enableAutocompletion,
+} from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { cpp } from '@codemirror/lang-cpp'
 import { go } from '@codemirror/lang-go'
@@ -9,10 +15,13 @@ import {
   HighlightStyle,
   StreamLanguage,
   bracketMatching,
+  foldGutter,
+  foldKeymap,
   indentOnInput,
   syntaxHighlighting,
 } from '@codemirror/language'
 import { csharp, kotlin } from '@codemirror/legacy-modes/mode/clike'
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState } from '@codemirror/state'
 import {
   EditorView,
@@ -52,17 +61,41 @@ const readonlySlot = new Compartment()
 
 /** Цвета берутся из токенов темы, поэтому подсветка сама следует за светлой/тёмной. */
 const highlight = HighlightStyle.define([
-  { tag: [tags.comment, tags.lineComment, tags.blockComment], color: 'var(--code-comment)' },
+  {
+    tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment],
+    color: 'var(--code-comment)',
+    fontStyle: 'italic',
+  },
   {
     tag: [tags.keyword, tags.controlKeyword, tags.moduleKeyword, tags.modifier, tags.self],
     color: 'var(--code-keyword)',
   },
-  { tag: [tags.string, tags.special(tags.string), tags.regexp], color: 'var(--code-string)' },
+  {
+    tag: [tags.string, tags.special(tags.string), tags.regexp, tags.character],
+    color: 'var(--code-string)',
+  },
+  { tag: tags.escape, color: 'var(--code-string)', fontWeight: 'var(--weight-semibold)' },
   { tag: [tags.number, tags.bool, tags.null, tags.atom], color: 'var(--code-number)' },
-  { tag: [tags.function(tags.variableName), tags.labelName], color: 'var(--code-function)' },
-  { tag: [tags.typeName, tags.className, tags.namespace], color: 'var(--code-type)' },
+  {
+    tag: [
+      tags.function(tags.variableName),
+      tags.function(tags.definition(tags.variableName)),
+      tags.labelName,
+    ],
+    color: 'var(--code-function)',
+  },
+  {
+    tag: [tags.typeName, tags.className, tags.namespace, tags.annotation],
+    color: 'var(--code-type)',
+  },
   { tag: [tags.operator, tags.punctuation, tags.bracket], color: 'var(--code-operator)' },
+  {
+    tag: [tags.definition(tags.variableName), tags.definition(tags.propertyName)],
+    color: 'var(--code-name)',
+    fontWeight: 'var(--weight-medium)',
+  },
   { tag: [tags.variableName, tags.propertyName], color: 'var(--code-name)' },
+  { tag: [tags.meta, tags.processingInstruction], color: 'var(--code-comment)' },
   { tag: tags.invalid, color: 'var(--code-invalid)' },
 ])
 
@@ -94,6 +127,45 @@ const theme = EditorView.theme({
     color: 'inherit',
     outline: '1px solid var(--accent)',
   },
+  '.cm-selectionMatch': { backgroundColor: 'var(--accent-soft)' },
+  '.cm-foldGutter, .cm-foldPlaceholder': { color: 'var(--text-muted)' },
+  '.cm-foldPlaceholder': {
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-xs)',
+    padding: '0 4px',
+  },
+  '.cm-tooltip': {
+    backgroundColor: 'var(--card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-sm)',
+    boxShadow: 'var(--shadow-raised)',
+    color: 'var(--text)',
+  },
+  '.cm-tooltip-autocomplete ul li[aria-selected]': {
+    backgroundColor: 'var(--accent-soft)',
+    color: 'var(--text)',
+  },
+  '.cm-completionLabel': { color: 'var(--text)' },
+  '.cm-completionMatchedText': { color: 'var(--accent)', textDecoration: 'none' },
+  '.cm-completionDetail': { color: 'var(--text-muted)', fontStyle: 'normal' },
+  '.cm-panels': {
+    backgroundColor: 'var(--card)',
+    color: 'var(--text)',
+    borderBottom: '1px solid var(--border)',
+  },
+  '.cm-panels input, .cm-panels button': {
+    appearance: 'none',
+    color: 'var(--text)',
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-xs)',
+    padding: '2px 6px',
+  },
+  '.cm-panels button:hover': { backgroundColor: 'var(--surface-hover)' },
+  '.cm-panels label': { color: 'var(--text-muted)' },
+  '.cm-searchMatch': { backgroundColor: 'var(--accent-soft)' },
+  '.cm-searchMatch-selected': { backgroundColor: 'var(--accent)', color: 'var(--on-accent)' },
 })
 
 function languageExtension(key: string) {
@@ -127,13 +199,26 @@ onMounted(() => {
       doc: props.modelValue,
       extensions: [
         lineNumbers(),
+        foldGutter(),
         ...(props.highlightActiveLine ? [activeLineHighlight(), activeLineGutterHighlight()] : []),
         history(),
         drawSelection(),
         indentOnInput(),
         bracketMatching(),
+        closeBrackets(),
+        enableAutocompletion(),
+        highlightSelectionMatches(),
+        search({ top: true }),
         syntaxHighlighting(highlight),
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...searchKeymap,
+          ...historyKeymap,
+          ...foldKeymap,
+          ...completionKeymap,
+          indentWithTab,
+        ]),
         theme,
         EditorView.lineWrapping,
         EditorView.contentAttributes.of({ 'aria-label': props.ariaLabel }),

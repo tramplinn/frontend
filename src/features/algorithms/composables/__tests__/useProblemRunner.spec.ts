@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getAlgorithmProblem, getAlgorithmProgress, listAlgorithmLanguages } from '@/api/algorithms'
+import {
+  getAlgorithmProblem,
+  getAlgorithmProgress,
+  listAlgorithmLanguages,
+  listAlgorithmSolutions,
+} from '@/api/algorithms'
 import type { AlgorithmProblem } from '@/api/schemas/algorithms'
 
 import { useProblemRunner } from '../useProblemRunner'
@@ -10,6 +15,7 @@ vi.mock('@/api/algorithms', () => ({
   getAlgorithmProgress: vi.fn(),
   getAlgorithmSubmission: vi.fn(),
   listAlgorithmLanguages: vi.fn(),
+  listAlgorithmSolutions: vi.fn(),
   runAlgorithm: vi.fn(),
   saveAlgorithmReflection: vi.fn(),
   submitAlgorithm: vi.fn(),
@@ -49,17 +55,28 @@ describe('useProblemRunner', () => {
     vi.mocked(listAlgorithmLanguages).mockResolvedValue([
       { key: 'python', name: 'Python' },
       { key: 'cpp', name: 'C++' },
+      { key: 'go', name: 'Go' },
     ])
+    vi.mocked(listAlgorithmSolutions).mockResolvedValue([])
   })
 
-  it('offers only languages the runner actually supports', async () => {
+  it('offers every language the runner supports, not just the ones with a template', async () => {
     const runner = makeRunner()
     await runner.load()
 
-    expect(runner.languages.value).toEqual(['python', 'cpp'])
-    expect(runner.unavailableLanguages.value).toEqual(['kotlin'])
+    expect(runner.languages.value).toEqual(['python', 'cpp', 'go'])
     expect(runner.language.value).toBe('python')
     expect(runner.sourceCode.value).toBe('# python')
+  })
+
+  it('starts from a blank file when switching to a language with no author template', async () => {
+    const runner = makeRunner()
+    await runner.load()
+
+    runner.selectLanguage('go')
+
+    expect(runner.language.value).toBe('go')
+    expect(runner.sourceCode.value).toBe('')
   })
 
   it('keeps a separate draft per language', async () => {
@@ -103,16 +120,28 @@ describe('useProblemRunner', () => {
     expect(runner.sourceCode.value).toBe('print("solved")')
   })
 
-  it('marks restarted after resetToStarter and clears it again on reload', async () => {
+  it('loads a past solution into the editor as an editable draft', async () => {
+    vi.mocked(listAlgorithmSolutions).mockResolvedValue([
+      {
+        id: '01910000-0000-7000-8000-000000000003',
+        language: 'cpp',
+        sourceCode: '// old accepted solution',
+        finishedAt: '2026-09-01T10:00:00.000Z',
+      },
+    ])
+
     const runner = makeRunner()
     await runner.load()
-    expect(runner.restarted.value).toBe(false)
+    // the solutions list is fetched in a microtask queued after load() resolves
+    await Promise.resolve()
+    await Promise.resolve()
 
-    runner.resetToStarter()
-    expect(runner.restarted.value).toBe(true)
+    expect(runner.solutions.value).toHaveLength(1)
 
-    await runner.load()
-    expect(runner.restarted.value).toBe(false)
+    runner.loadSolution('01910000-0000-7000-8000-000000000003')
+
+    expect(runner.language.value).toBe('cpp')
+    expect(runner.sourceCode.value).toBe('// old accepted solution')
   })
 
   it('blocks execution while the code is empty', async () => {

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.20.3
+        version: 6.20.3
       '@codemirror/commands':
         specifier: ^6.11.0
         version: 6.11.0
@@ -32,6 +35,9 @@ importers:
       '@codemirror/legacy-modes':
         specifier: ^6.5.4
         version: 6.5.4
+      '@codemirror/search':
+        specifier: ^6.7.2
+        version: 6.7.2
       '@codemirror/state':
         specifier: ^6.7.2
         version: 6.7.2
