@@ -153,6 +153,33 @@ export async function request<T extends z.ZodType>(
   return parsed.data
 }
 
+interface Page<T> {
+  items: T[]
+  total: number
+  limit: number
+  offset: number
+}
+
+/** Собирает все страницы в один массив — для мест, которым нужен весь каталог целиком,
+    а не постраничная навигация (серверная пагинация тут — деталь транспорта, не UX). */
+export async function fetchAllPages<T>(
+  path: string,
+  schema: z.ZodType<Page<T>>,
+  pageSize = 50,
+): Promise<T[]> {
+  const items: T[] = []
+  let offset = 0
+  for (;;) {
+    const page = await request(path, { schema, query: { limit: pageSize, offset } })
+    items.push(...page.items)
+    offset += page.items.length
+    if (page.items.length === 0 || offset >= page.total) {
+      break
+    }
+  }
+  return items
+}
+
 export async function requestStream(
   path: string,
   options: Omit<RequestOptions<z.ZodType>, 'schema'>,

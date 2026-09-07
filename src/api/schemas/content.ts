@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { contentStatusSchema, questionTypeSchema, uuidSchema } from './common'
+import { contentStatusSchema, pageSchema, questionTypeSchema, uuidSchema } from './common'
 import { assetSchema } from './assets'
 import { tagSchema } from './tags'
 
@@ -100,6 +100,8 @@ export const courseTreeSchema = courseSchema.extend({
   modules: z.array(moduleTreeSchema).default([]),
 })
 
+export const coursePageSchema = pageSchema(courseSchema)
+
 export const trackCourseSchema = z.object({
   position: z.number().int(),
   course: courseSchema,
@@ -114,6 +116,8 @@ export const trackSchema = z.object({
   status: contentStatusSchema,
   courses: z.array(trackCourseSchema).default([]),
 })
+
+export const trackPageSchema = pageSchema(trackSchema)
 
 export const interviewCardPreviewSchema = z.object({
   position: z.number().int(),

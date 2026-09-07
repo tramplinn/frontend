@@ -1,9 +1,10 @@
 import { z } from 'zod'
 
 import { snakeBody } from './case'
-import { request } from './client'
+import { fetchAllPages, request } from './client'
 import type { ContentStatus, QuestionType } from './schemas/common'
 import {
+  coursePageSchema,
   courseSchema,
   courseTreeSchema,
   lessonSchema,
@@ -14,6 +15,7 @@ import {
   quizAuthorSchema,
   quizQuestionSchema,
   quizSchema,
+  trackPageSchema,
   trackSchema,
 } from './schemas/content'
 import type {
@@ -31,7 +33,7 @@ import type {
 } from './schemas/content'
 
 export function listDraftTracks(): Promise<Track[]> {
-  return request('/authoring/tracks', { schema: z.array(trackSchema) })
+  return fetchAllPages('/authoring/tracks', trackPageSchema)
 }
 
 export interface TrackDraft {
@@ -78,7 +80,7 @@ export async function reorderTrackCourses(trackId: string, courseIds: string[]):
 }
 
 export function listDraftCourses(): Promise<Course[]> {
-  return request('/authoring/courses', { schema: z.array(courseSchema) })
+  return fetchAllPages('/authoring/courses', coursePageSchema)
 }
 
 export function getDraftCourse(slug: string): Promise<CourseTree> {

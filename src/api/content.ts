@@ -1,14 +1,14 @@
 import { z } from 'zod'
 
-import { request } from './client'
+import { fetchAllPages, request } from './client'
 import {
-  courseSchema,
+  coursePageSchema,
   courseTreeSchema,
   interviewCardSchema,
   lessonSchema,
   moduleDependencySchema,
   quizSchema,
-  trackSchema,
+  trackPageSchema,
 } from './schemas/content'
 import type {
   Course,
@@ -21,11 +21,11 @@ import type {
 } from './schemas/content'
 
 export function listTracks(): Promise<Track[]> {
-  return request('/tracks', { schema: z.array(trackSchema) })
+  return fetchAllPages('/tracks', trackPageSchema)
 }
 
 export function listCourses(): Promise<Course[]> {
-  return request('/courses', { schema: z.array(courseSchema) })
+  return fetchAllPages('/courses', coursePageSchema)
 }
 
 export function getCourse(slug: string): Promise<CourseTree> {
