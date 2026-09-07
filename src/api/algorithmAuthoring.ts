@@ -1,9 +1,9 @@
-import { z } from 'zod'
-
 import { snakeBody } from './case'
-import { request } from './client'
+import { fetchAllPages, request } from './client'
 import {
+  practiceSetAuthorPageSchema,
   practiceSetAuthorSchema,
+  problemAuthorPageSchema,
   problemAuthorSchema,
   templateAuthorSchema,
   testCaseSchema,
@@ -31,7 +31,7 @@ export interface ProblemDraft {
 }
 
 export function listProblems(): Promise<ProblemAuthor[]> {
-  return request(`${BASE}/algorithms/problems`, { schema: z.array(problemAuthorSchema) })
+  return fetchAllPages(`${BASE}/algorithms/problems`, problemAuthorPageSchema)
 }
 
 export function getProblem(problemId: string): Promise<ProblemAuthor> {
@@ -132,7 +132,7 @@ export interface PracticeSetDraft {
 }
 
 export function listPracticeSets(): Promise<PracticeSetAuthor[]> {
-  return request(`${BASE}/practice-sets`, { schema: z.array(practiceSetAuthorSchema) })
+  return fetchAllPages(`${BASE}/practice-sets`, practiceSetAuthorPageSchema)
 }
 
 export function getPracticeSet(setId: string): Promise<PracticeSetAuthor> {

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { algorithmDifficultySchema, practiceModeSchema } from './algorithms'
-import { contentStatusSchema, uuidSchema } from './common'
+import { contentStatusSchema, pageSchema, uuidSchema } from './common'
 import { tagSchema } from './tags'
 
 /** Языки, которые принимает бэкенд (LANGUAGE_PATTERN в schemas/algorithms.py). */
@@ -51,6 +51,8 @@ export const problemAuthorSchema = z.object({
   templates: z.array(templateAuthorSchema),
 })
 
+export const problemAuthorPageSchema = pageSchema(problemAuthorSchema)
+
 export const setProblemAuthorSchema = z.object({
   problemId: uuidSchema,
   position: z.number().int(),
@@ -69,6 +71,8 @@ export const practiceSetAuthorSchema = z.object({
   status: contentStatusSchema,
   problems: z.array(setProblemAuthorSchema),
 })
+
+export const practiceSetAuthorPageSchema = pageSchema(practiceSetAuthorSchema)
 
 export type AlgorithmLanguage = z.infer<typeof algorithmLanguageSchema>
 export type AlgorithmProvider = z.infer<typeof algorithmProviderSchema>
