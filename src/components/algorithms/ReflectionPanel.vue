@@ -45,7 +45,12 @@ function save(): void {
     <div class="body">
       <label class="field">
         <span>сложность</span>
-        <input v-model="complexity" type="text" placeholder="O(n log n) по времени, O(n) памяти" />
+        <input
+          v-model="complexity"
+          type="text"
+          class="form-field"
+          placeholder="O(n log n) по времени, O(n) памяти"
+        />
       </label>
 
       <fieldset class="field">
@@ -68,7 +73,12 @@ function save(): void {
 
       <label class="field">
         <span>заметки</span>
-        <textarea v-model="notes" rows="4" placeholder="Идея, на чём споткнулся, что повторить" />
+        <textarea
+          v-model="notes"
+          rows="4"
+          class="form-field"
+          placeholder="Идея, на чём споткнулся, что повторить"
+        />
       </label>
 
       <AppButton :loading="savingReflection" @click="save">сохранить разбор</AppButton>
@@ -103,22 +113,6 @@ function save(): void {
   padding: 0;
   font-size: var(--text-caption);
   color: var(--text-muted);
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--bg);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-input);
-}
-
-textarea {
-  resize: vertical;
 }
 
 .scale {

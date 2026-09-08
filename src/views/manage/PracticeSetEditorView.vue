@@ -189,7 +189,7 @@ onMounted(() => void load())
         <div class="grid">
           <label class="field">
             <span>название</span>
-            <input v-model="title" type="text" />
+            <input v-model="title" type="text" class="form-field" />
           </label>
 
           <div class="field">
@@ -199,13 +199,13 @@ onMounted(() => void load())
 
           <label v-if="mode === 'mock_interview'" class="field">
             <span>длительность, минут</span>
-            <input v-model.number="duration" type="number" min="1" max="480" />
+            <input v-model.number="duration" type="number" min="1" max="480" class="form-field" />
           </label>
         </div>
 
         <label class="field">
           <span>описание</span>
-          <textarea v-model="description" rows="3" />
+          <textarea v-model="description" rows="3" class="form-field" />
         </label>
 
         <div class="row">
@@ -343,22 +343,6 @@ h2 {
   gap: var(--space-2);
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--bg);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-input);
-}
-
-textarea {
-  resize: vertical;
 }
 
 .row {

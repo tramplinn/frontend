@@ -30,6 +30,32 @@
   -webkit-appearance: none;
 }
 
+/* Как .text-field, но без фиксированной высоты — подходит и textarea;
+   используется в полноразмерных формах редактирования, а не в тулбарах. */
+.form-field {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-input);
+}
+
+.form-field::placeholder {
+  color: var(--text-muted);
+}
+
+.form-field:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+textarea.form-field {
+  resize: vertical;
+}
+
 .chip {
   padding: 2px var(--space-2);
   border-radius: var(--radius-pill);

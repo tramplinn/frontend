@@ -132,7 +132,7 @@ const canValidate = computed(() => {
         <div class="grid">
           <label class="field">
             <span>название</span>
-            <input v-model="fields.title" type="text" />
+            <input v-model="fields.title" type="text" class="form-field" />
           </label>
 
           <div class="field">
@@ -155,7 +155,13 @@ const canValidate = computed(() => {
 
           <label class="field">
             <span>лимит времени, мс</span>
-            <input v-model.number="fields.timeLimitMs" type="number" min="50" max="5000" />
+            <input
+              v-model.number="fields.timeLimitMs"
+              type="number"
+              min="50"
+              max="5000"
+              class="form-field"
+            />
           </label>
 
           <label class="field">
@@ -166,6 +172,7 @@ const canValidate = computed(() => {
               min="16384"
               max="524288"
               step="1024"
+              class="form-field"
             />
           </label>
         </div>
@@ -314,18 +321,6 @@ h2 {
   gap: var(--space-2);
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--bg);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-input);
 }
 
 .grid input,

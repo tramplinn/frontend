@@ -43,8 +43,8 @@ function toggleTag(id: string): void {
 
     <div class="filters">
       <label class="search">
-        <span class="sr-only">Поиск по названию</span>
-        <input v-model="search" type="search" placeholder="поиск по названию" />
+        <span class="visually-hidden">Поиск по названию</span>
+        <input v-model="search" type="search" class="text-field" placeholder="поиск по названию" />
       </label>
 
       <div class="chips" role="group" aria-label="Сложность">
@@ -149,14 +149,6 @@ function toggleTag(id: string): void {
 .search input {
   width: 100%;
   max-width: 420px;
-  height: var(--ctl-sm);
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--card);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-input);
 }
 
 .chips {
@@ -229,14 +221,6 @@ function toggleTag(id: string): void {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
 }
 
 @media (max-width: 600px) {
