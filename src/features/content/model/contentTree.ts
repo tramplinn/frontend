@@ -1,5 +1,5 @@
 import type { ContentStatus } from '@/api/schemas/common'
-import type { ModuleTree, Track } from '@/api/schemas/content'
+import type { ModuleItem, ModuleTree, Track } from '@/api/schemas/content'
 
 export const toggleContentStatus = (status: ContentStatus): ContentStatus =>
   status === 'published' ? 'draft' : 'published'
@@ -7,12 +7,16 @@ export const toggleContentStatus = (status: ContentStatus): ContentStatus =>
 export const contentStatusAction = (status: ContentStatus): string =>
   status === 'published' ? 'снять' : 'опубликовать'
 
+export function itemStatus(item: ModuleItem): ContentStatus {
+  return item.kind === 'lesson'
+    ? item.lesson.status
+    : item.kind === 'quiz'
+      ? item.quiz.status
+      : item.practiceSet.status
+}
+
 export function publishedItemCount(module: ModuleTree): number {
-  return module.items.filter((item) => {
-    const content =
-      item.kind === 'lesson' ? item.lesson : item.kind === 'quiz' ? item.quiz : item.practiceSet
-    return content.status === 'published'
-  }).length
+  return module.items.filter((item) => itemStatus(item) === 'published').length
 }
 
 export function isPublishedModuleEmpty(module: ModuleTree): boolean {

@@ -52,6 +52,9 @@ const {
   moveOpenModule,
   moveItem,
   removeItem,
+  publishItem,
+  publishModuleCascade,
+  publishCourseCascade,
 } = props.content
 </script>
 
@@ -67,6 +70,7 @@ const {
       :track-titles="props.trackTitles"
       @toggle="toggleCourse(props.course.slug)"
       @publish="run(() => updateCourse(props.course.id, { status: flip(props.course.status) }))"
+      @publish-cascade="publishCourseCascade(props.course)"
       @move="(delta) => emit('move', delta)"
       @edit="toggleEditing(props.course.id)"
       @detach="emit('detach')"
@@ -110,12 +114,14 @@ const {
           @toggle-deps="openModuleId = openModuleId === module.id ? null : module.id"
           @deps-changed="refresh"
           @publish="run(() => updateModule(module.id, { status: flip(module.status) }))"
+          @publish-cascade="publishModuleCascade(module)"
           @move="(delta) => moveOpenModule(moduleIndex, delta)"
           @remove="run(() => deleteModule(module.id))"
           @add-lesson="(draft) => addLesson(module.id, draft)"
           @add-quiz="(draft) => addQuiz(module.id, draft)"
           @add-practice="(draft) => addPractice(module.id, draft)"
           @move-item="(index, delta) => moveItem(module, index, delta)"
+          @publish-item="(item) => publishItem(item)"
           @remove-item="(item) => removeItem(item)"
         />
 

@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
 
-import { createPracticeSet, deletePracticeSet } from '@/api/algorithmAuthoring'
+import { createPracticeSet, deletePracticeSet, updatePracticeSet } from '@/api/algorithmAuthoring'
 import {
   attachCourse,
   createCourse,
@@ -14,25 +14,33 @@ import {
   listDraftCourses,
   listDraftModuleDependencies,
   listDraftTracks,
+  publishCourseCascade as publishCourseCascadeRequest,
+  publishModuleCascade as publishModuleCascadeRequest,
+  publishTrackCascade as publishTrackCascadeRequest,
   reorderModuleItems,
   reorderModules,
   reorderTrackCourses,
   updateCourse,
+  updateLesson,
   updateModule,
+  updateQuiz,
   updateTrack,
 } from '@/api/authoring'
 import type { CourseDraft, ModuleDraft, TrackDraft } from '@/api/authoring'
+import type { ContentStatus } from '@/api/schemas/common'
 import type {
   Course,
   CourseTree,
   ModuleDependency,
   ModuleItem,
   ModuleTree,
+  PublishReport,
   Track,
 } from '@/api/schemas/content'
 import {
   contentStatusAction,
   isPublishedModuleEmpty,
+  itemStatus,
   orderedCourses,
   publishedItemCount,
   swapAdjacent,
@@ -51,6 +59,7 @@ export function useContentManagement() {
   const error = ref<unknown>(null)
   const busy = ref(false)
   const actionError = ref<unknown>(null)
+  const publishReport = ref<PublishReport | null>(null)
   const courseError = ref<unknown>(null)
   const loadingCourse = ref(false)
   const editing = ref<string | null>(null)
@@ -209,6 +218,49 @@ export function useContentManagement() {
     })
   }
 
+  function updateItemStatus(item: ModuleItem, status: ContentStatus): Promise<unknown> {
+    if (item.kind === 'lesson') return updateLesson(item.lesson.id, { status })
+    if (item.kind === 'quiz') return updateQuiz(item.quiz.id, { status })
+    return updatePracticeSet(item.practiceSet.id, { status })
+  }
+
+  function publishItem(item: ModuleItem): void {
+    void runInTree(() => updateItemStatus(item, toggleContentStatus(itemStatus(item))))
+  }
+
+  /* «Опубликовать всё содержимое» — один POST на бэк вместо букета
+     параллельных PATCH с фронта (best-effort: публикует всё проходящее
+     валидацию, остальное пропускает с причиной; уже опубликованное не
+     трогает и публикацию не снимает — см. PublishCascadeService). Экран
+     обновляется всегда, даже если что-то пошло не так на середине —
+     раньше при частичном сбое сервер мог уйти вперёд, а экран об этом
+     не узнавал. */
+  async function runCascade(action: () => Promise<PublishReport>): Promise<void> {
+    busy.value = true
+    actionError.value = null
+    publishReport.value = null
+    try {
+      publishReport.value = await action()
+    } catch (cause) {
+      actionError.value = cause
+    } finally {
+      busy.value = false
+    }
+    await refresh()
+  }
+
+  function publishModuleCascade(module: ModuleTree): void {
+    void runCascade(() => publishModuleCascadeRequest(module.id))
+  }
+
+  function publishCourseCascade(course: Course): void {
+    void runCascade(() => publishCourseCascadeRequest(course.id))
+  }
+
+  function publishTrackCascade(track: Track): void {
+    void runCascade(() => publishTrackCascadeRequest(track.id))
+  }
+
   function moveModule(course: CourseTree, index: number, delta: number): void {
     const ids = swapAdjacent(
       [...course.modules].sort((a, b) => a.position - b.position).map((item) => item.id),
@@ -281,6 +333,7 @@ export function useContentManagement() {
     error,
     busy,
     actionError,
+    publishReport,
     courseError,
     loadingCourse,
     courseEmptyForStudents,
@@ -306,6 +359,10 @@ export function useContentManagement() {
     addPractice,
     addQuiz,
     removeItem,
+    publishItem,
+    publishModuleCascade,
+    publishCourseCascade,
+    publishTrackCascade,
     moveModule,
     moveOpenModule,
     moveItem,

@@ -34,6 +34,7 @@ const emit = defineEmits<{
   toggleDeps: []
   depsChanged: []
   publish: []
+  publishCascade: []
   move: [delta: number]
   remove: []
   addLesson: [draft: { title: string; slug: string }]
@@ -41,6 +42,7 @@ const emit = defineEmits<{
   addPractice: [draft: { title: string }]
   moveItem: [index: number, delta: number]
   removeItem: [item: ModuleItem]
+  publishItem: [item: ModuleItem]
 }>()
 </script>
 
@@ -65,6 +67,7 @@ const emit = defineEmits<{
         <RowMenuItem @select="emit('publish')">
           {{ contentStatusAction(props.module.status) }}
         </RowMenuItem>
+        <RowMenuItem @select="emit('publishCascade')">опубликовать всё содержимое</RowMenuItem>
         <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
         <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
         <RowMenuItem danger @select="emit('remove')">удалить модуль</RowMenuItem>
@@ -97,6 +100,7 @@ const emit = defineEmits<{
           :first="itemIndex === 0"
           :last="itemIndex === props.module.items.length - 1"
           @move="(delta) => emit('moveItem', itemIndex, delta)"
+          @publish="emit('publishItem', item)"
           @remove="emit('removeItem', item)"
         />
       </ul>

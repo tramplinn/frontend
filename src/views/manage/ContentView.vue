@@ -24,6 +24,7 @@ const {
   error,
   busy,
   actionError,
+  publishReport,
   flip,
   publishLabel,
   ordered,
@@ -34,6 +35,7 @@ const {
   addTrack,
   addCourse,
   addStandaloneCourse,
+  publishTrackCascade,
   move,
 } = content
 </script>
@@ -45,6 +47,15 @@ const {
     </header>
 
     <p v-if="actionError" class="action-error" role="alert">{{ errorText(actionError) }}</p>
+
+    <div v-if="publishReport" class="publish-report" role="status">
+      <p>опубликовано: {{ publishReport.published.length }}</p>
+      <ul v-if="publishReport.skipped.length > 0" class="publish-skips">
+        <li v-for="skip in publishReport.skipped" :key="skip.id">
+          «{{ skip.title }}» — {{ skip.reason }}
+        </li>
+      </ul>
+    </div>
 
     <LoadState :pending="pending" :error="error">
       <TabsRoot default-value="tracks">
@@ -75,6 +86,9 @@ const {
                     @select="run(() => updateTrack(track.id, { status: flip(track.status) }))"
                   >
                     {{ publishLabel(track.status) }}
+                  </RowMenuItem>
+                  <RowMenuItem @select="publishTrackCascade(track)">
+                    опубликовать всё содержимое
                   </RowMenuItem>
                   <RowMenuItem danger @select="run(() => deleteTrack(track.id))">
                     удалить трек
@@ -156,6 +170,21 @@ const {
   margin-bottom: var(--space-4);
   color: var(--danger);
   font-size: var(--text-caption);
+}
+
+.publish-report {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-ctl);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--text-caption);
+}
+
+.publish-skips {
+  margin-top: var(--space-2);
+  padding-left: var(--space-4);
+  color: var(--warning);
 }
 
 .tabs {

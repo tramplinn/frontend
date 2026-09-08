@@ -5,6 +5,7 @@ import type { ModuleItem } from '@/api/schemas/content'
 import RowMenu from '@/components/ui/RowMenu.vue'
 import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
+import { contentStatusAction } from '@/features/content/model/contentTree'
 import { withCount } from '@/lib/plural'
 
 const props = defineProps<{
@@ -14,7 +15,7 @@ const props = defineProps<{
   last: boolean
 }>()
 
-const emit = defineEmits<{ move: [delta: number]; remove: [] }>()
+const emit = defineEmits<{ move: [delta: number]; publish: []; remove: [] }>()
 
 const content = computed(() =>
   props.item.kind === 'lesson'
@@ -55,6 +56,7 @@ const removeLabel = computed(() =>
     </RouterLink>
 
     <RowMenu :disabled="props.busy" :label="`Действия: ${content.title}`">
+      <RowMenuItem @select="emit('publish')">{{ contentStatusAction(content.status) }}</RowMenuItem>
       <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
       <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
       <RowMenuItem danger @select="emit('remove')">{{ removeLabel }}</RowMenuItem>

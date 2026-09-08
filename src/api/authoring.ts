@@ -12,6 +12,7 @@ import {
   moduleDependencySchema,
   moduleSchema,
   moduleTreeSchema,
+  publishReportSchema,
   quizAuthorSchema,
   quizQuestionSchema,
   quizSchema,
@@ -26,6 +27,7 @@ import type {
   Module,
   ModuleDependency,
   ModuleTree,
+  PublishReport,
   Quiz,
   QuizAuthor,
   QuizQuestion,
@@ -62,6 +64,13 @@ export function updateTrack(trackId: string, changes: Partial<TrackDraft>): Prom
 
 export async function deleteTrack(trackId: string): Promise<void> {
   await request(`/authoring/tracks/${trackId}`, { method: 'DELETE' })
+}
+
+export function publishTrackCascade(trackId: string): Promise<PublishReport> {
+  return request(`/authoring/tracks/${trackId}/publish`, {
+    method: 'POST',
+    schema: publishReportSchema,
+  })
 }
 
 export async function attachCourse(trackId: string, courseId: string): Promise<void> {
@@ -118,6 +127,13 @@ export async function deleteCourse(courseId: string): Promise<void> {
   await request(`/authoring/courses/${courseId}`, { method: 'DELETE' })
 }
 
+export function publishCourseCascade(courseId: string): Promise<PublishReport> {
+  return request(`/authoring/courses/${courseId}/publish`, {
+    method: 'POST',
+    schema: publishReportSchema,
+  })
+}
+
 export function listDraftModuleDependencies(slug: string): Promise<ModuleDependency[]> {
   return request(`/authoring/courses/${encodeURIComponent(slug)}/module-dependencies`, {
     schema: z.array(moduleDependencySchema),
@@ -162,6 +178,13 @@ export async function reorderModules(courseId: string, moduleIds: string[]): Pro
 
 export async function deleteModule(moduleId: string): Promise<void> {
   await request(`/authoring/modules/${moduleId}`, { method: 'DELETE' })
+}
+
+export function publishModuleCascade(moduleId: string): Promise<PublishReport> {
+  return request(`/authoring/modules/${moduleId}/publish`, {
+    method: 'POST',
+    schema: publishReportSchema,
+  })
 }
 
 export async function addModuleDependency(moduleId: string, dependsOnId: string): Promise<void> {

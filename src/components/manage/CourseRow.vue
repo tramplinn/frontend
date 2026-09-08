@@ -23,6 +23,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   toggle: []
   publish: []
+  publishCascade: []
   move: [delta: number]
   edit: []
   detach: []
@@ -45,6 +46,7 @@ const emit = defineEmits<{
       <RowMenuItem @select="emit('publish')">
         {{ contentStatusAction(props.course.status) }}
       </RowMenuItem>
+      <RowMenuItem @select="emit('publishCascade')">опубликовать всё содержимое</RowMenuItem>
       <RowMenuItem @select="emit('edit')">изменить курс</RowMenuItem>
       <template v-if="!props.standalone">
         <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше в треке</RowMenuItem>

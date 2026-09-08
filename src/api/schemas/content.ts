@@ -144,6 +144,18 @@ export const quizAuthorSchema = quizSchema.extend({
   questions: z.array(quizQuestionAuthorSchema).default([]),
 })
 
+export const publishSkipSchema = z.object({
+  id: uuidSchema,
+  kind: z.enum(['lesson', 'quiz', 'practice_set']),
+  title: z.string(),
+  reason: z.string(),
+})
+
+export const publishReportSchema = z.object({
+  published: z.array(uuidSchema),
+  skipped: z.array(publishSkipSchema),
+})
+
 export type InterviewCard = z.infer<typeof interviewCardSchema>
 export type Lesson = z.infer<typeof lessonSchema>
 export type QuizQuestion = z.infer<typeof quizQuestionSchema>
@@ -160,3 +172,5 @@ export type Track = z.infer<typeof trackSchema>
 export type ModuleDependency = z.infer<typeof moduleDependencySchema>
 export type InterviewCardPreview = z.infer<typeof interviewCardPreviewSchema>
 export type MarkdownPreview = z.infer<typeof markdownPreviewSchema>
+export type PublishSkip = z.infer<typeof publishSkipSchema>
+export type PublishReport = z.infer<typeof publishReportSchema>
