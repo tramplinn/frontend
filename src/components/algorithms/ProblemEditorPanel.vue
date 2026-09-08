@@ -44,8 +44,15 @@ function formatSolvedAt(value: string | null): string {
   return value ? new Date(value).toLocaleString() : ''
 }
 
+const historyOptions = computed(() =>
+  solutions.value.map((item) => ({
+    value: item.id,
+    label: `${formatSolvedAt(item.finishedAt)} · ${languageLabel(item.language)}`,
+  })),
+)
+
 function applyHistoryPick(id: string): void {
-  if (id) loadSolution(id)
+  loadSolution(id)
   historyPick.value = ''
 }
 
@@ -76,15 +83,15 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       />
       <p v-else class="muted">для задачи не настроен ни один доступный язык</p>
 
-      <label v-if="solutions.length > 0" class="history">
-        <span class="sr-only">прошлые решения</span>
-        <select v-model="historyPick" @change="applyHistoryPick(historyPick)">
-          <option value="" disabled>прошлые решения ({{ solutions.length }})</option>
-          <option v-for="item in solutions" :key="item.id" :value="item.id">
-            {{ formatSolvedAt(item.finishedAt) }} · {{ languageLabel(item.language) }}
-          </option>
-        </select>
-      </label>
+      <AppSelect
+        v-if="solutions.length > 0"
+        :model-value="historyPick"
+        :options="historyOptions"
+        :placeholder="`прошлые решения (${solutions.length})`"
+        label="Прошлые решения"
+        :disabled="running"
+        @update:model-value="applyHistoryPick"
+      />
 
       <ConfirmButton
         label="решить заново"
@@ -177,27 +184,6 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
   align-items: center;
   gap: var(--space-3);
   justify-content: space-between;
-}
-
-.history select {
-  height: var(--ctl-sm);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-  background: var(--card);
-  color: var(--text);
-  font-family: inherit;
-  font-size: var(--text-caption);
-  cursor: pointer;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
 }
 
 .verdict {

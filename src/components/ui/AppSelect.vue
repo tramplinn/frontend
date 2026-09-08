@@ -22,15 +22,18 @@ const props = withDefaults(
     modelValue: T
     options: Option[]
     label: string
+    /** Текст триггера, пока modelValue не совпадает ни с одной опцией. */
+    placeholder?: string | null
     disabled?: boolean
   }>(),
-  { disabled: false },
+  { disabled: false, placeholder: null },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: T] }>()
 
 const currentLabel = computed(
-  () => props.options.find((item) => item.value === props.modelValue)?.label ?? '',
+  () =>
+    props.options.find((item) => item.value === props.modelValue)?.label ?? props.placeholder ?? '',
 )
 
 function update(value: unknown): void {
@@ -48,7 +51,7 @@ function update(value: unknown): void {
     @update:model-value="update"
   >
     <SelectTrigger class="trigger" :aria-label="props.label">
-      <SelectValue>{{ currentLabel }}</SelectValue>
+      <SelectValue class="value" :placeholder="props.placeholder">{{ currentLabel }}</SelectValue>
       <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true" class="caret">
         <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" />
       </svg>
@@ -102,6 +105,10 @@ function update(value: unknown): void {
 .trigger:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.value[data-placeholder] {
+  color: var(--text-muted);
 }
 
 .caret {
