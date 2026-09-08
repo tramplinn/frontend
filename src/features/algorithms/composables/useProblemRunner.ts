@@ -52,14 +52,20 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   const drafts = new Map<string, string>()
   const requestGuard = useVersionedLoad()
 
-  /* Как на LeetCode: студент может решать на любом языке раннера, а не только
-     на тех, для которых автор задачи завёл стартовый шаблон. Список шаблонов —
-     это только источник стартового кода, а не ограничение выбора. */
   const languages = computed(() => {
-    if (supported.value.length > 0) {
-      return supported.value
+    const templates = problem.value?.templates.map((item) => item.language) ?? []
+    if (supported.value.length === 0) {
+      return templates
     }
-    return problem.value?.templates.map((item) => item.language) ?? []
+    const allowed = new Set(supported.value)
+    return templates.filter((item) => allowed.has(item))
+  })
+
+  const unavailableLanguages = computed(() => {
+    const offered = new Set(languages.value)
+    return (problem.value?.templates.map((item) => item.language) ?? []).filter(
+      (item) => !offered.has(item),
+    )
   })
 
   const queueStatus = computed(() => {
@@ -80,13 +86,6 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
 
   function draftKey(problemId: string, lang: string): string {
     return `${problemId}:${lang}`
-  }
-
-  /* Раз выбор языков больше не сводится к шаблонам задачи, по умолчанию всё
-     равно предпочитаем язык, для которого автор оставил стартовый код. */
-  function defaultLanguage(): string {
-    const withTemplate = problem.value?.templates.map((item) => item.language) ?? []
-    return withTemplate.find((item) => languages.value.includes(item)) ?? languages.value[0] ?? ''
   }
 
   function selectLanguage(next: string): void {
@@ -114,7 +113,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       problem.value = loaded
       supported.value = allowed
       language.value = ''
-      selectLanguage(defaultLanguage())
+      selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
       const languageAtLoad = language.value
       const sourceCodeAtLoad = sourceCode.value
       getAlgorithmProgress(id)
@@ -262,5 +261,6 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     selectLanguage,
     solutions,
     sourceCode,
+    unavailableLanguages,
   }
 }

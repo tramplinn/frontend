@@ -60,23 +60,14 @@ describe('useProblemRunner', () => {
     vi.mocked(listAlgorithmSolutions).mockResolvedValue([])
   })
 
-  it('offers every language the runner supports, not just the ones with a template', async () => {
+  it('offers only languages the runner actually supports', async () => {
     const runner = makeRunner()
     await runner.load()
 
-    expect(runner.languages.value).toEqual(['python', 'cpp', 'go'])
+    expect(runner.languages.value).toEqual(['python', 'cpp'])
+    expect(runner.unavailableLanguages.value).toEqual(['kotlin'])
     expect(runner.language.value).toBe('python')
     expect(runner.sourceCode.value).toBe('# python')
-  })
-
-  it('starts from a blank file when switching to a language with no author template', async () => {
-    const runner = makeRunner()
-    await runner.load()
-
-    runner.selectLanguage('go')
-
-    expect(runner.language.value).toBe('go')
-    expect(runner.sourceCode.value).toBe('')
   })
 
   it('keeps a separate draft per language', async () => {

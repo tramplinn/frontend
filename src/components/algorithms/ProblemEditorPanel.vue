@@ -29,6 +29,7 @@ const {
   selectLanguage,
   solutions,
   sourceCode,
+  unavailableLanguages,
 } = props.runner
 
 const languageOptions = computed(() =>
@@ -103,6 +104,11 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
         {{ finished ? verdictLabel(verdict) : queueStatus }}
       </span>
     </div>
+
+    <p v-if="unavailableLanguages.length > 0" class="hint">
+      недоступны в раннере:
+      {{ unavailableLanguages.map(languageLabel).join(', ') }}
+    </p>
 
     <CodeEditor
       v-model="sourceCode"
@@ -210,7 +216,8 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
   color: var(--danger);
 }
 
-.muted {
+.muted,
+.hint {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }
