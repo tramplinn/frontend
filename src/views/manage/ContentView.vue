@@ -1,19 +1,10 @@
 <script setup lang="ts">
-import {
-  attachCourse,
-  deleteCourse,
-  deleteModule,
-  deleteTrack,
-  detachCourse,
-  updateCourse,
-  updateModule,
-  updateTrack,
-} from '@/api/authoring'
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
+
+import { attachCourse, deleteTrack, detachCourse, updateTrack } from '@/api/authoring'
 import AddCourse from '@/components/manage/AddCourse.vue'
-import CourseRow from '@/components/manage/CourseRow.vue'
+import CourseTreeItem from '@/components/manage/CourseTreeItem.vue'
 import InlineCreate from '@/components/manage/InlineCreate.vue'
-import CourseEditor from '@/components/manage/CourseEditor.vue'
-import ModuleCard from '@/components/manage/ModuleCard.vue'
 import TrackEditor from '@/components/manage/TrackEditor.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import RowMenu from '@/components/ui/RowMenu.vue'
@@ -22,180 +13,136 @@ import StatusChip from '@/components/ui/StatusChip.vue'
 import { useContentManagement } from '@/features/content/composables/useContentManagement'
 import { errorText } from '@/lib/errors'
 
+/* CourseTreeItem получает весь объект целиком (как runner в ProblemEditorPanel) —
+   он используется и внутри карточки трека, и в плоском списке курсов ниже. */
+const content = useContentManagement()
 const {
   tracks,
   allCourses,
-  openCourse,
-  openSlug,
-  dependencies,
-  openModuleId,
-  openModule,
+  courseTrackTitles,
   pending,
   error,
   busy,
   actionError,
-  courseError,
-  loadingCourse,
-  courseEmptyForStudents,
   flip,
   publishLabel,
   ordered,
-  toggleCourse,
-  refresh,
   run,
   editing,
   toggleEditing,
   saveTrack,
-  saveCourse,
-  saveModule,
   addTrack,
   addCourse,
-  addModule,
-  addLesson,
-  addPractice,
-  addQuiz,
-  removeItem,
-  moveOpenModule,
-  moveItem,
+  addStandaloneCourse,
   move,
-} = useContentManagement()
+} = content
 </script>
 
 <template>
   <section>
     <header class="head">
-      <div>
-        <h1 class="heading">контент</h1>
-      </div>
-      <InlineCreate label="трек" placeholder="название трека" :saving="busy" @create="addTrack" />
+      <h1 class="heading">контент</h1>
     </header>
 
     <p v-if="actionError" class="action-error" role="alert">{{ errorText(actionError) }}</p>
 
     <LoadState :pending="pending" :error="error">
-      <p v-if="tracks.length === 0" class="empty">треков пока нет</p>
+      <TabsRoot default-value="tracks">
+        <TabsList class="tabs" aria-label="Раздел контента">
+          <TabsTrigger value="tracks" class="tab">треки</TabsTrigger>
+          <TabsTrigger value="courses" class="tab">курсы</TabsTrigger>
+        </TabsList>
 
-      <div v-else class="tracks">
-        <article v-for="track in tracks" :key="track.id" class="track">
-          <header class="track-head">
-            <h2 class="track-title">{{ track.title }}</h2>
-            <StatusChip :status="track.status" />
-            <RowMenu class="actions" :disabled="busy" :label="`Действия: ${track.title}`">
-              <RowMenuItem @select="toggleEditing(track.id)">изменить трек</RowMenuItem>
-              <RowMenuItem
-                @select="run(() => updateTrack(track.id, { status: flip(track.status) }))"
-              >
-                {{ publishLabel(track.status) }}
-              </RowMenuItem>
-              <RowMenuItem danger @select="run(() => deleteTrack(track.id))">
-                удалить трек
-              </RowMenuItem>
-            </RowMenu>
-          </header>
-
-          <TrackEditor
-            v-if="editing === track.id"
-            :track="track"
-            :busy="busy"
-            @save="(changes) => saveTrack(track.id, changes)"
-            @cancel="editing = null"
+        <TabsContent value="tracks">
+          <InlineCreate
+            label="трек"
+            placeholder="название трека"
+            class="tab-create"
+            :saving="busy"
+            @create="addTrack"
           />
 
-          <ul class="courses">
-            <li v-for="(link, index) in ordered(track)" :key="link.course.id">
-              <CourseRow
-                :course="link.course"
-                :busy="busy"
-                :open="openSlug === link.course.slug"
-                :first="index === 0"
-                :last="index === track.courses.length - 1"
-                @toggle="toggleCourse(link.course.slug)"
-                @publish="
-                  run(() => updateCourse(link.course.id, { status: flip(link.course.status) }))
-                "
-                @move="(delta) => move(track, index, delta)"
-                @edit="toggleEditing(link.course.id)"
-                @detach="run(() => detachCourse(track.id, link.course.id))"
-                @remove="run(() => deleteCourse(link.course.id))"
-              />
+          <p v-if="tracks.length === 0" class="empty">треков пока нет</p>
 
-              <CourseEditor
-                v-if="editing === link.course.id"
-                :course="link.course"
+          <div v-else class="tracks">
+            <article v-for="track in tracks" :key="track.id" class="track">
+              <header class="track-head">
+                <h2 class="track-title">{{ track.title }}</h2>
+                <StatusChip :status="track.status" />
+                <RowMenu class="actions" :disabled="busy" :label="`Действия: ${track.title}`">
+                  <RowMenuItem @select="toggleEditing(track.id)">изменить трек</RowMenuItem>
+                  <RowMenuItem
+                    @select="run(() => updateTrack(track.id, { status: flip(track.status) }))"
+                  >
+                    {{ publishLabel(track.status) }}
+                  </RowMenuItem>
+                  <RowMenuItem danger @select="run(() => deleteTrack(track.id))">
+                    удалить трек
+                  </RowMenuItem>
+                </RowMenu>
+              </header>
+
+              <TrackEditor
+                v-if="editing === track.id"
+                :track="track"
                 :busy="busy"
-                @save="(changes) => saveCourse(link.course.id, changes)"
+                @save="(changes) => saveTrack(track.id, changes)"
                 @cancel="editing = null"
               />
 
-              <div v-if="openSlug === link.course.slug" class="modules">
-                <p v-if="loadingCourse" class="hint">загружаем…</p>
-                <p v-else-if="courseError" class="error">курс не открылся</p>
+              <ul class="courses">
+                <CourseTreeItem
+                  v-for="(link, index) in ordered(track)"
+                  :key="link.course.id"
+                  :content="content"
+                  :course="link.course"
+                  :first="index === 0"
+                  :last="index === track.courses.length - 1"
+                  @move="(delta) => move(track, index, delta)"
+                  @detach="run(() => detachCourse(track.id, link.course.id))"
+                />
+              </ul>
 
-                <template v-else-if="openCourse">
-                  <p v-if="openCourse.modules.length === 0" class="hint">в курсе нет модулей</p>
+              <AddCourse
+                :track="track"
+                :courses="allCourses"
+                :busy="busy"
+                @create="(draft) => addCourse(track, draft)"
+                @attach="(courseId) => run(() => attachCourse(track.id, courseId))"
+              />
+            </article>
+          </div>
+        </TabsContent>
 
-                  <p v-if="courseEmptyForStudents" class="warn">
-                    Курс опубликован, но студенты увидят пустую страницу: ни один модуль не
-                    опубликован.
-                  </p>
-
-                  <ModuleCard
-                    v-for="(module, moduleIndex) in openCourse.modules"
-                    :key="module.id"
-                    :module="module"
-                    :modules="openCourse.modules"
-                    :dependencies="dependencies"
-                    :busy="busy"
-                    :first="moduleIndex === 0"
-                    :last="moduleIndex === openCourse.modules.length - 1"
-                    :editing="editing === module.id"
-                    :expanded="openModule"
-                    :deps-open="openModuleId === module.id"
-                    @edit="toggleEditing(module.id)"
-                    @save="(changes) => saveModule(module.id, changes)"
-                    @cancel-edit="editing = null"
-                    @toggle-deps="openModuleId = openModuleId === module.id ? null : module.id"
-                    @deps-changed="refresh"
-                    @publish="run(() => updateModule(module.id, { status: flip(module.status) }))"
-                    @move="(delta) => moveOpenModule(moduleIndex, delta)"
-                    @remove="run(() => deleteModule(module.id))"
-                    @add-lesson="(draft) => addLesson(module.id, draft)"
-                    @add-quiz="(draft) => addQuiz(module.id, draft)"
-                    @add-practice="(draft) => addPractice(module.id, draft)"
-                    @move-item="(index, delta) => moveItem(module, index, delta)"
-                    @remove-item="(item) => removeItem(item)"
-                  />
-
-                  <InlineCreate
-                    label="модуль"
-                    placeholder="название модуля"
-                    :saving="busy"
-                    @create="addModule"
-                  />
-                </template>
-              </div>
-            </li>
-          </ul>
-
-          <AddCourse
-            :track="track"
-            :courses="allCourses"
-            :busy="busy"
-            @create="(draft) => addCourse(track, draft)"
-            @attach="(courseId) => run(() => attachCourse(track.id, courseId))"
+        <TabsContent value="courses">
+          <InlineCreate
+            label="курс"
+            placeholder="название курса"
+            class="tab-create"
+            :saving="busy"
+            @create="addStandaloneCourse"
           />
-        </article>
-      </div>
+
+          <p v-if="allCourses.length === 0" class="empty">курсов пока нет</p>
+
+          <ul v-else class="courses">
+            <CourseTreeItem
+              v-for="course in allCourses"
+              :key="course.id"
+              :content="content"
+              :course="course"
+              standalone
+              :track-titles="courseTrackTitles.get(course.id) ?? []"
+            />
+          </ul>
+        </TabsContent>
+      </TabsRoot>
     </LoadState>
   </section>
 </template>
 
 <style scoped>
 .head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
 
@@ -209,6 +156,42 @@ const {
   margin-bottom: var(--space-4);
   color: var(--danger);
   font-size: var(--text-caption);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  height: var(--ctl-sm);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-ctl);
+  background: var(--card);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.tab:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.tab[data-state='active'] {
+  background: var(--selected);
+  color: var(--on-selected);
+}
+
+.tab-create {
+  margin-bottom: var(--space-4);
 }
 
 .tracks {
@@ -240,87 +223,13 @@ const {
   margin-left: auto;
 }
 
-.courses,
-.items {
+.courses {
   list-style: none;
-}
-
-.modules {
-  padding: var(--space-3) 0 var(--space-4) var(--space-4);
-  margin-left: var(--space-4);
-  border-left: 1px solid var(--border);
-}
-
-.module + .module {
-  margin-top: var(--space-4);
-}
-
-.module-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-ctl);
-  background: var(--surface);
-}
-
-.module-title {
-  font-size: var(--text-body);
-  font-weight: var(--weight-medium);
-}
-
-.module-body {
-  padding-left: var(--space-4);
-  margin: var(--space-2) 0 0 var(--space-4);
-  border-left: 1px solid var(--border);
-}
-
-.module-meta {
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.module-add {
-  display: flex;
-  gap: var(--space-2);
-  padding-top: var(--space-1);
 }
 
 .empty {
   padding: var(--space-12) 0;
   color: var(--text-muted);
   font-size: var(--text-caption);
-}
-
-.hint {
-  padding: var(--space-3);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.error {
-  padding: var(--space-3);
-  color: var(--danger);
-  font-size: var(--text-caption);
-}
-
-.warn {
-  max-width: var(--measure);
-  margin: 0 var(--space-3) var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--warning-soft);
-  color: var(--warning);
-  border-radius: var(--radius-ctl);
-  font-size: var(--text-caption);
-}
-
-.warn-chip {
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--warning-soft);
-  color: var(--warning);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
 }
 </style>

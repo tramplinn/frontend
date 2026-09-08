@@ -5,13 +5,20 @@ import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { contentStatusAction } from '@/features/content/model/contentTree'
 
-const props = defineProps<{
-  course: Course
-  busy: boolean
-  open: boolean
-  first: boolean
-  last: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    course: Course
+    busy: boolean
+    open: boolean
+    first?: boolean
+    last?: boolean
+    /** Курс без трека: пункты меню про порядок и «убрать из трека» тут бессмысленны. */
+    standalone?: boolean
+    /** Показывается только в плоском списке курсов — из какого(их) трека(ов) курс. */
+    trackTitles?: string[]
+  }>(),
+  { first: true, last: true, standalone: false, trackTitles: () => [] },
+)
 
 const emit = defineEmits<{
   toggle: []
@@ -29,6 +36,9 @@ const emit = defineEmits<{
       <span class="caret">{{ props.open ? '−' : '+' }}</span>
       <span class="course-title">{{ props.course.title }}</span>
       <StatusChip :status="props.course.status" />
+      <span v-if="props.standalone" class="track-titles">
+        {{ props.trackTitles.length > 0 ? props.trackTitles.join(', ') : 'без трека' }}
+      </span>
     </button>
 
     <RowMenu :disabled="props.busy" :label="`Действия: ${props.course.title}`">
@@ -36,9 +46,11 @@ const emit = defineEmits<{
         {{ contentStatusAction(props.course.status) }}
       </RowMenuItem>
       <RowMenuItem @select="emit('edit')">изменить курс</RowMenuItem>
-      <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше в треке</RowMenuItem>
-      <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже в треке</RowMenuItem>
-      <RowMenuItem @select="emit('detach')">убрать из трека</RowMenuItem>
+      <template v-if="!props.standalone">
+        <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше в треке</RowMenuItem>
+        <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже в треке</RowMenuItem>
+        <RowMenuItem @select="emit('detach')">убрать из трека</RowMenuItem>
+      </template>
       <RowMenuItem danger @select="emit('remove')">удалить курс</RowMenuItem>
     </RowMenu>
   </div>
@@ -81,5 +93,13 @@ const emit = defineEmits<{
 
 .course-title {
   font-weight: var(--weight-medium);
+}
+
+.track-titles {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

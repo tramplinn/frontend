@@ -177,6 +177,11 @@ export function useContentManagement() {
     })
   }
 
+  /** Курс без трека — привязать можно позже, из карточки нужного трека. */
+  function addStandaloneCourse(draft: { title: string; slug: string }): void {
+    void run(() => createCourse(draft))
+  }
+
   function addModule(draft: { title: string; slug: string }): void {
     const course = openCourse.value
     if (course) {
@@ -237,6 +242,20 @@ export function useContentManagement() {
     if (ids) void run(() => reorderTrackCourses(track.id, ids))
   }
 
+  /* Курс виден в дереве трека, только если к какому-то треку привязан —
+     а свежесозданный (или отвязанный после удаления трека) курс может не
+     быть привязан ни к одному. Плоская вкладка «курсы» показывает вообще
+     все и подписывает, в каких треках курс участвует (их может быть и 0). */
+  const courseTrackTitles = computed(() => {
+    const byCourse = new Map<string, string[]>()
+    for (const track of tracks.value) {
+      for (const link of track.courses) {
+        byCourse.set(link.course.id, [...(byCourse.get(link.course.id) ?? []), track.title])
+      }
+    }
+    return byCourse
+  })
+
   const openModule = computed(
     () => openCourse.value?.modules.find((item) => item.id === openModuleId.value) ?? null,
   )
@@ -252,6 +271,7 @@ export function useContentManagement() {
   return {
     tracks,
     allCourses,
+    courseTrackTitles,
     openCourse,
     openSlug,
     dependencies,
@@ -280,6 +300,7 @@ export function useContentManagement() {
     saveModule,
     addTrack,
     addCourse,
+    addStandaloneCourse,
     addModule,
     addLesson,
     addPractice,
