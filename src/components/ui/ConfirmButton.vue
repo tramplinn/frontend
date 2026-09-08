@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
-
 import AppButton from '@/components/ui/AppButton.vue'
+import { useArmedConfirm } from '@/composables/useArmedConfirm'
 
 const props = withDefaults(
   defineProps<{
@@ -16,23 +15,11 @@ const props = withDefaults(
 
 const emit = defineEmits<{ confirm: [] }>()
 
-const armed = ref(false)
-let timer: ReturnType<typeof setTimeout> | undefined
+const { armed, press } = useArmedConfirm()
 
-function press(): void {
-  if (armed.value) {
-    clearTimeout(timer)
-    armed.value = false
-    emit('confirm')
-    return
-  }
-  armed.value = true
-  timer = setTimeout(() => (armed.value = false), 4000)
+function onClick(): void {
+  if (press()) emit('confirm')
 }
-
-onUnmounted(() => {
-  clearTimeout(timer)
-})
 </script>
 
 <template>
@@ -41,7 +28,7 @@ onUnmounted(() => {
     :variant="armed ? 'danger' : 'quiet'"
     :loading="props.loading"
     :disabled="props.disabled"
-    @click="press"
+    @click="onClick"
   >
     {{ armed ? props.confirmLabel : props.label }}
   </AppButton>
