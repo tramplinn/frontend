@@ -110,6 +110,7 @@ function attach(courseId: string): void {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-2);
 }
@@ -122,6 +123,7 @@ function attach(courseId: string): void {
 
 .input {
   width: 260px;
+  max-width: 100%;
 }
 
 .slug {

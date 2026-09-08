@@ -80,6 +80,10 @@
   --learning-rail-width: 320px;
   --sidebar: 232px;
   --topbar: 56px;
+  /* Отступ, который должен оставлять контент снизу-справа, чтобы плавающий
+     триггер FeedbackWidget (см. .trigger там) не перекрывал его — на
+     мобильных .content доходит до правого края, в отличие от десктопа. */
+  --feedback-clearance: calc(var(--ctl-sm) * 2 + var(--space-3));
   --brand-mark: 16px;
   --map-height: 480px;
   --map-height-compact: 280px;

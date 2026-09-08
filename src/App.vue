@@ -63,13 +63,13 @@ import FeedbackWidget from '@/components/layout/FeedbackWidget.vue'
   }
 
   .main {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--feedback-clearance);
   }
 }
 
 @media (max-width: 420px) {
   .main {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--feedback-clearance);
   }
 }
 </style>
