@@ -51,7 +51,7 @@ function update(value: unknown): void {
     @update:model-value="update"
   >
     <SelectTrigger class="trigger" :aria-label="props.label">
-      <SelectValue class="value" :placeholder="props.placeholder">{{ currentLabel }}</SelectValue>
+      <SelectValue class="value" :placeholder="props.placeholder ?? ''">{{ currentLabel }}</SelectValue>
       <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true" class="caret">
         <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" />
       </svg>
