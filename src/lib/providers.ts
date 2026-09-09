@@ -4,6 +4,7 @@ import type { IdentityProvider } from '@/api/schemas/common'
 const PROVIDER_NAMES: Record<IdentityProvider, string> = {
   github: 'GitHub',
   yandex: 'Яндекс ID',
+  gitlab: 'GitLab',
 }
 
 export function providerName(provider: IdentityProvider): string {
