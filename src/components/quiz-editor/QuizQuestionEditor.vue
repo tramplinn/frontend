@@ -254,12 +254,14 @@ function pickAttachment(event: Event): void {
   color: transparent;
   font-size: var(--text-micro);
   cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
 }
 
 .pick--on {
-  background: var(--success);
   border-color: var(--success);
-  color: var(--on-success);
+  color: var(--success);
 }
 
 .file-note,

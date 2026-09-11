@@ -28,10 +28,9 @@ const groups = computed<Group[]>(() =>
     const parsed = splitOnce(line, ':')
     return {
       name: parsed.left,
-      items: parsed.right
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
+      // Без filter(Boolean): иначе строка, очищенная до пустой при наборе
+      // текста, тут же пропадала бы из массива на следующий же ре-рендер.
+      items: parsed.right.split(',').map((item) => item.trim()),
     }
   }),
 )
@@ -74,7 +73,7 @@ function setItem(groupIndex: number, itemIndex: number, value: string): void {
 function addItem(groupIndex: number): void {
   writeGroups(
     groups.value.map((group, at) =>
-      at === groupIndex ? { ...group, items: [...group.items, 'Новый элемент'] } : group,
+      at === groupIndex ? { ...group, items: [...group.items, ''] } : group,
     ),
   )
 }
@@ -117,6 +116,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
           ><span>понятие</span
           ><input
             :value="pair.left"
+            placeholder="новое понятие"
             @input="setPair(index, 'left', ($event.target as HTMLInputElement).value)"
         /></label>
         <span class="pair-arrow" aria-hidden="true">→</span>
@@ -124,6 +124,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
           ><span>соответствие</span
           ><input
             :value="pair.right"
+            placeholder="соответствие"
             @input="setPair(index, 'right', ($event.target as HTMLInputElement).value)"
         /></label>
         <AppButton
@@ -133,10 +134,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
           >убрать</AppButton
         >
       </div>
-      <AppButton
-        size="sm"
-        variant="quiet"
-        @click="writePairs([...pairs, { left: 'Новое понятие', right: 'Соответствие' }])"
+      <AppButton size="sm" variant="quiet" @click="writePairs([...pairs, { left: '', right: '' }])"
         >+ пара</AppButton
       >
     </template>
@@ -148,6 +146,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             ><span>название блока</span
             ><input
               :value="group.name"
+              placeholder="новый блок"
               @input="setGroup(groupIndex, ($event.target as HTMLInputElement).value)"
           /></label>
           <AppButton
@@ -179,6 +178,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             </button>
             <input
               :value="item"
+              placeholder="новый элемент"
               :aria-label="`Элемент блока ${group.name}`"
               @input="setItem(groupIndex, itemIndex, ($event.target as HTMLInputElement).value)"
             />
@@ -197,7 +197,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
       <AppButton
         size="sm"
         variant="quiet"
-        @click="writeGroups([...groups, { name: 'Новый блок', items: ['Новый элемент'] }])"
+        @click="writeGroups([...groups, { name: '', items: [''] }])"
         >+ блок</AppButton
       >
     </template>
@@ -252,6 +252,9 @@ input {
 input:focus {
   border-color: var(--accent);
   outline: none;
+}
+input::placeholder {
+  color: var(--text-muted);
 }
 .pair-arrow {
   align-self: center;

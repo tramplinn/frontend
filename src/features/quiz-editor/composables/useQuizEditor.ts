@@ -93,21 +93,34 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     if (draft) patch(questionId, removeQuestionOption(draft, index))
   }
 
+  /** Обновляет только сохранённый вопрос — полный load() затирал бы черновики
+      всех остальных карточек, которые ещё не нажали «сохранить». */
+  function replaceQuestion(question: QuizQuestionAuthor): void {
+    const quiz = loaded.value
+    if (!quiz) return
+    loaded.value = {
+      ...quiz,
+      questions: quiz.questions.map((item) => (item.id === question.id ? question : item)),
+    }
+  }
+
   async function save(question: QuizQuestionAuthor): Promise<void> {
     const draft = draftOf(question.id)
     if (!draft) return
     busy.value = question.id
     error.value = null
     try {
-      await updateQuestion(question.id, {
+      const answer = toQuestionAnswer(draft)
+      const explainMd = draft.explainMd.trim() === '' ? null : draft.explainMd
+      const updated = await updateQuestion(question.id, {
         promptMd: draft.promptMd,
         type: draft.type,
         options: toQuestionOptions(draft),
-        answer: toQuestionAnswer(draft),
-        explainMd: draft.explainMd.trim() === '' ? null : draft.explainMd,
+        answer,
+        explainMd,
         attachmentIds: draft.attachments.map((asset) => asset.id),
       })
-      await load()
+      replaceQuestion({ ...updated, answer, explainMd })
     } catch (cause) {
       error.value = cause
     } finally {
@@ -128,8 +141,10 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
       answer: { value: 'Вариант 1' },
     }
     try {
-      await createQuestion(quiz.id, draft)
-      await load()
+      const created = await createQuestion(quiz.id, draft)
+      const authored: QuizQuestionAuthor = { ...created, answer: draft.answer, explainMd: null }
+      loaded.value = { ...quiz, questions: [...quiz.questions, authored] }
+      drafts.value = new Map(drafts.value).set(authored.id, toEditableQuestion(authored))
     } catch (cause) {
       error.value = cause
     } finally {
@@ -168,10 +183,19 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   }
 
   async function remove(questionId: string): Promise<void> {
+    const quiz = loaded.value
     busy.value = questionId
     try {
       await deleteQuestion(questionId)
-      await load()
+      if (quiz) {
+        loaded.value = {
+          ...quiz,
+          questions: quiz.questions.filter((item) => item.id !== questionId),
+        }
+      }
+      const next = new Map(drafts.value)
+      next.delete(questionId)
+      drafts.value = next
     } catch (cause) {
       error.value = cause
     } finally {
@@ -184,10 +208,10 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     if (!quiz) return
     busy.value = 'quiz'
     try {
-      await updateQuiz(quiz.id, {
+      const updated = await updateQuiz(quiz.id, {
         status: quiz.status === 'published' ? 'draft' : 'published',
       })
-      await load()
+      loaded.value = { ...quiz, status: updated.status }
     } catch (cause) {
       error.value = cause
     } finally {
@@ -222,8 +246,8 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     busy.value = 'quiz'
     error.value = null
     try {
-      await updateQuiz(quiz.id, { lessonId: value === MODULE_WIDE ? null : value })
-      await load()
+      const updated = await updateQuiz(quiz.id, { lessonId: value === MODULE_WIDE ? null : value })
+      loaded.value = { ...quiz, lessonId: updated.lessonId }
     } catch (cause) {
       error.value = cause
     } finally {
