@@ -22,6 +22,11 @@ export function clearSession(): void {
   session = null
 }
 
+/** Вход по почте отдаёт access-токен прямо в теле ответа, без похода на /auth/refresh. */
+export function setSession(accessToken: string, expiresAt: string): void {
+  session = { token: accessToken, expiresAt: new Date(expiresAt).getTime() }
+}
+
 function isExpired(value: Session): boolean {
   return value.expiresAt - EXPIRY_SKEW_MS <= Date.now()
 }

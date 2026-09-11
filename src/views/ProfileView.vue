@@ -2,7 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { linkUrl, logoutEverywhere, unlinkIdentity } from '@/api/auth'
+import {
+  linkUrl,
+  logoutEverywhere,
+  requestEmailLinkCode,
+  unlinkIdentity,
+  verifyEmailLinkCode,
+} from '@/api/auth'
 import type { IdentityProvider } from '@/api/schemas/common'
 import type { DeveloperGrade, PublicProfile, Specialty } from '@/api/schemas/users'
 import { getPublicProfile } from '@/api/users'
@@ -39,6 +45,11 @@ const identities = computed(() => auth.user?.identities ?? [])
 const canUnlink = computed(() => identities.value.length > 1)
 const linkedProviders = computed(() => new Set(identities.value.map((item) => item.provider)))
 const unlinked = computed(() => auth.providers.filter((item) => !linkedProviders.value.has(item)))
+const emailLinked = computed(() => linkedProviders.value.has('email'))
+
+const emailLinkStep = ref<'idle' | 'request' | 'code'>('idle')
+const linkEmail = ref('')
+const linkCode = ref('')
 
 async function loadPublicProfile(): Promise<void> {
   if (auth.user) publicProfile.value = await getPublicProfile(auth.user.login)
@@ -108,6 +119,47 @@ async function unlink(provider: IdentityProvider): Promise<void> {
     await auth.reload()
   } catch {
     error.value = 'Не удалось отвязать способ входа.'
+  } finally {
+    busy.value = false
+  }
+}
+
+function startEmailLink(): void {
+  emailLinkStep.value = 'request'
+  error.value = null
+}
+
+function cancelEmailLink(): void {
+  emailLinkStep.value = 'idle'
+  linkEmail.value = ''
+  linkCode.value = ''
+}
+
+async function sendEmailLinkCode(): Promise<void> {
+  const value = linkEmail.value.trim()
+  if (!value) return
+  busy.value = true
+  error.value = null
+  try {
+    await requestEmailLinkCode(value)
+    emailLinkStep.value = 'code'
+  } catch (cause) {
+    error.value = errorText(cause)
+  } finally {
+    busy.value = false
+  }
+}
+
+async function confirmEmailLink(): Promise<void> {
+  if (linkCode.value.length !== 6) return
+  busy.value = true
+  error.value = null
+  try {
+    await verifyEmailLinkCode(linkEmail.value.trim(), linkCode.value)
+    await auth.reload()
+    cancelEmailLink()
+  } catch (cause) {
+    error.value = errorText(cause)
   } finally {
     busy.value = false
   }
@@ -199,7 +251,7 @@ async function unlink(provider: IdentityProvider): Promise<void> {
             <small v-else>единственный вход</small>
           </li>
         </ul>
-        <div v-if="unlinked.length" class="links">
+        <div v-if="unlinked.length || !emailLinked" class="links">
           <AppButton
             v-for="provider in unlinked"
             :key="provider"
@@ -208,7 +260,57 @@ async function unlink(provider: IdentityProvider): Promise<void> {
             @click="link(provider)"
             >привязать {{ providerName(provider) }}</AppButton
           >
+          <AppButton
+            v-if="!emailLinked && emailLinkStep === 'idle'"
+            size="sm"
+            :loading="busy"
+            @click="startEmailLink"
+            >привязать почту</AppButton
+          >
         </div>
+
+        <form
+          v-if="emailLinkStep === 'request'"
+          class="email-link-form"
+          @submit.prevent="sendEmailLinkCode"
+        >
+          <input
+            v-model="linkEmail"
+            type="email"
+            class="text-field"
+            placeholder="почта"
+            autocomplete="email"
+            required
+          />
+          <AppButton type="submit" size="sm" variant="primary" :loading="busy"
+            >получить код</AppButton
+          >
+          <AppButton type="button" size="sm" :disabled="busy" @click="cancelEmailLink"
+            >отмена</AppButton
+          >
+        </form>
+
+        <form
+          v-else-if="emailLinkStep === 'code'"
+          class="email-link-form"
+          @submit.prevent="confirmEmailLink"
+        >
+          <p class="hint">код отправлен на {{ linkEmail }}</p>
+          <input
+            v-model="linkCode"
+            inputmode="numeric"
+            pattern="\d{6}"
+            maxlength="6"
+            class="text-field"
+            placeholder="код из письма"
+            autocomplete="one-time-code"
+            required
+          />
+          <AppButton type="submit" size="sm" variant="primary" :loading="busy">привязать</AppButton>
+          <AppButton type="button" size="sm" :disabled="busy" @click="cancelEmailLink"
+            >отмена</AppButton
+          >
+        </form>
         <div class="sessions">
           <AppButton :loading="signingOut" @click="signOut(false)">выйти</AppButton>
           <ConfirmButton
@@ -331,6 +433,22 @@ header h2 {
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-3);
+}
+.email-link-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.email-link-form .text-field {
+  flex: 1;
+  min-width: 160px;
+}
+.hint {
+  width: 100%;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
 }
 .sessions {
   padding-top: var(--space-6);

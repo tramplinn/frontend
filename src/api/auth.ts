@@ -1,5 +1,6 @@
-import { clearSession, refreshSession, request } from './client'
+import { clearSession, refreshSession, request, setSession } from './client'
 import {
+  accessTokenSchema,
   authorizeUrlSchema,
   mcpAuthorizationApprovalSchema,
   mcpAuthorizationRequestSchema,
@@ -38,6 +39,30 @@ export function linkUrl(
 
 export function fetchMe(): Promise<Me> {
   return request('/auth/me', { schema: meSchema })
+}
+
+export async function requestEmailLoginCode(email: string): Promise<void> {
+  await request('/auth/email/start', { method: 'POST', body: snakeBody({ email }) })
+}
+
+/** Код подтверждает почту, дальше сервер сам решает: вход или регистрация нового пользователя. */
+export async function verifyEmailLoginCode(email: string, code: string): Promise<Me> {
+  const tokens = await request('/auth/email/verify', {
+    method: 'POST',
+    body: snakeBody({ email, code }),
+    schema: accessTokenSchema,
+    withCookies: true,
+  })
+  setSession(tokens.accessToken, tokens.expiresAt)
+  return fetchMe()
+}
+
+export async function requestEmailLinkCode(email: string): Promise<void> {
+  await request('/auth/email/link/start', { method: 'POST', body: snakeBody({ email }) })
+}
+
+export async function verifyEmailLinkCode(email: string, code: string): Promise<void> {
+  await request('/auth/email/link/verify', { method: 'POST', body: snakeBody({ email, code }) })
 }
 
 export interface ProfileChanges {

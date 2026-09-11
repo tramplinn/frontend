@@ -6,8 +6,10 @@ import {
   listProviders,
   loginUrl,
   logout as logoutRequest,
+  requestEmailLoginCode,
   restoreSession,
   updateProfile as updateProfileRequest,
+  verifyEmailLoginCode,
 } from '@/api/auth'
 import type { ProfileChanges } from '@/api/auth'
 import type { Me } from '@/api/schemas/auth'
@@ -59,6 +61,14 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.assign(authorizeUrl)
   }
 
+  async function requestEmailCode(email: string): Promise<void> {
+    await requestEmailLoginCode(email)
+  }
+
+  async function loginWithEmail(email: string, code: string): Promise<void> {
+    user.value = await verifyEmailLoginCode(email, code)
+  }
+
   function forget(): void {
     user.value = null
   }
@@ -82,6 +92,8 @@ export const useAuthStore = defineStore('auth', () => {
     providers,
     loadProviders,
     login,
+    requestEmailCode,
+    loginWithEmail,
     logout,
   }
 })
