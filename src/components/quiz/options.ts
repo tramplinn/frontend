@@ -13,7 +13,9 @@ function isLabelled(value: object): value is { value: unknown; label: string } {
 
 /** Формат, в котором MCP-сервер присылает варианты single/multiple вопросов: `{id, label}`. */
 function isIdentified(value: object): value is { id: unknown; label: string } {
-  return 'id' in value && 'label' in value && typeof (value as { label: unknown }).label === 'string'
+  return (
+    'id' in value && 'label' in value && typeof (value as { label: unknown }).label === 'string'
+  )
 }
 
 export function normalizeOptions(options: unknown[]): QuizOption[] {
