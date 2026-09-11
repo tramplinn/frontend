@@ -324,7 +324,8 @@ h2 {
 }
 
 .grid input,
-.grid :deep(.trigger) {
+.grid :deep(.trigger),
+.grid :deep(.chips) {
   width: 100%;
   min-height: 46px;
   background: var(--bg);
