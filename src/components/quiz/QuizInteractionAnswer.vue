@@ -18,12 +18,18 @@ const emit = defineEmits<{ answer: [value: unknown] }>()
 
 const placements = ref<PlacementMap>({})
 const draggedItemId = ref<string | null>(null)
+const dragOverTarget = ref<string | null>(null)
 
 function select(itemId: string): void {
   if (!props.reviewing) draggedItemId.value = itemId
 }
 
+function hover(targetId: string | null): void {
+  dragOverTarget.value = targetId
+}
+
 function place(targetId: string): void {
+  dragOverTarget.value = null
   const itemId = draggedItemId.value
   if (!itemId || props.reviewing) return
   if (props.question.type === 'matching') {
@@ -53,6 +59,7 @@ function place(targetId: string): void {
         :draggable="!reviewing"
         :disabled="reviewing"
         @dragstart="select(item.id)"
+        @dragend="hover(null)"
         @click="select(item.id)"
       >
         {{ item.label }}
@@ -65,8 +72,11 @@ function place(targetId: string): void {
         <button
           type="button"
           class="drop-zone"
+          :class="{ 'drop-zone--over': dragOverTarget === left.id }"
           :disabled="reviewing"
+          @dragenter.prevent="hover(left.id)"
           @dragover.prevent
+          @dragleave="hover(null)"
           @drop.prevent="place(left.id)"
           @click="place(left.id)"
         >
@@ -80,10 +90,13 @@ function place(targetId: string): void {
         v-for="group in interactiveOptions(question, 'group')"
         :key="group.id"
         class="group-zone"
+        :class="{ 'group-zone--over': dragOverTarget === group.id }"
         role="button"
         :aria-label="`Поместить выбранный элемент в группу ${group.label}`"
         :tabindex="reviewing ? -1 : 0"
+        @dragenter.prevent="hover(group.id)"
         @dragover.prevent
+        @dragleave="hover(null)"
         @drop.prevent="place(group.id)"
         @click="place(group.id)"
         @keydown.enter.prevent="place(group.id)"
@@ -99,6 +112,7 @@ function place(targetId: string): void {
           :draggable="!reviewing"
           :disabled="reviewing"
           @dragstart.stop="select(item.id)"
+          @dragend.stop="hover(null)"
           @click.stop="select(item.id)"
         >
           {{ item.label }}
@@ -132,13 +146,26 @@ function place(targetId: string): void {
   background: var(--surface);
   color: inherit;
   text-align: left;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
 }
 
 .drag-token {
+  /* Без сброса нативного вида кнопки Chrome иногда рисует превью
+     перетаскивания квадратным, игнорируя наш border-radius/фон. */
+  appearance: none;
+  -webkit-appearance: none;
   cursor: grab;
 }
 
 .drag-token--selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.drop-zone--over,
+.group-zone--over {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
