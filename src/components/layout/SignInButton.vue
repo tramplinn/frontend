@@ -18,6 +18,7 @@ const auth = useAuthStore()
 const open = ref(false)
 const step = ref<Step>('providers')
 const busy = ref(false)
+const pendingProvider = ref<IdentityProvider | null>(null)
 const error = ref<string | null>(null)
 const email = ref('')
 const code = ref('')
@@ -30,6 +31,7 @@ function reset(): void {
   open.value = false
   step.value = 'providers'
   busy.value = false
+  pendingProvider.value = null
   error.value = null
   email.value = ''
   code.value = ''
@@ -37,12 +39,14 @@ function reset(): void {
 
 async function signIn(provider: IdentityProvider): Promise<void> {
   busy.value = true
+  pendingProvider.value = provider
   error.value = null
   try {
     await auth.login(provider, props.nextPath)
   } catch (cause) {
     error.value = errorText(cause)
     busy.value = false
+    pendingProvider.value = null
   }
 }
 
@@ -108,12 +112,15 @@ async function submitCode(): Promise<void> {
           :key="provider"
           :size="props.size"
           variant="secondary"
-          :loading="busy"
+          :loading="pendingProvider === provider"
+          :disabled="busy && pendingProvider !== provider"
           @click="signIn(provider)"
         >
           {{ providerName(provider) }}
         </AppButton>
-        <button type="button" class="link-btn" @click="chooseEmail">войти по почте</button>
+        <button type="button" class="link-btn" :disabled="busy" @click="chooseEmail">
+          войти по почте
+        </button>
       </template>
 
       <form v-else-if="step === 'email-request'" class="email-form" @submit.prevent="sendCode">
