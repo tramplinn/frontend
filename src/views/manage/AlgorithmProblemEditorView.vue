@@ -22,6 +22,8 @@ const props = defineProps<{ problem: string }>()
 const {
   actionError,
   addCase,
+  applyAssistantCases,
+  applyAssistantTemplates,
   assetError,
   autosaving,
   busy,
@@ -69,16 +71,26 @@ const tagSuggestions = useTagSuggestions()
 
 const assistantDocument = computed(() => {
   const current = fields.value
-  return current
-    ? {
-        title: current.title,
-        statementMd: current.statementMd,
-        difficulty: current.difficulty,
-        tags: current.tags,
-        timeLimitMs: current.timeLimitMs,
-        memoryLimitKb: current.memoryLimitKb,
-      }
-    : { title: '' }
+  const problem = loaded.value
+  if (!current || !problem) return { title: '' }
+  return {
+    title: current.title,
+    statementMd: current.statementMd,
+    difficulty: current.difficulty,
+    tags: current.tags,
+    timeLimitMs: current.timeLimitMs,
+    memoryLimitKb: current.memoryLimitKb,
+    testCases: problem.testCases.map((item) => ({
+      input: item.input,
+      expectedOutput: item.expectedOutput,
+      isSample: item.isSample,
+    })),
+    templates: problem.templates.map((item) => ({
+      language: item.language,
+      starterCode: item.starterCode,
+      solutionCode: item.solutionCode,
+    })),
+  }
 })
 
 function applyAssistantPatch(patch: TeacherAssistantPatch): void {
@@ -90,6 +102,8 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
   if (patch.tags !== null) current.tags = patch.tags
   if (patch.timeLimitMs !== null) current.timeLimitMs = patch.timeLimitMs
   if (patch.memoryLimitKb !== null) current.memoryLimitKb = patch.memoryLimitKb
+  if (patch.testCases !== null) void applyAssistantCases(patch.testCases)
+  if (patch.templates !== null) void applyAssistantTemplates(patch.templates)
 }
 
 /** Прогон по тестам имеет смысл, только когда есть что прогонять и на чём. */

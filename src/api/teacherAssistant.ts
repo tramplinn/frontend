@@ -14,7 +14,7 @@ export function suggestAuthoringChanges(
 ): Promise<TeacherAssistantPatch> {
   return request('/authoring/assistant/suggest', {
     method: 'POST',
-    body: snakeBody({ surface, instruction, document: snakeBody({ ...document }) }),
+    body: snakeBody({ surface, instruction, document: { ...document } }),
     schema: teacherAssistantPatchSchema,
   })
 }

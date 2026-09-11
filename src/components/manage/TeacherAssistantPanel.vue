@@ -7,6 +7,8 @@ import type {
   TeacherAssistantDocument,
   TeacherAssistantPatch,
   TeacherAssistantSurface,
+  TeacherAssistantTemplate,
+  TeacherAssistantTestCase,
 } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useFloatingPanel } from '@/composables/useFloatingPanel'
@@ -39,6 +41,8 @@ const fieldLabels: Record<keyof Omit<TeacherAssistantPatch, 'explanation'>, stri
   tags: 'темы',
   timeLimitMs: 'лимит времени',
   memoryLimitKb: 'лимит памяти',
+  testCases: 'тесты',
+  templates: 'решения по языкам',
 }
 
 type PatchField = keyof typeof fieldLabels
@@ -65,8 +69,38 @@ const turns = ref<ChatTurn[]>([])
 
 const patchFields = Object.keys(fieldLabels) as PatchField[]
 
+function isTestCase(value: unknown): value is TeacherAssistantTestCase {
+  return typeof value === 'object' && value !== null && 'expectedOutput' in value
+}
+
+function isTemplate(value: unknown): value is TeacherAssistantTemplate {
+  return typeof value === 'object' && value !== null && 'starterCode' in value
+}
+
+/** Тесты и решения — структуры, а не текст, поэтому рендерим их в читаемый блок
+    построчно: тем же линейным diff'ом ниже это сравнивается как обычный текст. */
 function textOf(value: unknown): string {
-  if (Array.isArray(value)) return value.join(', ')
+  if (Array.isArray(value)) {
+    if (value.length === 0) return ''
+    if (isTestCase(value[0])) {
+      return (value as TeacherAssistantTestCase[])
+        .map(
+          (item, index) =>
+            `${String(index + 1)}. ${item.isSample ? 'пример' : 'скрытый'}\n` +
+            `вход: ${item.input}\nвывод: ${item.expectedOutput}`,
+        )
+        .join('\n\n')
+    }
+    if (isTemplate(value[0])) {
+      return (value as TeacherAssistantTemplate[])
+        .map(
+          (item) =>
+            `${item.language}\nзаготовка:\n${item.starterCode}\nрешение:\n${item.solutionCode}`,
+        )
+        .join('\n\n')
+    }
+    return value.join(', ')
+  }
   if (value === undefined || value === null) return ''
   if (typeof value === 'string') return value
   if (typeof value === 'number') return value.toString()
@@ -159,6 +193,8 @@ function patchFor(turn: AssistantTurn, fields: PatchField[]): TeacherAssistantPa
     tags: has('tags') ? current.tags : null,
     timeLimitMs: has('timeLimitMs') ? current.timeLimitMs : null,
     memoryLimitKb: has('memoryLimitKb') ? current.memoryLimitKb : null,
+    testCases: has('testCases') ? current.testCases : null,
+    templates: has('templates') ? current.templates : null,
   }
 }
 

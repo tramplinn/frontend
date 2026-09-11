@@ -334,6 +334,34 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     })
   }
 
+  /** Полностью заменяет тесты предложенными ассистентом — старые не сопоставляются
+      с новыми построчно, поэтому это удаление всех и добавление заново, а не патч. */
+  async function applyAssistantCases(cases: TestCaseFields[]): Promise<void> {
+    const problem = loaded.value
+    if (!problem) return
+    await saveQueue
+    await run('assistant-cases', async () => {
+      for (const item of [...problem.testCases]) {
+        clearTimeout(caseTimers.get(item.id))
+        caseTimers.delete(item.id)
+        await deleteTestCase(item.id)
+      }
+      problem.testCases = []
+      caseDrafts.value = new Map()
+      for (const [index, item] of cases.entries()) {
+        const created = await addTestCase(problem.id, {
+          position: index,
+          input: item.input,
+          expectedOutput: item.expectedOutput,
+          isSample: item.isSample,
+        })
+        problem.testCases.push(created)
+        caseDrafts.value = new Map(caseDrafts.value).set(created.id, toCaseFields(created))
+      }
+      invalidateTemplates()
+    })
+  }
+
   async function saveCase(caseId: string): Promise<boolean> {
     if (!caseDirty(caseId)) return true
     return enqueueSave(async () => {
@@ -388,6 +416,32 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
       if (!problem || !draft || !templateDirty(language)) return
       const saved = await putTemplate(problem.id, language, draft.starterCode, draft.solutionCode)
       upsertTemplate(saved)
+    })
+  }
+
+  /** Апсерт по перечисленным языкам — шаблоны для остальных языков не трогает. */
+  async function applyAssistantTemplates(
+    templates: { language: AlgorithmLanguage; starterCode: string; solutionCode: string }[],
+  ): Promise<void> {
+    const problem = loaded.value
+    if (!problem) return
+    await saveQueue
+    await run('assistant-templates', async () => {
+      for (const item of templates) {
+        clearTimeout(templateTimers.get(item.language))
+        templateTimers.delete(item.language)
+        const saved = await putTemplate(
+          problem.id,
+          item.language,
+          item.starterCode,
+          item.solutionCode,
+        )
+        upsertTemplate(saved)
+        templateDrafts.value = new Map(templateDrafts.value).set(item.language, {
+          starterCode: saved.starterCode,
+          solutionCode: saved.solutionCode,
+        })
+      }
     })
   }
 
@@ -470,6 +524,8 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   return {
     actionError,
     addCase,
+    applyAssistantCases,
+    applyAssistantTemplates,
     assetError: assetInsert.error,
     autosaving,
     busy,
