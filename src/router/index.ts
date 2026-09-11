@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
+import { reloadOnStaleChunk } from '@/lib/staleChunk'
 import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
@@ -182,3 +183,5 @@ router.beforeEach(async (to) => {
   }
   return true
 })
+
+router.onError(reloadOnStaleChunk)
