@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { IdentityProvider } from '@/api/schemas/common'
 import AppButton from '@/components/ui/AppButton.vue'
+import BrandMark from '@/components/layout/BrandMark.vue'
+import ProviderIcon from '@/components/layout/ProviderIcon.vue'
 import { errorText } from '@/lib/errors'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 
-const props = withDefaults(
-  defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md'; floatError?: boolean }>(),
-  { label: 'войти', size: 'md', floatError: false },
-)
+const props = withDefaults(defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md' }>(), {
+  label: 'войти',
+  size: 'md',
+})
 
-type Step = 'providers' | 'email-request' | 'email-code'
+type Step = 'providers' | 'email-code'
 
 const auth = useAuthStore()
 const open = ref(false)
@@ -25,6 +27,25 @@ const code = ref('')
 
 onMounted(() => {
   void auth.loadProviders().catch(() => {})
+})
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape') reset()
+}
+
+watch(open, (value) => {
+  if (value) {
+    window.addEventListener('keydown', onKeydown)
+    document.body.style.overflow = 'hidden'
+  } else {
+    window.removeEventListener('keydown', onKeydown)
+    document.body.style.overflow = ''
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
 })
 
 function reset(): void {
@@ -50,21 +71,10 @@ async function signIn(provider: IdentityProvider): Promise<void> {
   }
 }
 
-/** Один провайдер и нет входа по почте отдельным шагом — сразу редиректим, без выбора. */
 function start(): void {
   error.value = null
-  const only = auth.providers.length === 1 ? auth.providers[0] : undefined
-  if (only) {
-    void signIn(only)
-    return
-  }
-  step.value = auth.providers.length === 0 ? 'email-request' : 'providers'
+  step.value = 'providers'
   open.value = true
-}
-
-function chooseEmail(): void {
-  step.value = 'email-request'
-  error.value = null
 }
 
 async function sendCode(): Promise<void> {
@@ -99,96 +109,103 @@ async function submitCode(): Promise<void> {
 
 <template>
   <div class="signin">
-    <AppButton v-if="!open" :size="props.size" variant="primary" @click="start">
+    <AppButton :size="props.size" variant="primary" @click="start">
       {{ props.label }}
     </AppButton>
 
-    <div v-else class="panel" :class="{ 'panel--float': props.floatError }">
-      <button type="button" class="close" aria-label="Закрыть" @click="reset">×</button>
+    <Teleport to="body">
+      <div v-if="open" class="overlay" @click.self="reset">
+        <div class="panel" role="dialog" aria-modal="true" aria-label="Вход">
+          <button type="button" class="close" aria-label="Закрыть" @click="reset">×</button>
 
-      <template v-if="step === 'providers'">
-        <AppButton
-          v-for="provider in auth.providers"
-          :key="provider"
-          :size="props.size"
-          variant="secondary"
-          :loading="pendingProvider === provider"
-          :disabled="busy && pendingProvider !== provider"
-          @click="signIn(provider)"
-        >
-          {{ providerName(provider) }}
-        </AppButton>
-        <button type="button" class="link-btn" :disabled="busy" @click="chooseEmail">
-          войти по почте
-        </button>
-      </template>
+          <div class="head">
+            <div class="brand">
+              <BrandMark />
+              <span>трамплин</span>
+            </div>
+            <p class="lead">Войдите, чтобы продолжить</p>
+          </div>
 
-      <form v-else-if="step === 'email-request'" class="email-form" @submit.prevent="sendCode">
-        <input
-          v-model="email"
-          type="email"
-          class="text-field"
-          placeholder="почта"
-          autocomplete="email"
-          required
-        />
-        <AppButton type="submit" :size="props.size" variant="primary" :loading="busy">
-          получить код
-        </AppButton>
-        <button
-          v-if="auth.providers.length > 0"
-          type="button"
-          class="link-btn"
-          @click="step = 'providers'"
-        >
-          назад
-        </button>
-      </form>
+          <template v-if="step === 'providers'">
+            <div v-if="auth.providers.length > 0" class="providers">
+              <AppButton
+                v-for="provider in auth.providers"
+                :key="provider"
+                variant="secondary"
+                :loading="pendingProvider === provider"
+                :disabled="busy && pendingProvider !== provider"
+                @click="signIn(provider)"
+              >
+                <ProviderIcon :provider="provider" />
+                {{ providerName(provider) }}
+              </AppButton>
+            </div>
 
-      <form v-else class="email-form" @submit.prevent="submitCode">
-        <p class="hint">код отправлен на {{ email }}</p>
-        <input
-          v-model="code"
-          inputmode="numeric"
-          pattern="\d{6}"
-          maxlength="6"
-          class="text-field"
-          placeholder="код из письма"
-          autocomplete="one-time-code"
-          required
-        />
-        <AppButton type="submit" :size="props.size" variant="primary" :loading="busy">
-          войти
-        </AppButton>
-        <button type="button" class="link-btn" :disabled="busy" @click="sendCode">
-          отправить код ещё раз
-        </button>
-      </form>
+            <div v-if="auth.providers.length > 0" class="divider"><span>или по почте</span></div>
 
-      <span v-if="error" class="error" role="alert">{{ error }}</span>
-    </div>
+            <form class="email-form" @submit.prevent="sendCode">
+              <input
+                v-model="email"
+                type="email"
+                class="text-field"
+                placeholder="почта"
+                autocomplete="email"
+                required
+              />
+              <AppButton type="submit" variant="primary" :loading="busy">получить код</AppButton>
+            </form>
+          </template>
+
+          <form v-else class="email-form" @submit.prevent="submitCode">
+            <p class="hint">код отправлен на {{ email }}</p>
+            <input
+              v-model="code"
+              inputmode="numeric"
+              pattern="\d{6}"
+              maxlength="6"
+              class="text-field"
+              placeholder="код из письма"
+              autocomplete="one-time-code"
+              required
+            />
+            <AppButton type="submit" variant="primary" :loading="busy">войти</AppButton>
+            <button type="button" class="link-btn" :disabled="busy" @click="sendCode">
+              отправить код ещё раз
+            </button>
+            <button type="button" class="link-btn" :disabled="busy" @click="step = 'providers'">
+              назад
+            </button>
+          </form>
+
+          <span v-if="error" class="error" role="alert">{{ error }}</span>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
 .signin {
-  position: relative;
   display: inline-flex;
 }
 
-.panel {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 220px;
-  padding-top: var(--space-6);
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 45%);
 }
 
-.panel--float {
-  position: absolute;
-  z-index: 10;
-  top: calc(100% + var(--space-2));
-  right: 0;
-  padding: var(--space-6) var(--space-4) var(--space-4);
+.panel {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  width: min(360px, 100%);
+  padding: var(--space-8) var(--space-6) var(--space-6);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--card);
@@ -197,9 +214,15 @@ async function submitCode(): Promise<void> {
 
 .close {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-size: var(--text-title);
@@ -207,9 +230,68 @@ async function submitCode(): Promise<void> {
   cursor: pointer;
 }
 
+.close:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.head {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.lead {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+
+.providers {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.providers :deep(.btn) {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding-left: var(--space-4);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.divider::before,
+.divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  content: '';
+}
+
 .email-form {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+.email-form :deep(.btn) {
+  width: 100%;
 }
 
 .hint {

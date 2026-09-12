@@ -100,7 +100,7 @@ const crumbs = computed<Crumb[]>(() => {
 
     <div class="side">
       <ThemeToggle />
-      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" float-error />
+      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" />
     </div>
   </header>
 </template>
