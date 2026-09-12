@@ -1,371 +1,63 @@
-import { computed, onMounted, ref } from 'vue'
-
-import { createPracticeSet, deletePracticeSet, updatePracticeSet } from '@/api/algorithmAuthoring'
-import {
-  attachCourse,
-  createCourse,
-  createLesson,
-  createModule,
-  createQuiz,
-  createTrack,
-  deleteLesson,
-  deleteQuiz,
-  getDraftCourse,
-  listDraftCourses,
-  listDraftModuleDependencies,
-  listDraftTracks,
-  publishCourseCascade as publishCourseCascadeRequest,
-  publishModuleCascade as publishModuleCascadeRequest,
-  publishTrackCascade as publishTrackCascadeRequest,
-  reorderModuleItems,
-  reorderModules,
-  reorderTrackCourses,
-  updateCourse,
-  updateLesson,
-  updateModule,
-  updateQuiz,
-  updateTrack,
-} from '@/api/authoring'
-import type { CourseDraft, ModuleDraft, TrackDraft } from '@/api/authoring'
-import type { ContentStatus } from '@/api/schemas/common'
-import type {
-  Course,
-  CourseTree,
-  ModuleDependency,
-  ModuleItem,
-  ModuleTree,
-  PublishReport,
-  Track,
-} from '@/api/schemas/content'
 import {
   contentStatusAction,
   isPublishedModuleEmpty,
-  itemStatus,
   orderedCourses,
   publishedItemCount,
-  swapAdjacent,
   toggleContentStatus,
 } from '@/features/content/model/contentTree'
-import { runBusyAction } from '@/lib/asyncAction'
+import { useContentActions } from './useContentActions'
+import { useContentTree } from './useContentTree'
 
 export function useContentManagement() {
-  const tracks = ref<Track[]>([])
-  const allCourses = ref<Course[]>([])
-  const openCourse = ref<CourseTree | null>(null)
-  const openSlug = ref<string | null>(null)
-  const dependencies = ref<ModuleDependency[]>([])
-  const openModuleId = ref<string | null>(null)
-  const pending = ref(true)
-  const error = ref<unknown>(null)
-  const busy = ref(false)
-  const actionError = ref<unknown>(null)
-  const publishReport = ref<PublishReport | null>(null)
-  const courseError = ref<unknown>(null)
-  const loadingCourse = ref(false)
-  const editing = ref<string | null>(null)
-
-  function toggleEditing(id: string): void {
-    editing.value = editing.value === id ? null : id
-  }
-
-  async function loadLists(): Promise<void> {
-    const [loadedTracks, loadedCourses] = await Promise.all([listDraftTracks(), listDraftCourses()])
-    tracks.value = loadedTracks
-    allCourses.value = loadedCourses
-  }
-
-  async function load(): Promise<void> {
-    pending.value = true
-    error.value = null
-    try {
-      await loadLists()
-    } catch (cause) {
-      error.value = cause
-    } finally {
-      pending.value = false
-    }
-  }
-
-  async function fetchTree(slug: string): Promise<void> {
-    const [tree, moduleDependencies] = await Promise.all([
-      getDraftCourse(slug),
-      listDraftModuleDependencies(slug),
-    ])
-    openCourse.value = tree
-    dependencies.value = moduleDependencies
-  }
-
-  async function openTree(slug: string): Promise<void> {
-    loadingCourse.value = true
-    courseError.value = null
-    try {
-      await fetchTree(slug)
-    } catch (cause) {
-      courseError.value = cause
-      openCourse.value = null
-    } finally {
-      loadingCourse.value = false
-    }
-  }
-
-  async function toggleCourse(slug: string): Promise<void> {
-    if (openSlug.value === slug) {
-      openSlug.value = null
-      openCourse.value = null
-      openModuleId.value = null
-      return
-    }
-    openSlug.value = slug
-    openModuleId.value = null
-    await openTree(slug)
-  }
-
-  async function refresh(): Promise<void> {
-    await loadLists()
-    await refreshTree()
-  }
-
-  async function refreshTree(): Promise<void> {
-    if (openSlug.value !== null) {
-      await fetchTree(openSlug.value)
-    }
-  }
-
-  async function saveEdited(action: () => Promise<unknown>): Promise<void> {
-    await run(action)
-    if (actionError.value === null) {
-      editing.value = null
-    }
-  }
-
-  function saveTrack(trackId: string, changes: Partial<TrackDraft>): Promise<void> {
-    return saveEdited(() => updateTrack(trackId, changes))
-  }
-
-  function saveCourse(courseId: string, changes: Partial<CourseDraft>): Promise<void> {
-    return saveEdited(() => updateCourse(courseId, changes))
-  }
-
-  function saveModule(moduleId: string, changes: Partial<ModuleDraft>): Promise<void> {
-    return saveEdited(() => updateModule(moduleId, changes))
-  }
-
-  async function run(action: () => Promise<unknown>): Promise<void> {
-    await perform(action, refresh)
-  }
-
-  async function runInTree(action: () => Promise<unknown>): Promise<void> {
-    await perform(action, refreshTree)
-  }
-
-  async function perform(
-    action: () => Promise<unknown>,
-    reload: () => Promise<void>,
-  ): Promise<void> {
-    await runBusyAction(
-      {
-        setBusy: (active) => (busy.value = active),
-        clearError: () => (actionError.value = null),
-        setError: (cause) => (actionError.value = cause),
-      },
-      async () => {
-        await action()
-        await reload()
-      },
-    )
-  }
-
-  function addTrack(draft: { title: string; slug: string }): void {
-    void run(() => createTrack(draft))
-  }
-
-  function addCourse(track: Track, draft: { title: string; slug: string }): void {
-    void run(async () => {
-      const course = await createCourse(draft)
-      await attachCourse(track.id, course.id)
-    })
-  }
-
-  /** Курс без трека — привязать можно позже, из карточки нужного трека. */
-  function addStandaloneCourse(draft: { title: string; slug: string }): void {
-    void run(() => createCourse(draft))
-  }
-
-  function addModule(draft: { title: string; slug: string }): void {
-    const course = openCourse.value
-    if (course) {
-      void runInTree(() => createModule(course.id, { ...draft, position: course.modules.length }))
-    }
-  }
-
-  function addLesson(moduleId: string, draft: { title: string; slug: string }): void {
-    void runInTree(() => createLesson(moduleId, draft))
-  }
-
-  function addQuiz(moduleId: string, draft: { title: string; slug: string }): void {
-    void runInTree(() => createQuiz(moduleId, draft))
-  }
-
-  function addPractice(moduleId: string, draft: { title: string }): void {
-    void runInTree(() => createPracticeSet(moduleId, { title: draft.title }))
-  }
-
-  function removeItem(item: ModuleItem): void {
-    void runInTree(() => {
-      if (item.kind === 'lesson') return deleteLesson(item.lesson.id)
-      if (item.kind === 'quiz') return deleteQuiz(item.quiz.id)
-      return deletePracticeSet(item.practiceSet.id)
-    })
-  }
-
-  function updateItemStatus(item: ModuleItem, status: ContentStatus): Promise<unknown> {
-    if (item.kind === 'lesson') return updateLesson(item.lesson.id, { status })
-    if (item.kind === 'quiz') return updateQuiz(item.quiz.id, { status })
-    return updatePracticeSet(item.practiceSet.id, { status })
-  }
-
-  function publishItem(item: ModuleItem): void {
-    void runInTree(() => updateItemStatus(item, toggleContentStatus(itemStatus(item))))
-  }
-
-  /* «Опубликовать всё содержимое» — один POST на бэк вместо букета
-     параллельных PATCH с фронта (best-effort: публикует всё проходящее
-     валидацию, остальное пропускает с причиной; уже опубликованное не
-     трогает и публикацию не снимает — см. PublishCascadeService). Экран
-     обновляется всегда, даже если что-то пошло не так на середине —
-     раньше при частичном сбое сервер мог уйти вперёд, а экран об этом
-     не узнавал. */
-  async function runCascade(action: () => Promise<PublishReport>): Promise<void> {
-    busy.value = true
-    actionError.value = null
-    publishReport.value = null
-    try {
-      publishReport.value = await action()
-    } catch (cause) {
-      actionError.value = cause
-    } finally {
-      busy.value = false
-    }
-    await refresh()
-  }
-
-  function publishModuleCascade(module: ModuleTree): void {
-    void runCascade(() => publishModuleCascadeRequest(module.id))
-  }
-
-  function publishCourseCascade(course: Course): void {
-    void runCascade(() => publishCourseCascadeRequest(course.id))
-  }
-
-  function publishTrackCascade(track: Track): void {
-    void runCascade(() => publishTrackCascadeRequest(track.id))
-  }
-
-  function moveModule(course: CourseTree, index: number, delta: number): void {
-    const ids = swapAdjacent(
-      [...course.modules].sort((a, b) => a.position - b.position).map((item) => item.id),
-      index,
-      delta,
-    )
-    if (ids) void runInTree(() => reorderModules(course.id, ids))
-  }
-
-  function moveOpenModule(index: number, delta: number): void {
-    if (openCourse.value) {
-      moveModule(openCourse.value, index, delta)
-    }
-  }
-
-  function moveItem(module: ModuleTree, index: number, delta: number): void {
-    const ids = swapAdjacent(
-      module.items.map((item) => item.id),
-      index,
-      delta,
-    )
-    if (ids) void runInTree(() => reorderModuleItems(module.id, ids))
-  }
-
-  function moveCourse(track: Track, index: number, delta: number): void {
-    const ids = swapAdjacent(
-      orderedCourses(track).map((link) => link.course.id),
-      index,
-      delta,
-    )
-    if (ids) void run(() => reorderTrackCourses(track.id, ids))
-  }
-
-  /* Курс виден в дереве трека, только если к какому-то треку привязан —
-     а свежесозданный (или отвязанный после удаления трека) курс может не
-     быть привязан ни к одному. Плоская вкладка «курсы» показывает вообще
-     все и подписывает, в каких треках курс участвует (их может быть и 0). */
-  const courseTrackTitles = computed(() => {
-    const byCourse = new Map<string, string[]>()
-    for (const track of tracks.value) {
-      for (const link of track.courses) {
-        byCourse.set(link.course.id, [...(byCourse.get(link.course.id) ?? []), track.title])
-      }
-    }
-    return byCourse
-  })
-
-  const openModule = computed(
-    () => openCourse.value?.modules.find((item) => item.id === openModuleId.value) ?? null,
-  )
-  const courseEmptyForStudents = computed(
-    () =>
-      openCourse.value !== null &&
-      openCourse.value.status === 'published' &&
-      openCourse.value.modules.every((module) => module.status !== 'published'),
-  )
-
-  onMounted(() => void load())
+  const tree = useContentTree()
+  const actions = useContentActions(tree)
 
   return {
-    tracks,
-    allCourses,
-    courseTrackTitles,
-    openCourse,
-    openSlug,
-    dependencies,
-    openModuleId,
-    openModule,
-    pending,
-    error,
-    busy,
-    actionError,
-    publishReport,
-    courseError,
-    loadingCourse,
-    courseEmptyForStudents,
+    tracks: tree.tracks,
+    allCourses: tree.allCourses,
+    courseTrackTitles: tree.courseTrackTitles,
+    openCourse: tree.openCourse,
+    openSlug: tree.openSlug,
+    dependencies: tree.dependencies,
+    openModuleId: tree.openModuleId,
+    openModule: tree.openModule,
+    pending: tree.pending,
+    error: tree.error,
+    busy: actions.busy,
+    actionError: actions.actionError,
+    publishReport: actions.publishReport,
+    courseError: tree.courseError,
+    loadingCourse: tree.loadingCourse,
+    courseEmptyForStudents: tree.courseEmptyForStudents,
     flip: toggleContentStatus,
     publishLabel: contentStatusAction,
     publishedItems: publishedItemCount,
     isModuleEmptyForStudents: isPublishedModuleEmpty,
     ordered: orderedCourses,
-    toggleCourse,
-    refresh,
-    run,
-    runInTree,
-    editing,
-    toggleEditing,
-    saveTrack,
-    saveCourse,
-    saveModule,
-    addTrack,
-    addCourse,
-    addStandaloneCourse,
-    addModule,
-    addLesson,
-    addPractice,
-    addQuiz,
-    removeItem,
-    publishItem,
-    publishModuleCascade,
-    publishCourseCascade,
-    publishTrackCascade,
-    moveModule,
-    moveOpenModule,
-    moveItem,
-    move: moveCourse,
+    toggleCourse: tree.toggleCourse,
+    refresh: tree.refresh,
+    run: actions.run,
+    runInTree: actions.runInTree,
+    editing: actions.editing,
+    toggleEditing: actions.toggleEditing,
+    saveTrack: actions.saveTrack,
+    saveCourse: actions.saveCourse,
+    saveModule: actions.saveModule,
+    addTrack: actions.addTrack,
+    addCourse: actions.addCourse,
+    addStandaloneCourse: actions.addStandaloneCourse,
+    addModule: actions.addModule,
+    addLesson: actions.addLesson,
+    addPractice: actions.addPractice,
+    addQuiz: actions.addQuiz,
+    removeItem: actions.removeItem,
+    publishItem: actions.publishItem,
+    publishModuleCascade: actions.publishModuleCascade,
+    publishCourseCascade: actions.publishCourseCascade,
+    publishTrackCascade: actions.publishTrackCascade,
+    moveModule: actions.moveModule,
+    moveOpenModule: actions.moveOpenModule,
+    moveItem: actions.moveItem,
+    move: actions.moveCourse,
   }
 }
