@@ -81,6 +81,7 @@ function update(value: unknown): void {
 .trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
   height: var(--ctl-sm);
   padding: 0 var(--space-3);
@@ -94,6 +95,16 @@ function update(value: unknown): void {
   transition:
     background var(--motion-fast) var(--ease),
     border-color var(--motion-fast) var(--ease);
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caret {
+  flex: none;
 }
 
 .trigger:hover:not(:disabled) {
