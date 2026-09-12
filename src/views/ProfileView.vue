@@ -35,7 +35,8 @@ const grade = ref<DeveloperGrade | ''>(auth.user?.grade ?? '')
 const experienceYears = ref<number | null>(auth.user?.experienceYears ?? null)
 const saving = ref(false)
 const signingOut = ref(false)
-const busy = ref(false)
+const busyAction = ref<string | null>(null)
+const anyBusy = computed(() => busyAction.value !== null)
 const error = ref<string | null>(null)
 
 const specialtyOptions = [{ value: '', label: 'не выбрано' }, ...SPECIALTIES]
@@ -100,19 +101,19 @@ async function signOut(all = false): Promise<void> {
 }
 
 async function link(provider: IdentityProvider): Promise<void> {
-  busy.value = true
+  busyAction.value = `link:${provider}`
   error.value = null
   try {
     const { authorizeUrl } = await linkUrl(provider, '/me')
     window.location.assign(authorizeUrl)
   } catch {
     error.value = 'Не удалось начать привязку.'
-    busy.value = false
+    busyAction.value = null
   }
 }
 
 async function unlink(provider: IdentityProvider): Promise<void> {
-  busy.value = true
+  busyAction.value = `unlink:${provider}`
   error.value = null
   try {
     await unlinkIdentity(provider)
@@ -120,7 +121,7 @@ async function unlink(provider: IdentityProvider): Promise<void> {
   } catch {
     error.value = 'Не удалось отвязать способ входа.'
   } finally {
-    busy.value = false
+    busyAction.value = null
   }
 }
 
@@ -138,7 +139,7 @@ function cancelEmailLink(): void {
 async function sendEmailLinkCode(): Promise<void> {
   const value = linkEmail.value.trim()
   if (!value) return
-  busy.value = true
+  busyAction.value = 'email-request'
   error.value = null
   try {
     await requestEmailLinkCode(value)
@@ -146,13 +147,13 @@ async function sendEmailLinkCode(): Promise<void> {
   } catch (cause) {
     error.value = errorText(cause)
   } finally {
-    busy.value = false
+    busyAction.value = null
   }
 }
 
 async function confirmEmailLink(): Promise<void> {
   if (linkCode.value.length !== 6) return
-  busy.value = true
+  busyAction.value = 'email-confirm'
   error.value = null
   try {
     await verifyEmailLinkCode(linkEmail.value.trim(), linkCode.value)
@@ -161,7 +162,7 @@ async function confirmEmailLink(): Promise<void> {
   } catch (cause) {
     error.value = errorText(cause)
   } finally {
-    busy.value = false
+    busyAction.value = null
   }
 }
 </script>
@@ -245,7 +246,8 @@ async function confirmEmailLink(): Promise<void> {
               v-if="canUnlink"
               label="отвязать"
               confirm-label="точно отвязать?"
-              :loading="busy"
+              :loading="busyAction === `unlink:${identity.provider}`"
+              :disabled="anyBusy && busyAction !== `unlink:${identity.provider}`"
               @confirm="unlink(identity.provider)"
             />
             <small v-else>единственный вход</small>
@@ -256,14 +258,15 @@ async function confirmEmailLink(): Promise<void> {
             v-for="provider in unlinked"
             :key="provider"
             size="sm"
-            :loading="busy"
+            :loading="busyAction === `link:${provider}`"
+            :disabled="anyBusy && busyAction !== `link:${provider}`"
             @click="link(provider)"
             >привязать {{ providerName(provider) }}</AppButton
           >
           <AppButton
             v-if="!emailLinked && emailLinkStep === 'idle'"
             size="sm"
-            :loading="busy"
+            :disabled="anyBusy"
             @click="startEmailLink"
             >привязать почту</AppButton
           >
@@ -282,10 +285,14 @@ async function confirmEmailLink(): Promise<void> {
             autocomplete="email"
             required
           />
-          <AppButton type="submit" size="sm" variant="primary" :loading="busy"
+          <AppButton
+            type="submit"
+            size="sm"
+            variant="primary"
+            :loading="busyAction === 'email-request'"
             >получить код</AppButton
           >
-          <AppButton type="button" size="sm" :disabled="busy" @click="cancelEmailLink"
+          <AppButton type="button" size="sm" :disabled="anyBusy" @click="cancelEmailLink"
             >отмена</AppButton
           >
         </form>
@@ -306,8 +313,14 @@ async function confirmEmailLink(): Promise<void> {
             autocomplete="one-time-code"
             required
           />
-          <AppButton type="submit" size="sm" variant="primary" :loading="busy">привязать</AppButton>
-          <AppButton type="button" size="sm" :disabled="busy" @click="cancelEmailLink"
+          <AppButton
+            type="submit"
+            size="sm"
+            variant="primary"
+            :loading="busyAction === 'email-confirm'"
+            >привязать</AppButton
+          >
+          <AppButton type="button" size="sm" :disabled="anyBusy" @click="cancelEmailLink"
             >отмена</AppButton
           >
         </form>
