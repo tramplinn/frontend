@@ -14,23 +14,31 @@ const props = defineProps<{ news: string }>()
 
 const {
   actionError,
+  assetError,
   attachPhotos,
   autosaving,
   bodyMd,
   busy,
   detachPhoto,
+  dragging,
   error,
   html,
   load,
   loaded,
   movePhoto,
+  onDragLeave,
+  onDragOver,
+  onDrop,
+  onPaste,
   pending,
   saveError,
   savedAt,
   saving,
+  setSource,
   setStatus,
   summary,
   title,
+  uploadingAsset,
 } = useNewsEditor(() => props.news)
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -95,7 +103,19 @@ function onFiles(event: Event): void {
         />
       </div>
 
-      <MarkdownEditor v-model="bodyMd" :html="html" source-label="Исходник новости" />
+      <MarkdownEditor
+        v-model="bodyMd"
+        :html="html"
+        source-label="Исходник новости"
+        :dragging="dragging"
+        :uploading="uploadingAsset"
+        :asset-error="assetError"
+        @source="setSource"
+        @paste="onPaste"
+        @drop="onDrop"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave"
+      />
 
       <p v-if="saveError" class="save-error" role="alert">{{ errorText(saveError) }}</p>
 

@@ -87,15 +87,12 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-ctl);
   transition: background var(--motion-fast) var(--ease);
 }
 
 .item:hover {
-  background: var(--surface-hover);
+  background: var(--surface);
 }
 
 .item-link {
@@ -104,7 +101,7 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
   gap: var(--space-3);
   flex: 1;
   min-width: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--text-caption);
 }
 

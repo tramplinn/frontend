@@ -1,11 +1,13 @@
 import { computed, onMounted, onUnmounted, ref, toValue, watch } from 'vue'
-import type { MaybeRefOrGetter } from 'vue'
+import type { ComponentPublicInstance, MaybeRefOrGetter } from 'vue'
 
 import { uploadAsset } from '@/api/assets'
 import { getDraftNews, updateNews } from '@/api/news'
 import type { Asset } from '@/api/schemas/assets'
 import { assetMimeSchema } from '@/api/schemas/assets'
 import type { News } from '@/api/schemas/news'
+import { useAssetInsert } from '@/composables/useAssetInsert'
+import { useCursorInsert } from '@/composables/useCursorInsert'
 import { useDebounce } from '@/composables/useDebounce'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
@@ -29,6 +31,7 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
   const busy = ref(false)
   const savedAt = ref<Date | null>(null)
   const autosaveCount = ref(0)
+  const source = ref<HTMLTextAreaElement | null>(null)
 
   const loadGuard = useVersionedLoad()
   const autosaveDebounce = useDebounce(AUTOSAVE_DEBOUNCE_MS)
@@ -203,6 +206,18 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
     void runPhotoAction(() => updateNews(current.id, { photoIds }))
   }
 
+  function setSource(element: Element | ComponentPublicInstance | null): void {
+    source.value = element instanceof HTMLTextAreaElement ? element : null
+  }
+
+  const { insertAtCursor, replacePlaceholder } = useCursorInsert(
+    source,
+    () => bodyMd.value,
+    (value) => (bodyMd.value = value),
+  )
+
+  const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
+
   useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения новости. Уйти со страницы?')
 
   watch(
@@ -222,23 +237,31 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
 
   return {
     actionError,
+    assetError: assetInsert.error,
     attachPhotos,
     autosaving,
     bodyMd,
     busy,
     detachPhoto,
     dirty,
+    dragging: assetInsert.dragging,
     error,
     html,
     load,
     loaded,
     movePhoto,
+    onDragLeave: assetInsert.onDragLeave,
+    onDragOver: assetInsert.onDragOver,
+    onDrop: assetInsert.onDrop,
+    onPaste: assetInsert.onPaste,
     pending,
     saveError,
     savedAt,
     saving,
+    setSource,
     setStatus,
     summary,
     title,
+    uploadingAsset: assetInsert.uploading,
   }
 }
