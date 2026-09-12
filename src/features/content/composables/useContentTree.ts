@@ -123,6 +123,7 @@ export function useContentTree() {
     courseError,
     loadingCourse,
     courseEmptyForStudents,
+    load,
     toggleCourse,
     refresh,
     refreshTree,

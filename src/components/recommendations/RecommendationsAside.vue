@@ -5,12 +5,12 @@ import { useRecommendations } from '@/features/recommendations/composables/useRe
 import { hours } from '@/lib/hours'
 import RecommendationRow from './RecommendationRow.vue'
 
-const { courses, algorithms, pending, error } = useRecommendations()
+const { courses, algorithms, pending, error, load } = useRecommendations()
 </script>
 
 <template>
   <aside v-if="pending || error || algorithms.length > 0 || courses.length > 0" class="aside">
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <div v-if="algorithms.length > 0" class="block">
         <h2 class="heading">рекомендуем алгосы</h2>
         <div class="list">

@@ -35,6 +35,7 @@ import FeedbackWidget from '@/components/layout/FeedbackWidget.vue'
   background: var(--selected);
   color: var(--on-selected);
   font-size: var(--text-caption);
+  box-shadow: var(--shadow-raised);
   transform: translateY(calc(-100% - var(--space-4)));
 }
 

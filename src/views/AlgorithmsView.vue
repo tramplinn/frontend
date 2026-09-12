@@ -12,6 +12,7 @@ const {
   error,
   hasMore,
   items,
+  load,
   page,
   pending,
   search,
@@ -70,7 +71,7 @@ function toggleTag(id: string): void {
       </div>
     </div>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="items.length === 0" class="muted empty">
         Ничего не нашлось. Попробуй снять фильтры.
       </p>
@@ -223,7 +224,7 @@ function toggleTag(id: string): void {
   gap: var(--space-3);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 620px) {
   .card {
     align-items: flex-start;
   }

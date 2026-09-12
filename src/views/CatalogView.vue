@@ -18,7 +18,9 @@ function requested(): string {
   return typeof value === 'string' ? value : ''
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  pending.value = true
+  error.value = null
   try {
     const tracks = await content.loadTracks()
     const wanted = requested()
@@ -28,7 +30,9 @@ onMounted(async () => {
   } finally {
     pending.value = false
   }
-})
+}
+
+onMounted(() => void load())
 
 watch(
   () => route.query.track,
@@ -45,7 +49,7 @@ watch(
   <section>
     <h1 class="heading">курсы</h1>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="content.tracks.length === 0" class="empty">пока ничего не опубликовано</p>
 
       <TabsRoot v-else v-model="active">

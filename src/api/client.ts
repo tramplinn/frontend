@@ -5,6 +5,7 @@ import { ApiError, ContractError, NetworkError, toApiError } from './errors'
 import { accessTokenSchema } from './schemas/auth'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+const DEFAULT_TIMEOUT_MS = 15_000
 
 interface Session {
   token: string
@@ -120,6 +121,28 @@ async function send(path: string, options: RequestOptions<z.ZodType>): Promise<R
   }
 }
 
+/** Без явного signal вешает свой таймаут: иначе недоступный бэкенд оставляет
+    запрос висеть вечно и LoadState — с ним — в состоянии «загрузка» навсегда.
+    Стриминг (requestStream) сюда не заходит и таймаутом не ограничен. */
+function withTimeout(
+  signal: AbortSignal | undefined,
+  ms: number,
+): { signal: AbortSignal; clear: () => void } {
+  if (signal) {
+    return { signal, clear: () => {} }
+  }
+  const controller = new AbortController()
+  const timer = setTimeout(() => {
+    controller.abort()
+  }, ms)
+  return {
+    signal: controller.signal,
+    clear: () => {
+      clearTimeout(timer)
+    },
+  }
+}
+
 export async function request<T extends z.ZodType>(
   path: string,
   options: RequestOptions<T> & { schema: T },
@@ -133,29 +156,34 @@ export async function request<T extends z.ZodType>(
     await refreshSession()
   }
 
-  let response = await send(path, options)
+  const timeout = withTimeout(options.signal, DEFAULT_TIMEOUT_MS)
+  try {
+    let response = await send(path, { ...options, signal: timeout.signal })
 
-  if (response.status === 401 && options.skipRetry !== true && options.withCookies !== true) {
-    const renewed = await refreshSession()
-    if (renewed) {
-      response = await send(path, options)
+    if (response.status === 401 && options.skipRetry !== true && options.withCookies !== true) {
+      const renewed = await refreshSession()
+      if (renewed) {
+        response = await send(path, { ...options, signal: timeout.signal })
+      }
     }
-  }
 
-  if (!response.ok) {
-    throw await toApiError(response)
-  }
+    if (!response.ok) {
+      throw await toApiError(response)
+    }
 
-  if (!options.schema || response.status === 204) {
-    return
-  }
+    if (!options.schema || response.status === 204) {
+      return
+    }
 
-  const payload: unknown = camelizeKeys(await response.json())
-  const parsed = options.schema.safeParse(payload)
-  if (!parsed.success) {
-    throw new ContractError(path, parsed.error)
+    const payload: unknown = camelizeKeys(await response.json())
+    const parsed = options.schema.safeParse(payload)
+    if (!parsed.success) {
+      throw new ContractError(path, parsed.error)
+    }
+    return parsed.data
+  } finally {
+    timeout.clear()
   }
-  return parsed.data
 }
 
 interface Page<T> {

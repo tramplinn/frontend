@@ -23,6 +23,7 @@ export function useContentManagement() {
     openModule: tree.openModule,
     pending: tree.pending,
     error: tree.error,
+    load: tree.load,
     busy: actions.busy,
     actionError: actions.actionError,
     publishReport: actions.publishReport,

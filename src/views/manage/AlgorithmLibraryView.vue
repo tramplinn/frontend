@@ -98,7 +98,7 @@ onMounted(() => void load())
 
     <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="problems.length === 0" class="muted empty">Задач пока нет. Создай первую выше.</p>
 
       <ul v-else class="list">

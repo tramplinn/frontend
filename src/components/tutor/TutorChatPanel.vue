@@ -359,7 +359,7 @@ if (expanded.value) loadRenderer()
   transform: translateY(-50%) translateX(100%);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 620px) {
   .chat {
     inset: 0;
     width: 100vw;

@@ -189,6 +189,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     hasNoHidden,
     hasNoSample,
     hasNoValidatedTemplate: templates.hasNoValidatedTemplate,
+    load,
     loaded,
     onDragLeave: problemFields.assetInsert.onDragLeave,
     onDragOver: problemFields.assetInsert.onDragOver,

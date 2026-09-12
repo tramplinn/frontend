@@ -54,7 +54,7 @@ function subtitle(person: PublicUser): string {
       <div>
         <h1>люди</h1>
       </div>
-      <p>{{ total }} профилей</p>
+      <p v-if="!pending && !error">{{ total }} профилей</p>
     </header>
     <input
       v-model="query"
@@ -62,7 +62,7 @@ function subtitle(person: PublicUser): string {
       type="search"
       placeholder="имя, логин или направление"
     />
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="search">
       <p v-if="people.length === 0" class="empty">никого не нашлось</p>
       <div v-else class="grid">
         <RouterLink
@@ -171,7 +171,7 @@ function subtitle(person: PublicUser): string {
 .empty {
   color: var(--text-muted);
 }
-@media (max-width: 680px) {
+@media (max-width: 700px) {
   .grid {
     grid-template-columns: 1fr;
   }

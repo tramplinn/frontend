@@ -171,7 +171,7 @@ onMounted(() => void load())
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded" class="page">
       <header class="head">
         <div class="head-main">

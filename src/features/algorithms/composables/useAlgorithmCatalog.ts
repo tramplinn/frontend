@@ -73,6 +73,7 @@ export function useAlgorithmCatalog() {
     error,
     hasMore,
     items,
+    load,
     page,
     pending,
     search,

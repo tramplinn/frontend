@@ -107,6 +107,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     lessonOptions,
     boundLesson,
     bindTo,
+    load,
     pending,
     error,
     busy,

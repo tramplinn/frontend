@@ -38,7 +38,9 @@ async function loadMore(): Promise<void> {
   }
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  pending.value = true
+  error.value = null
   try {
     await loadPage()
   } catch (cause) {
@@ -46,7 +48,9 @@ onMounted(async () => {
   } finally {
     pending.value = false
   }
-})
+}
+
+onMounted(() => void load())
 </script>
 
 <template>
@@ -54,7 +58,7 @@ onMounted(async () => {
     <section class="news-page">
       <h1 class="heading">новости</h1>
 
-      <LoadState :pending="pending" :error="error">
+      <LoadState :pending="pending" :error="error" @retry="load">
         <p v-if="items.length === 0" class="blank">Новостей пока нет.</p>
 
         <template v-else>
@@ -127,7 +131,7 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 620px) {
   .heading {
     margin-bottom: var(--space-5);
   }

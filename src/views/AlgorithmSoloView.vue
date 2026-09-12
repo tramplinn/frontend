@@ -8,11 +8,11 @@ import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmSolo } from '@/features/algorithms/composables/useAlgorithmSolo'
 
 const props = defineProps<{ problem: string }>()
-const { error, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
+const { error, load, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <article class="solo">
       <header class="head">
         <BackLink :to="{ name: 'algorithms' }">ко всем задачам</BackLink>

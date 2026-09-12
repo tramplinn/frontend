@@ -75,6 +75,7 @@ export function useUsers() {
   return {
     actionError,
     error,
+    load,
     patch,
     pending,
     query,

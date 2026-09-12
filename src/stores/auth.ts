@@ -22,6 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
   const status = ref<Status>('idle')
   // Кнопки входа рисуем по ответу сервера: непрописанного провайдера в нём нет.
   const providers = ref<IdentityProvider[]>([])
+  const providersError = ref<unknown>(null)
 
   const isAuthenticated = computed(() => user.value !== null)
   const isTeacher = computed(() => user.value?.role === 'teacher' || user.value?.role === 'admin')
@@ -51,8 +52,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function loadProviders(): Promise<void> {
-    if (providers.value.length === 0) {
+    if (providers.value.length > 0) return
+    try {
       providers.value = (await listProviders()).providers
+      providersError.value = null
+    } catch (cause) {
+      providersError.value = cause
     }
   }
 
@@ -90,6 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
     reload,
     updateProfile,
     providers,
+    providersError,
     loadProviders,
     login,
     requestEmailCode,

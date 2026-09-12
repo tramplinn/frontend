@@ -13,7 +13,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'админ' },
 ]
 
-const { users, total, query, roleFilter, pending, error, actionError, savingIds, patch } =
+const { users, total, query, roleFilter, pending, error, actionError, savingIds, patch, load } =
   useUsers()
 </script>
 
@@ -46,7 +46,7 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
 
     <p v-if="actionError" class="action-error" role="alert">{{ errorText(actionError) }}</p>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="users.length === 0" class="empty">никого не нашлось</p>
 
       <div v-else class="table-wrap">

@@ -4,6 +4,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { PublicProfile } from '@/api/schemas/users'
 import { getPublicProfile } from '@/api/users'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 
 const props = defineProps<{ login: string }>()
@@ -31,7 +32,15 @@ watch(
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error"
+  <BackLink :to="{ name: 'people' }" class="back">к людям</BackLink>
+  <LoadState :pending="pending" :error="error" @retry="load"
     ><ProfileSummary v-if="profile" :profile="profile"
   /></LoadState>
 </template>
+
+<style scoped>
+.back {
+  display: inline-flex;
+  margin-bottom: var(--space-6);
+}
+</style>

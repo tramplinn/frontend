@@ -70,10 +70,10 @@ watch(
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <h1 class="title">{{ tree?.title ?? course }}</h1>
+  <LoadState :pending="pending" :error="error" @retry="load(course)">
     <article v-if="tree">
       <header class="head">
-        <h1 class="title">{{ tree.title }}</h1>
         <p v-if="tree.summary" class="summary">{{ tree.summary }}</p>
 
         <div v-if="auth.isAuthenticated && courseProgress" class="progress">
@@ -171,6 +171,8 @@ watch(
 }
 
 .title {
+  max-width: var(--measure);
+  margin-bottom: var(--space-3);
   font-size: var(--text-hero);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.03em;

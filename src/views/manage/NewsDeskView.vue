@@ -19,6 +19,7 @@ const {
   actionError,
   busy,
   editing,
+  load,
   add,
   save,
   remove,
@@ -66,7 +67,7 @@ function onFiles(event: Event): void {
       @change="onFiles"
     />
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="items.length === 0" class="blank">Пока ни одной новости.</p>
 
       <ul v-else class="list">

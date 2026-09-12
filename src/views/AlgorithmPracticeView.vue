@@ -17,6 +17,7 @@ const {
   error,
   finish,
   finishing,
+  load,
   pending,
   practiceSet,
   runner,
@@ -37,7 +38,7 @@ const SESSION_LABELS: Record<string, string> = {
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <article v-if="practiceSet && session" class="practice">
       <header class="head">
         <div>

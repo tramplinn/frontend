@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { errorText } from '@/lib/errors'
+import AppButton from './AppButton.vue'
 
 const props = defineProps<{ pending: boolean; error: unknown }>()
+const emit = defineEmits<{ retry: [] }>()
 </script>
 
 <template>
   <p v-if="props.pending" class="state" role="status">загрузка</p>
-  <p v-else-if="props.error" class="state state--error" role="alert">
-    {{ errorText(props.error) }}
-  </p>
+  <div v-else-if="props.error" class="state state--error" role="alert">
+    <p>{{ errorText(props.error) }}</p>
+    <AppButton size="sm" @click="emit('retry')">повторить</AppButton>
+  </div>
   <slot v-else />
 </template>
 
@@ -20,6 +23,10 @@ const props = defineProps<{ pending: boolean; error: unknown }>()
 }
 
 .state--error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
   color: var(--danger);
 }
 </style>

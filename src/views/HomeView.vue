@@ -18,11 +18,13 @@ const started = computed(() => progress.startedCourses)
 const inProgress = computed(() => progress.inProgressCourses)
 const finished = computed(() => progress.finishedCourses)
 
-onMounted(async () => {
+async function load(): Promise<void> {
   if (!auth.isAuthenticated) {
     pending.value = false
     return
   }
+  pending.value = true
+  error.value = null
   try {
     await progress.load()
     await progress.loadStarted()
@@ -31,7 +33,9 @@ onMounted(async () => {
   } finally {
     pending.value = false
   }
-})
+}
+
+onMounted(() => void load())
 </script>
 
 <template>
@@ -40,7 +44,7 @@ onMounted(async () => {
   <section v-else>
     <h1 class="heading">моё обучение</h1>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <div v-if="started.length === 0" class="blank">
         <p class="blank-text">Вы ещё не начали ни одного курса.</p>
         <RouterLink :to="{ name: 'catalog' }" class="blank-link">открыть каталог →</RouterLink>

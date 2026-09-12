@@ -134,6 +134,7 @@ export function useAlgorithmPractice(setId: () => string) {
     error,
     finish,
     finishing,
+    load,
     pending,
     practiceSet,
     runner,

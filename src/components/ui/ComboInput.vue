@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -13,6 +13,8 @@ const props = withDefaults(
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const open = ref(false)
+const activeIndex = ref(-1)
+const listboxId = useId()
 
 const options = computed(() => {
   const query = props.modelValue.trim().toLowerCase()
@@ -22,9 +24,41 @@ const options = computed(() => {
     .slice(0, 8)
 })
 
+watch(options, () => {
+  activeIndex.value = -1
+})
+
 function pick(name: string): void {
   emit('update:modelValue', name)
   open.value = false
+  activeIndex.value = -1
+}
+
+function moveActive(delta: number): void {
+  if (options.value.length === 0) return
+  const count = options.value.length
+  const base = activeIndex.value < 0 ? (delta > 0 ? -1 : 0) : activeIndex.value
+  activeIndex.value = (base + delta + count) % count
+  open.value = true
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    moveActive(1)
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveActive(-1)
+  } else if (event.key === 'Enter') {
+    const name = options.value[activeIndex.value]
+    if (name !== undefined) {
+      event.preventDefault()
+      pick(name)
+    }
+  } else if (event.key === 'Escape') {
+    open.value = false
+    activeIndex.value = -1
+  }
 }
 </script>
 
@@ -33,18 +67,37 @@ function pick(name: string): void {
     <input
       :value="modelValue"
       type="text"
+      role="combobox"
       class="text-field input"
       :placeholder="placeholder"
+      aria-autocomplete="list"
+      :aria-expanded="open && options.length > 0"
+      :aria-controls="listboxId"
+      :aria-activedescendant="activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      @keydown="onKeydown"
       @focus="open = true"
       @blur="open = false"
     />
     <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true" class="caret">
       <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" />
     </svg>
-    <ul v-if="open && options.length > 0" class="suggestions" role="listbox">
-      <li v-for="name in options" :key="name">
-        <button type="button" @mousedown.prevent="pick(name)">{{ name }}</button>
+    <ul v-if="open && options.length > 0" :id="listboxId" class="suggestions" role="listbox">
+      <li
+        v-for="(name, index) in options"
+        :id="`${listboxId}-opt-${index}`"
+        :key="name"
+        role="option"
+        :aria-selected="index === activeIndex"
+      >
+        <button
+          type="button"
+          :class="{ active: index === activeIndex }"
+          @mousedown.prevent="pick(name)"
+          @mouseenter="activeIndex = index"
+        >
+          {{ name }}
+        </button>
       </li>
     </ul>
   </div>
@@ -96,7 +149,8 @@ function pick(name: string): void {
   cursor: pointer;
 }
 
-.suggestions button:hover {
+.suggestions button:hover,
+.suggestions button.active {
   background: var(--surface);
 }
 </style>

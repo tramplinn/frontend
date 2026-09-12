@@ -37,6 +37,7 @@ const {
   addStandaloneCourse,
   publishTrackCascade,
   move,
+  load,
 } = content
 </script>
 
@@ -57,7 +58,7 @@ const {
       </ul>
     </div>
 
-    <LoadState :pending="pending" :error="error">
+    <LoadState :pending="pending" :error="error" @retry="load">
       <TabsRoot default-value="tracks">
         <TabsList class="tabs" aria-label="Раздел контента">
           <TabsTrigger value="tracks" class="tab">треки</TabsTrigger>

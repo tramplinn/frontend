@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -14,6 +14,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 
 const draft = ref('')
 const open = ref(false)
+const activeIndex = ref(-1)
+const listboxId = useId()
 
 const options = computed(() => {
   const query = draft.value.trim().toLowerCase()
@@ -22,6 +24,10 @@ const options = computed(() => {
     .filter((name) => !chosen.has(name.toLowerCase()))
     .filter((name) => !query || name.toLowerCase().includes(query))
     .slice(0, 8)
+})
+
+watch(options, () => {
+  activeIndex.value = -1
 })
 
 function has(name: string): boolean {
@@ -47,20 +53,47 @@ function commitDraft(): void {
   draft.value = ''
 }
 
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Enter' || event.key === ',') {
-    event.preventDefault()
-    commitDraft()
-  } else if (event.key === 'Backspace' && !draft.value && props.modelValue.length > 0) {
-    const last = props.modelValue.at(-1)
-    if (last !== undefined) remove(last)
-  }
-}
-
 function pick(name: string): void {
   add(name)
   draft.value = ''
   open.value = false
+  activeIndex.value = -1
+}
+
+/** Стрелки двигают подсветку по списку подсказок с зацикливанием — без этого
+    клавиатурный пользователь не мог выбрать ничего, кроме своего текста. */
+function moveActive(delta: number): void {
+  if (options.value.length === 0) return
+  const count = options.value.length
+  const base = activeIndex.value < 0 ? (delta > 0 ? -1 : 0) : activeIndex.value
+  activeIndex.value = (base + delta + count) % count
+  open.value = true
+}
+
+function pickActive(): boolean {
+  const name = options.value[activeIndex.value]
+  if (name === undefined) return false
+  pick(name)
+  return true
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    moveActive(1)
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveActive(-1)
+  } else if (event.key === 'Enter' || event.key === ',') {
+    event.preventDefault()
+    if (!pickActive()) commitDraft()
+  } else if (event.key === 'Escape') {
+    open.value = false
+    activeIndex.value = -1
+  } else if (event.key === 'Backspace' && !draft.value && props.modelValue.length > 0) {
+    const last = props.modelValue.at(-1)
+    if (last !== undefined) remove(last)
+  }
 }
 </script>
 
@@ -82,6 +115,11 @@ function pick(name: string): void {
         <input
           v-model="draft"
           type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          :aria-expanded="open && options.length > 0"
+          :aria-controls="listboxId"
+          :aria-activedescendant="activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined"
           :placeholder="modelValue.length === 0 ? placeholder : ''"
           @keydown="onKeydown"
           @focus="open = true"
@@ -94,9 +132,22 @@ function pick(name: string): void {
         />
       </li>
     </ul>
-    <ul v-if="open && options.length > 0" class="suggestions" role="listbox">
-      <li v-for="name in options" :key="name">
-        <button type="button" @mousedown.prevent="pick(name)">{{ name }}</button>
+    <ul v-if="open && options.length > 0" :id="listboxId" class="suggestions" role="listbox">
+      <li
+        v-for="(name, index) in options"
+        :id="`${listboxId}-opt-${index}`"
+        :key="name"
+        role="option"
+        :aria-selected="index === activeIndex"
+      >
+        <button
+          type="button"
+          :class="{ active: index === activeIndex }"
+          @mousedown.prevent="pick(name)"
+          @mouseenter="activeIndex = index"
+        >
+          {{ name }}
+        </button>
       </li>
     </ul>
   </div>
@@ -188,7 +239,8 @@ function pick(name: string): void {
   cursor: pointer;
 }
 
-.suggestions button:hover {
+.suggestions button:hover,
+.suggestions button.active {
   background: var(--surface);
 }
 </style>

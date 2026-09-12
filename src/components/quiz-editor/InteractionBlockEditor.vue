@@ -316,7 +316,7 @@ input::placeholder {
 .remove:hover {
   color: var(--danger);
 }
-@media (max-width: 680px) {
+@media (max-width: 700px) {
   .interaction-editor {
     padding-left: 0;
   }

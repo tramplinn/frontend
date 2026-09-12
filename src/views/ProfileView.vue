@@ -66,6 +66,7 @@ async function signOut(all = false): Promise<void> {
 <template>
   <section v-if="auth.user" class="profile">
     <ProfileSummary v-if="publicProfile" :profile="publicProfile" own />
+    <p v-else-if="error" class="summary-error" role="alert">{{ error }}</p>
     <div class="columns">
       <form class="card editor" @submit.prevent="form.save">
         <header>
@@ -266,8 +267,8 @@ async function signOut(all = false): Promise<void> {
         </div>
       </section>
     </div>
-    <p v-if="error || form.error || identity.error" class="error" role="alert">
-      {{ error || form.error || identity.error }}
+    <p v-if="form.error || identity.error" class="error" role="alert">
+      {{ form.error || identity.error }}
     </p>
   </section>
 </template>
@@ -406,7 +407,11 @@ header h2 {
   color: var(--danger);
   font-size: var(--text-caption);
 }
-@media (max-width: 820px) {
+.summary-error {
+  color: var(--danger);
+  font-size: var(--text-caption);
+}
+@media (max-width: 800px) {
   .columns {
     grid-template-columns: 1fr;
   }

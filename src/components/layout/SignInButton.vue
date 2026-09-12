@@ -31,7 +31,7 @@ const email = ref('')
 const code = ref('')
 
 onMounted(() => {
-  void auth.loadProviders().catch(() => {})
+  void auth.loadProviders()
 })
 
 function onKeydown(event: KeyboardEvent): void {
@@ -139,6 +139,10 @@ async function submitCode(): Promise<void> {
                 {{ providerName(provider) }}
               </AppButton>
             </div>
+
+            <p v-if="auth.providers.length === 0 && auth.providersError" class="providers-error">
+              не получилось загрузить способы входа — можно продолжить по почте
+            </p>
 
             <div v-if="auth.providers.length > 0" class="divider"><span>или по почте</span></div>
 
@@ -257,6 +261,11 @@ async function submitCode(): Promise<void> {
   justify-content: flex-start;
   gap: var(--space-3);
   padding-left: var(--space-4);
+}
+
+.providers-error {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
 }
 
 .divider {

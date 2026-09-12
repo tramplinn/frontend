@@ -104,7 +104,7 @@ watch(
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <LearningPageLayout v-if="loaded" sheet-padding="compact">
       <template #header>
         <h1 class="title">{{ loaded.title }}</h1>

@@ -36,6 +36,7 @@ const {
   fields,
   hasNoHidden,
   hasNoSample,
+  load,
   loaded,
   onDragLeave,
   onDragOver,
@@ -116,7 +117,7 @@ const canValidate = computed(() => {
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded && fields" class="page">
       <header class="head">
         <div class="head-main">
@@ -372,7 +373,7 @@ textarea {
   list-style: none;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 620px) {
   .head {
     align-items: stretch;
   }

@@ -33,5 +33,5 @@ export function useRecommendations() {
     loadGuard.cancel()
   })
 
-  return { courses, algorithms, pending, error }
+  return { courses, algorithms, pending, error, load }
 }

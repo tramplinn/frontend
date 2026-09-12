@@ -68,5 +68,5 @@ export function useAlgorithmSolo(problemId: () => string) {
     runner.dispose()
   })
 
-  return { error, pending, runner, session, solved }
+  return { error, pending, runner, session, solved, load }
 }

@@ -109,7 +109,7 @@ watch(
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <LearningPageLayout v-if="location" prioritize-rail-end-on-mobile>
       <template #header>
         <h1 class="title">{{ location.lesson.title }}</h1>

@@ -119,7 +119,7 @@ pre {
   white-space: pre-wrap;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .sample-body {
     grid-template-columns: 1fr;
   }

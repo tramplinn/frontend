@@ -206,6 +206,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     dragging: assetInsert.dragging,
     error,
     html,
+    load,
     loaded,
     onDragLeave: assetInsert.onDragLeave,
     onDragOver: assetInsert.onDragOver,

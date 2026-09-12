@@ -41,7 +41,7 @@ watch(
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <article v-if="news" class="post">
       <BackLink :to="{ name: 'home' }" class="back">все новости</BackLink>
 

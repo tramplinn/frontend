@@ -248,7 +248,7 @@ h1 {
   font-size: var(--text-caption);
 }
 
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .hero {
     align-items: center;
     padding: var(--space-6);

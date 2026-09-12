@@ -26,6 +26,7 @@ const {
   dirty,
   error,
   html,
+  load,
   loaded,
   pending,
   previewError,
@@ -44,7 +45,7 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded" class="editor">
       <header class="head">
         <input v-model="title" class="title-input" aria-label="Название урока" />

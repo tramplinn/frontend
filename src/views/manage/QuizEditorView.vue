@@ -14,6 +14,7 @@ const {
   lessonOptions,
   boundLesson,
   bindTo,
+  load,
   pending,
   error,
   busy,
@@ -34,7 +35,7 @@ const {
 </script>
 
 <template>
-  <LoadState :pending="pending" :error="error">
+  <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded">
       <header class="head">
         <h1 class="title">{{ loaded.title }}</h1>
