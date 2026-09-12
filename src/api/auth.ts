@@ -72,6 +72,10 @@ export interface ProfileChanges {
   specialty?: Specialty | null
   grade?: DeveloperGrade | null
   experienceYears?: number | null
+  company?: string | null
+  university?: string | null
+  interests?: string[]
+  resumeAssetId?: string | null
 }
 
 export function updateProfile(changes: ProfileChanges): Promise<Me> {

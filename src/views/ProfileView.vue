@@ -13,9 +13,15 @@ import type { IdentityProvider } from '@/api/schemas/common'
 import type { DeveloperGrade, PublicProfile, Specialty } from '@/api/schemas/users'
 import { getPublicProfile } from '@/api/users'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
+import ResumeField from '@/components/profile/ResumeField.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import ComboInput from '@/components/ui/ComboInput.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import TagPicker from '@/components/ui/TagPicker.vue'
+import { useCompanySuggestions } from '@/composables/useCompanySuggestions'
+import { useInterestSuggestions } from '@/composables/useInterestSuggestions'
+import { useUniversitySuggestions } from '@/composables/useUniversitySuggestions'
 import { errorText } from '@/lib/errors'
 import { blankToNull } from '@/lib/forms'
 import { GRADES, SPECIALTIES } from '@/lib/profile'
@@ -33,6 +39,14 @@ const bio = ref(auth.user?.bio ?? '')
 const specialty = ref<Specialty | ''>(auth.user?.specialty ?? '')
 const grade = ref<DeveloperGrade | ''>(auth.user?.grade ?? '')
 const experienceYears = ref<number | null>(auth.user?.experienceYears ?? null)
+const company = ref(auth.user?.company?.name ?? '')
+const university = ref(auth.user?.university?.name ?? '')
+const interests = ref(auth.user?.interests.map((interest) => interest.name) ?? [])
+const resumeAssetId = ref(auth.user?.resumeAssetId ?? null)
+const resumeUrl = ref(auth.user?.resumeUrl ?? null)
+const companySuggestions = useCompanySuggestions()
+const universitySuggestions = useUniversitySuggestions()
+const interestSuggestions = useInterestSuggestions()
 const saving = ref(false)
 const signingOut = ref(false)
 const busyAction = ref<string | null>(null)
@@ -72,6 +86,10 @@ async function saveProfile(): Promise<void> {
       specialty: specialty.value || null,
       grade: grade.value || null,
       experienceYears: experienceYears.value,
+      company: blankToNull(company.value),
+      university: blankToNull(university.value),
+      interests: interests.value,
+      resumeAssetId: resumeAssetId.value,
     })
     await loadPublicProfile()
   } catch (cause) {
@@ -203,6 +221,30 @@ async function confirmEmailLink(): Promise<void> {
             min="0"
             max="80"
         /></label>
+        <div class="pair">
+          <label
+            ><span>компания</span
+            ><ComboInput
+              v-model="company"
+              :suggestions="companySuggestions"
+              placeholder="где работаете"
+          /></label>
+          <label
+            ><span>вуз</span
+            ><ComboInput
+              v-model="university"
+              :suggestions="universitySuggestions"
+              placeholder="где учитесь"
+          /></label>
+        </div>
+        <label
+          ><span>интересы</span
+          ><TagPicker
+            v-model="interests"
+            :suggestions="interestSuggestions"
+            placeholder="добавить интерес"
+        /></label>
+        <ResumeField v-model:asset-id="resumeAssetId" v-model:url="resumeUrl" />
         <label
           ><span>подробнее</span
           ><textarea
@@ -210,7 +252,7 @@ async function confirmEmailLink(): Promise<void> {
             class="text-field"
             rows="5"
             maxlength="1000"
-            placeholder="Интересы, стек, цели"
+            placeholder="Стек, цели"
           ></textarea>
         </label>
         <AppButton type="submit" variant="primary" :loading="saving">сохранить профиль</AppButton>

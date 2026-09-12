@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { pageSchema, uuidSchema } from './common'
+import { companySchema, interestSchema, universitySchema } from './directories'
 
 export const specialtySchema = z.enum([
   'frontend',
@@ -22,6 +23,9 @@ export const publicUserSchema = z.object({
   specialty: specialtySchema.nullable(),
   grade: developerGradeSchema.nullable(),
   experienceYears: z.number().int().nullable(),
+  company: companySchema.nullable(),
+  university: universitySchema.nullable(),
+  interests: z.array(interestSchema),
 })
 
 export const courseActivitySchema = z.object({
@@ -38,6 +42,7 @@ export const publicProfileSchema = publicUserSchema.extend({
   passedQuizzes: z.number().int(),
   solvedAlgorithms: z.number().int(),
   activeCourses: z.array(courseActivitySchema),
+  resumeUrl: z.string().nullable(),
 })
 
 export const publicUserPageSchema = pageSchema(publicUserSchema)

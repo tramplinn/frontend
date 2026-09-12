@@ -34,11 +34,26 @@ const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
           <span v-if="profile.experienceYears !== null">
             опыт {{ profile.experienceYears }} г.
           </span>
+          <span v-if="profile.company">{{ profile.company.name }}</span>
+          <span v-if="profile.university">{{ profile.university.name }}</span>
         </div>
       </div>
     </div>
 
     <p v-if="profile.bio" class="bio">{{ profile.bio }}</p>
+
+    <ul v-if="profile.interests.length" class="interests">
+      <li v-for="interest in profile.interests" :key="interest.id">{{ interest.name }}</li>
+    </ul>
+
+    <a
+      v-if="profile.resumeUrl"
+      :href="profile.resumeUrl"
+      target="_blank"
+      rel="noopener"
+      class="resume-link"
+      >резюме (PDF)</a
+    >
 
     <dl class="stats">
       <div>
@@ -147,6 +162,31 @@ h1 {
   max-width: var(--measure);
   padding: var(--space-6) var(--space-8) 0;
   white-space: pre-line;
+}
+.interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-8) 0;
+  list-style: none;
+}
+.interests li {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+.resume-link {
+  display: inline-flex;
+  width: fit-content;
+  margin: var(--space-4) var(--space-8) 0;
+  color: var(--accent);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+}
+.resume-link:hover {
+  text-decoration: underline;
 }
 .stats {
   display: grid;

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { dateTimeSchema, identityProviderSchema, userRoleSchema, uuidSchema } from './common'
+import { companySchema, interestSchema, universitySchema } from './directories'
 
 export const authorizeUrlSchema = z.object({
   authorizeUrl: z.url(),
@@ -39,6 +40,11 @@ export const userSchema = z.object({
     .nullable(),
   grade: z.enum(['learning', 'junior', 'middle', 'senior']).nullable(),
   experienceYears: z.number().int().nullable(),
+  company: companySchema.nullable(),
+  university: universitySchema.nullable(),
+  interests: z.array(interestSchema),
+  resumeAssetId: uuidSchema.nullable(),
+  resumeUrl: z.string().nullable(),
 })
 
 export const meSchema = userSchema.extend({
