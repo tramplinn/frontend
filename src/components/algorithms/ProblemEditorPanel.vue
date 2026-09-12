@@ -68,6 +68,8 @@ const cases = computed(() => result.value?.cases ?? [])
 /* result?.failedTest !== null в шаблоне дало бы true и на undefined,
    поэтому номер упавшего теста считаем здесь. */
 const failedTest = computed(() => (finished.value ? (result.value?.failedTest ?? null) : null))
+
+const failedCase = computed(() => (finished.value ? (result.value?.failedCase ?? null) : null))
 </script>
 
 <template>
@@ -151,7 +153,32 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       {{ result?.safeError }}
     </p>
 
-    <p v-if="failedTest !== null" class="error">упал тест {{ failedTest + 1 }}</p>
+    <p v-if="failedTest !== null && !failedCase" class="error">упал тест {{ failedTest + 1 }}</p>
+
+    <div v-if="failedCase" class="case case--failed">
+      <div class="case-head">
+        <strong>{{ failedCase.position === null ? 'тест' : `тест ${failedCase.position + 1}` }}</strong>
+        <span class="bad">{{ verdictLabel(verdict) }}</span>
+        <span v-if="failedCase.runtimeMs !== null" class="muted">{{ failedCase.runtimeMs }} мс</span>
+      </div>
+      <pre v-if="failedCase.compileOutput" class="stderr">{{ failedCase.compileOutput }}</pre>
+      <template v-else>
+        <div v-if="failedCase.input !== null" class="case-field">
+          <span class="muted">ввод</span>
+          <pre>{{ failedCase.input }}</pre>
+        </div>
+        <div v-if="failedCase.expectedOutput !== null" class="case-field">
+          <span class="muted">ожидалось</span>
+          <pre>{{ failedCase.expectedOutput }}</pre>
+        </div>
+        <div v-if="failedCase.stdout" class="case-field">
+          <span class="muted">получено</span>
+          <pre>{{ failedCase.stdout }}</pre>
+        </div>
+        <pre v-if="failedCase.stderr" class="stderr">{{ failedCase.stderr }}</pre>
+        <pre v-if="failedCase.message" class="stderr">{{ failedCase.message }}</pre>
+      </template>
+    </div>
 
     <div v-for="item in cases" :key="item.position ?? 'custom'" class="case">
       <div class="case-head">
@@ -163,6 +190,8 @@ const failedTest = computed(() => (finished.value ? (result.value?.failedTest ??
       </div>
       <pre v-if="item.stdout">{{ item.stdout }}</pre>
       <pre v-if="item.stderr" class="stderr">{{ item.stderr }}</pre>
+      <pre v-if="item.compileOutput" class="stderr">{{ item.compileOutput }}</pre>
+      <pre v-if="item.message" class="stderr">{{ item.message }}</pre>
     </div>
   </section>
 </template>
@@ -258,5 +287,14 @@ pre {
 
 .stderr {
   color: var(--danger);
+}
+
+.case--failed {
+  border: 1px solid var(--danger);
+}
+
+.case-field {
+  display: grid;
+  gap: var(--space-1);
 }
 </style>

@@ -79,6 +79,20 @@ export const runCaseSchema = z.object({
   verdict: verdictSchema,
   stdout: z.string().nullable(),
   stderr: z.string().nullable(),
+  compileOutput: z.string().nullable().default(null),
+  message: z.string().nullable().default(null),
+  runtimeMs: z.number().int().nullable(),
+  memoryKb: z.number().int().nullable(),
+})
+
+export const failedCaseSchema = z.object({
+  position: z.number().int().nullable(),
+  input: z.string().nullable(),
+  expectedOutput: z.string().nullable(),
+  stdout: z.string().nullable(),
+  stderr: z.string().nullable(),
+  compileOutput: z.string().nullable(),
+  message: z.string().nullable(),
   runtimeMs: z.number().int().nullable(),
   memoryKb: z.number().int().nullable(),
 })
@@ -98,6 +112,7 @@ export const submissionSchema = z.object({
   stderr: z.string().nullable(),
   safeError: z.string().nullable(),
   cases: z.array(runCaseSchema),
+  failedCase: failedCaseSchema.nullable().default(null),
   createdAt: z.string(),
   finishedAt: z.string().nullable(),
 })
@@ -150,6 +165,7 @@ export type PracticeSet = z.infer<typeof practiceSetSchema>
 export type PracticeSession = z.infer<typeof practiceSessionSchema>
 export type AlgorithmProblem = z.infer<typeof algorithmProblemSchema>
 export type AlgorithmSubmission = z.infer<typeof submissionSchema>
+export type FailedCase = z.infer<typeof failedCaseSchema>
 export type RunnerLanguage = z.infer<typeof runnerLanguageSchema>
 export type AlgorithmDifficulty = z.infer<typeof algorithmDifficultySchema>
 export type ProblemCard = z.infer<typeof problemCardSchema>
