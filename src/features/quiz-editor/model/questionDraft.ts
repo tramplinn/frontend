@@ -19,7 +19,13 @@ function toText(value: unknown): string {
 }
 
 export function toEditableQuestion(question: QuizQuestionAuthor): EditableQuestion {
-  const options = question.options.map(toText)
+  // options у single/multiple — плоские строки; у matching/grouping это объекты
+  // {id, kind, label}, которые восстанавливаются в interactionLines ниже. Раньше
+  // toText() сериализовал их в options и тем самым забивал единственный список,
+  // общий для всех типов вопроса, — после переключения на «один ответ»/«несколько»
+  // без перезагрузки страницы там всплывали сырые JSON-строки.
+  const isChoice = question.type === 'single' || question.type === 'multiple'
+  const options = isChoice ? question.options.map(toText) : []
   const answer = question.answer
   const values = Array.isArray(answer.values) ? answer.values.map(toText) : []
   const single = answer.value === undefined ? [] : [toText(answer.value)]
