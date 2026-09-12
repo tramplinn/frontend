@@ -7,6 +7,7 @@ import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { blankToNull } from '@/lib/forms'
 
 const props = defineProps<{ module: Module; busy: boolean }>()
@@ -33,7 +34,8 @@ const fields: EditorField<ModuleDraft>[] = [
   },
 ]
 
-const { valid, buildPatch } = useEntityForm(title, slug, fields)
+const { valid, buildPatch, dirty } = useEntityForm(title, slug, fields)
+useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения модуля. Уйти со страницы?')
 
 function save(): void {
   if (!valid.value) {

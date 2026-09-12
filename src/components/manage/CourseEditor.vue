@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { CourseDraft } from '@/api/authoring'
 import type { Course } from '@/api/schemas/content'
@@ -10,6 +10,7 @@ import TagPicker from '@/components/ui/TagPicker.vue'
 import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { ACCENT_COLOR_PLACEHOLDER, blankToNull, numberOrNull } from '@/lib/forms'
 
 const props = defineProps<{ course: Course; busy: boolean }>()
@@ -57,7 +58,18 @@ const fields: EditorField<CourseDraft>[] = [
   },
 ]
 
-const { valid, buildPatch } = useEntityForm(title, slug, fields)
+const { valid, buildPatch, dirty: fieldsDirty } = useEntityForm(title, slug, fields)
+
+const initialCoverAssetId = coverAssetId.value
+const initialTags = tags.value.slice()
+const dirty = computed(
+  () =>
+    fieldsDirty.value ||
+    coverAssetId.value !== initialCoverAssetId ||
+    tags.value.length !== initialTags.length ||
+    tags.value.some((name, index) => name !== initialTags[index]),
+)
+useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения курса. Уйти со страницы?')
 
 function save(): void {
   if (!valid.value) {

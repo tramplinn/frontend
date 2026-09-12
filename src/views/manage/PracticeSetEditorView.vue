@@ -17,6 +17,7 @@ import BackLink from '@/components/ui/BackLink.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { errorText } from '@/lib/errors'
 
 const props = defineProps<{ set: string }>()
@@ -60,6 +61,18 @@ const publishBlockers = computed(() => {
   }
   return blockers
 })
+
+const dirty = computed(() => {
+  const value = loaded.value
+  if (!value) return false
+  return (
+    title.value !== value.title ||
+    description.value !== value.description ||
+    mode.value !== value.mode ||
+    duration.value !== value.durationMinutes
+  )
+})
+useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения набора. Уйти со страницы?')
 
 function sync(value: PracticeSetAuthor): void {
   loaded.value = value

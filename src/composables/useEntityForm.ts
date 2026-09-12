@@ -19,8 +19,19 @@ export function useEntityForm<TDraft>(
   title: Ref<string>,
   slug: Ref<string>,
   fields: EditorField<TDraft>[],
-): { valid: ComputedRef<boolean>; buildPatch: () => Partial<TDraft> } {
+): { valid: ComputedRef<boolean>; buildPatch: () => Partial<TDraft>; dirty: ComputedRef<boolean> } {
+  const initialTitle = title.value
+  const initialSlug = slug.value
+  const initialFieldValues = fields.map((field) => field.model.value)
+
   const valid = computed(() => title.value.trim().length > 0 && slug.value.trim().length > 0)
+
+  const dirty = computed(
+    () =>
+      title.value !== initialTitle ||
+      slug.value !== initialSlug ||
+      fields.some((field, index) => field.model.value !== initialFieldValues[index]),
+  )
 
   function buildPatch(): Partial<TDraft> {
     const patch = {} as Partial<TDraft>
@@ -30,5 +41,5 @@ export function useEntityForm<TDraft>(
     return patch
   }
 
-  return { valid, buildPatch }
+  return { valid, buildPatch, dirty }
 }

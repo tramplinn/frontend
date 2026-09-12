@@ -12,6 +12,7 @@ import { uploadAsset } from '@/api/assets'
 import type { QuestionDraft } from '@/api/authoring'
 import { assetMimeSchema } from '@/api/schemas/assets'
 import type { ModuleTree, QuizAuthor, QuizQuestionAuthor } from '@/api/schemas/content'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import {
   removeQuestionOption,
   toEditableQuestion,
@@ -219,6 +220,17 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     }
   }
 
+  /** Черновик считается несохранённым, пока отличается от последней подтверждённой версии вопроса. */
+  const dirty = computed(() =>
+    (loaded.value?.questions ?? []).some((question) => {
+      const draft = drafts.value.get(question.id)
+      return draft !== undefined
+        ? JSON.stringify(draft) !== JSON.stringify(toEditableQuestion(question))
+        : false
+    }),
+  )
+  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения теста. Уйти со страницы?')
+
   onMounted(() => void load())
   watch(
     () => toValue(quizId),
@@ -263,6 +275,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     pending,
     error,
     busy,
+    dirty,
     draftOf,
     patch,
     toggleCorrect,

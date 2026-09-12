@@ -30,6 +30,7 @@ import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import { useAssetInsert } from '@/composables/useAssetInsert'
 import { useCursorInsert } from '@/composables/useCursorInsert'
 import { useDebounce } from '@/composables/useDebounce'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { errorText } from '@/lib/errors'
 
 export interface ProblemFields {
@@ -499,9 +500,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     return loaded.value?.templates.find((item) => item.language === language)
   }
 
-  function guard(event: BeforeUnloadEvent): void {
-    if (dirty.value) event.preventDefault()
-  }
+  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения задачи. Уйти со страницы?')
 
   watch(
     () => toValue(problemId),
@@ -516,11 +515,9 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   )
   onMounted(() => {
     void load()
-    window.addEventListener('beforeunload', guard)
   })
   onUnmounted(() => {
     clearTimers()
-    window.removeEventListener('beforeunload', guard)
   })
 
   return {

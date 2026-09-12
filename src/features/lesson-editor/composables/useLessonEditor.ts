@@ -6,6 +6,7 @@ import type { InterviewCardPreview, Lesson } from '@/api/schemas/content'
 import { useAssetInsert } from '@/composables/useAssetInsert'
 import { useCursorInsert } from '@/composables/useCursorInsert'
 import { useDebounce } from '@/composables/useDebounce'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PREVIEW_DEBOUNCE_MS = 400
@@ -107,9 +108,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
 
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
-  function guard(event: BeforeUnloadEvent): void {
-    if (dirty.value) event.preventDefault()
-  }
+  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения урока. Уйти со страницы?')
 
   watch(
     () => toValue(lessonId),
@@ -121,12 +120,10 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
 
   onMounted(() => {
     void load()
-    window.addEventListener('beforeunload', guard)
   })
   onUnmounted(() => {
     previewDebounce.cancel()
     previewGuard.cancel()
-    window.removeEventListener('beforeunload', guard)
   })
 
   return {

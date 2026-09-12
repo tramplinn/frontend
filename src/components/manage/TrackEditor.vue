@@ -7,6 +7,7 @@ import EntityFieldset from '@/components/manage/EntityFieldset.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { ACCENT_COLOR_PLACEHOLDER, blankToNull } from '@/lib/forms'
 
 const props = defineProps<{ track: Track; busy: boolean }>()
@@ -41,7 +42,8 @@ const fields: EditorField<TrackDraft>[] = [
   },
 ]
 
-const { valid, buildPatch } = useEntityForm(title, slug, fields)
+const { valid, buildPatch, dirty } = useEntityForm(title, slug, fields)
+useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения трека. Уйти со страницы?')
 
 function save(): void {
   if (!valid.value) {

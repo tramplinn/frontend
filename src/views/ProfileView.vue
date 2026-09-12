@@ -22,6 +22,7 @@ import OtpInput from '@/components/ui/OtpInput.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
 import { useCompanySuggestions } from '@/composables/useCompanySuggestions'
 import { useInterestSuggestions } from '@/composables/useInterestSuggestions'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useUniversitySuggestions } from '@/composables/useUniversitySuggestions'
 import { errorText } from '@/lib/errors'
 import { blankToNull } from '@/lib/forms'
@@ -67,6 +68,32 @@ const emailLinkStep = ref<'idle' | 'request' | 'code'>('idle')
 const linkEmail = ref('')
 const linkCode = ref('')
 
+function sameInterests(current: string[], original: { name: string }[]): boolean {
+  return (
+    current.length === original.length &&
+    current.every((name, index) => name === original[index]?.name)
+  )
+}
+
+const dirty = computed(() => {
+  const user = auth.user
+  if (!user) return false
+  return (
+    name.value !== (user.name ?? '') ||
+    headline.value !== (user.headline ?? '') ||
+    bio.value !== (user.bio ?? '') ||
+    specialty.value !== (user.specialty ?? '') ||
+    grade.value !== (user.grade ?? '') ||
+    experienceYears.value !== user.experienceYears ||
+    company.value !== (user.company?.name ?? '') ||
+    university.value !== (user.university?.name ?? '') ||
+    resumeAssetId.value !== user.resumeAssetId ||
+    !sameInterests(interests.value, user.interests)
+  )
+})
+
+useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения профиля. Уйти со страницы?')
+
 async function loadPublicProfile(): Promise<void> {
   if (auth.user) publicProfile.value = await getPublicProfile(auth.user.login)
 }
@@ -92,6 +119,20 @@ async function saveProfile(): Promise<void> {
       interests: interests.value,
       resumeAssetId: resumeAssetId.value,
     })
+    // Сервер нормализует значения (обрезает пробелы и т.п.) — синхронизируем
+    // локальные поля, иначе форма ошибочно останется «грязной» сразу после сохранения.
+    if (auth.user) {
+      name.value = auth.user.name ?? ''
+      headline.value = auth.user.headline ?? ''
+      bio.value = auth.user.bio ?? ''
+      specialty.value = auth.user.specialty ?? ''
+      grade.value = auth.user.grade ?? ''
+      experienceYears.value = auth.user.experienceYears
+      company.value = auth.user.company?.name ?? ''
+      university.value = auth.user.university?.name ?? ''
+      interests.value = auth.user.interests.map((interest) => interest.name)
+      resumeAssetId.value = auth.user.resumeAssetId
+    }
     await loadPublicProfile()
   } catch (cause) {
     error.value = errorText(cause)

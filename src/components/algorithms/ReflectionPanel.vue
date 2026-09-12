@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
 
 const props = defineProps<{ runner: ReturnType<typeof useProblemRunner> }>()
@@ -36,6 +37,14 @@ function save(): void {
     reflectionMd: notes.value.trim() || null,
   })
 }
+
+const dirty = computed(
+  () =>
+    complexity.value !== (progress.value?.complexityMd ?? '') ||
+    confidence.value !== (progress.value?.confidence ?? null) ||
+    notes.value !== (progress.value?.reflectionMd ?? ''),
+)
+useUnsavedChangesGuard(dirty, 'Есть несохранённый разбор решения. Уйти со страницы?')
 </script>
 
 <template>
