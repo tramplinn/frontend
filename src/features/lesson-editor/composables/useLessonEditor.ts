@@ -104,13 +104,16 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     return task.then(() => succeeded)
   }
 
-  /** Сохраняет только название и текст — смену статуса делает setStatus(). */
+  /** Сохраняет только название и текст — смену статуса делает setStatus().
+      Пустое название бэкенд отклонит (min_length=1) — ждём, не шлём сразу
+      после того, как его стёрли, чтобы перепечатать. */
   async function saveContent(): Promise<boolean> {
     if (!dirty.value) return true
+    if (!title.value.trim()) return false
     const current = loaded.value
     if (!current) return true
     return enqueueSave(async () => {
-      if (!dirty.value) return
+      if (!dirty.value || !title.value.trim()) return
       const saved = await updateLesson(current.id, {
         title: title.value,
         bodyMd: bodyMd.value,
@@ -133,6 +136,10 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   }
 
   async function setStatus(status: 'draft' | 'published'): Promise<void> {
+    if (!title.value.trim()) {
+      saveError.value = new Error('Название урока не может быть пустым')
+      return
+    }
     if (!(await flushAutosave())) return
     const current = loaded.value
     if (!current) return

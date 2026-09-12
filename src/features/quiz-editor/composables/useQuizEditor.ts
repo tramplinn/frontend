@@ -14,6 +14,7 @@ import { assetMimeSchema } from '@/api/schemas/assets'
 import type { ModuleTree, QuizAuthor, QuizQuestionAuthor } from '@/api/schemas/content'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import {
+  hasAnswerContent,
   removeQuestionOption,
   toEditableQuestion,
   toQuestionAnswer,
@@ -157,10 +158,14 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
 
   async function saveQuestion(questionId: string): Promise<boolean> {
     if (!isDirty(questionId)) return true
+    const draft = draftOf(questionId)
+    // Черновик может стать «грязным» на секунду раньше, чем валидным — например,
+    // сразу после смены типа на «связывание», пока пары ещё не введены. Ждём.
+    if (!draft || !hasAnswerContent(draft)) return false
     return enqueueSave(questionId, async () => {
       const draft = draftOf(questionId)
       const question = loaded.value?.questions.find((item) => item.id === questionId)
-      if (!draft || !question || !isDirty(questionId)) return
+      if (!draft || !question || !isDirty(questionId) || !hasAnswerContent(draft)) return
       const answer = toQuestionAnswer(draft)
       const explainMd = draft.explainMd.trim() === '' ? null : draft.explainMd
       const updated = await updateQuestion(questionId, {
@@ -263,7 +268,14 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   async function togglePublished(): Promise<void> {
     const quiz = loaded.value
     if (!quiz) return
-    if (!(await flushAutosaves())) return
+    error.value = null
+    const flushed = await flushAutosaves()
+    if (!flushed) {
+      // flushAutosaves сам пишет в error.value настоящую причину сбоя PATCH;
+      // пусто здесь — значит какой-то вопрос просто ещё не заполнен до конца.
+      if (!error.value) error.value = new Error('Не все вопросы сохранены — заполните их до конца')
+      return
+    }
     busy.value = 'quiz'
     try {
       const updated = await updateQuiz(quiz.id, {

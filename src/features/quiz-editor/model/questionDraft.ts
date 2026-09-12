@@ -99,6 +99,25 @@ export function toQuestionOptions(draft: EditableQuestion): unknown[] {
   return []
 }
 
+/** Черновик достаточно заполнен, чтобы его вообще стоило отправлять на сервер —
+    иначе автосейв уходит сразу после смены типа вопроса, пока пары/варианты
+    ещё не введены, и сервер честно отвечает invalid_quiz на пустой ответ. */
+export function hasAnswerContent(draft: EditableQuestion): boolean {
+  if (draft.type === 'single' || draft.type === 'multiple') {
+    return draft.options.some((option) => option.trim() !== '') && draft.correct.length > 0
+  }
+  if (draft.type === 'matching') {
+    return parsedLines(draft.interactionLines, '=').length > 0
+  }
+  if (draft.type === 'grouping') {
+    return parsedLines(draft.interactionLines, ':').length > 0
+  }
+  if (draft.type === 'text') {
+    return draft.accepted.some((item) => item.trim() !== '')
+  }
+  return true
+}
+
 interface InteractionLine {
   left: string
   right: string

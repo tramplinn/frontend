@@ -51,6 +51,7 @@ export interface TestCaseFields {
 
 export const ALL_LANGUAGES = algorithmLanguageSchema.options
 const AUTOSAVE_DEBOUNCE_MS = 700
+const INCOMPLETE_FIELDS_MESSAGE = 'Не все поля заполнены — сохранение отложено'
 
 function toFields(problem: ProblemAuthor): ProblemFields {
   return {
@@ -74,6 +75,18 @@ function toCaseFields(item: TestCase): TestCaseFields {
 
 function equalItems(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((item, index) => item === right[index])
+}
+
+/** v-model.number на пустом/нечисловом вводе оставляет исходную строку, а не 0 —
+    без этой проверки автосейв мог бы отправить "" вместо числа в разгар перепечатки
+    лимита и получить обратно ошибку валидации. */
+function hasValidFields(draft: ProblemFields | null): draft is ProblemFields {
+  return (
+    draft !== null &&
+    draft.title.trim() !== '' &&
+    Number.isFinite(draft.timeLimitMs) &&
+    Number.isFinite(draft.memoryLimitKb)
+  )
 }
 
 export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
@@ -264,10 +277,11 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
 
   async function saveProblem(): Promise<boolean> {
     if (!problemDirty.value) return true
+    if (!hasValidFields(fields.value)) return false
     return enqueueSave(async () => {
       const draft = fields.value
       const problem = loaded.value
-      if (!draft || !problem || !problemDirty.value) return
+      if (!draft || !problem || !problemDirty.value || !hasValidFields(draft)) return
       const submitted = { ...draft }
       const saved = await updateProblem(problem.id, {
         title: submitted.title,
@@ -294,7 +308,12 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   }
 
   async function togglePublished(): Promise<void> {
-    if (!(await flushAutosaves())) return
+    actionError.value = null
+    const flushed = await flushAutosaves()
+    if (!flushed) {
+      if (!(actionError.value as string | null)) actionError.value = INCOMPLETE_FIELDS_MESSAGE
+      return
+    }
     const problem = loaded.value
     if (!problem) return
     const next = problem.status === 'published' ? 'draft' : 'published'
@@ -459,7 +478,12 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
 
   /** Прогоняет solutionCode по всем тестам: без этого задачу нельзя опубликовать. */
   async function checkTemplate(language: AlgorithmLanguage): Promise<void> {
-    if (!(await flushAutosaves())) return
+    actionError.value = null
+    const flushed = await flushAutosaves()
+    if (!flushed) {
+      if (!(actionError.value as string | null)) actionError.value = INCOMPLETE_FIELDS_MESSAGE
+      return
+    }
     const problem = loaded.value
     if (!problem) return
     await run(`template:${language}`, async () => {
