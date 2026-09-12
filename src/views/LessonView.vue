@@ -12,6 +12,7 @@ import LessonChat from '@/components/lesson/LessonChat.vue'
 import ModulePager from '@/components/lesson/ModulePager.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { runBusyAction } from '@/lib/asyncAction'
 import { MissingContentError } from '@/lib/errors'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
@@ -84,19 +85,20 @@ async function toggleCompleted(): Promise<void> {
   if (!current) {
     return
   }
-  saving.value = true
-  progressError.value = null
-  try {
-    if (isCompleted.value) {
-      await progress.markReopened(current.lesson.id, props.course)
-    } else {
-      await progress.markCompleted(current.lesson.id, props.course)
-    }
-  } catch {
-    progressError.value = 'Не удалось сохранить отметку. Попробуйте ещё раз.'
-  } finally {
-    saving.value = false
-  }
+  await runBusyAction(
+    {
+      setBusy: (active) => (saving.value = active),
+      clearError: () => (progressError.value = null),
+      setError: () => (progressError.value = 'Не удалось сохранить отметку. Попробуйте ещё раз.'),
+    },
+    async () => {
+      if (isCompleted.value) {
+        await progress.markReopened(current.lesson.id, props.course)
+      } else {
+        await progress.markCompleted(current.lesson.id, props.course)
+      }
+    },
+  )
 }
 
 onMounted(() => void load())

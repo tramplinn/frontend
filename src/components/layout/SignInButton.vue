@@ -6,6 +6,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import BrandMark from '@/components/layout/BrandMark.vue'
 import ProviderIcon from '@/components/layout/ProviderIcon.vue'
 import OtpInput from '@/components/ui/OtpInput.vue'
+import { runBusyAction } from '@/lib/asyncAction'
 import { errorText } from '@/lib/errors'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
@@ -81,33 +82,27 @@ function start(): void {
   open.value = true
 }
 
+const busyHandlers = {
+  setBusy: (active: boolean) => (busy.value = active),
+  clearError: () => (error.value = null),
+  setError: (cause: unknown) => (error.value = errorText(cause)),
+}
+
 async function sendCode(): Promise<void> {
   const value = email.value.trim()
   if (!value) return
-  busy.value = true
-  error.value = null
-  try {
+  await runBusyAction(busyHandlers, async () => {
     await auth.requestEmailCode(value)
     step.value = 'email-code'
-  } catch (cause) {
-    error.value = errorText(cause)
-  } finally {
-    busy.value = false
-  }
+  })
 }
 
 async function submitCode(): Promise<void> {
   if (code.value.length !== 6) return
-  busy.value = true
-  error.value = null
-  try {
+  await runBusyAction(busyHandlers, async () => {
     await auth.loginWithEmail(email.value.trim(), code.value)
     reset()
-  } catch (cause) {
-    error.value = errorText(cause)
-  } finally {
-    busy.value = false
-  }
+  })
 }
 </script>
 

@@ -5,6 +5,7 @@ import { useCompanySuggestions } from '@/composables/useCompanySuggestions'
 import { useInterestSuggestions } from '@/composables/useInterestSuggestions'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useUniversitySuggestions } from '@/composables/useUniversitySuggestions'
+import { runBusyAction } from '@/lib/asyncAction'
 import { errorText } from '@/lib/errors'
 import { blankToNull } from '@/lib/forms'
 import { useAuthStore } from '@/stores/auth'
@@ -58,41 +59,42 @@ export function useProfileForm(afterSave: () => void | Promise<void>) {
   useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения профиля. Уйти со страницы?')
 
   async function save(): Promise<void> {
-    saving.value = true
-    error.value = null
-    try {
-      await auth.updateProfile({
-        name: blankToNull(name.value),
-        headline: blankToNull(headline.value),
-        bio: blankToNull(bio.value),
-        specialty: specialty.value || null,
-        grade: grade.value || null,
-        experienceYears: experienceYears.value,
-        company: blankToNull(company.value),
-        university: blankToNull(university.value),
-        interests: interests.value,
-        resumeAssetId: resumeAssetId.value,
-      })
-      // Сервер нормализует значения (обрезает пробелы и т.п.) — синхронизируем
-      // локальные поля, иначе форма ошибочно останется «грязной» сразу после сохранения.
-      if (auth.user) {
-        name.value = auth.user.name ?? ''
-        headline.value = auth.user.headline ?? ''
-        bio.value = auth.user.bio ?? ''
-        specialty.value = auth.user.specialty ?? ''
-        grade.value = auth.user.grade ?? ''
-        experienceYears.value = auth.user.experienceYears
-        company.value = auth.user.company?.name ?? ''
-        university.value = auth.user.university?.name ?? ''
-        interests.value = auth.user.interests.map((interest) => interest.name)
-        resumeAssetId.value = auth.user.resumeAssetId
-      }
-      await afterSave()
-    } catch (cause) {
-      error.value = errorText(cause)
-    } finally {
-      saving.value = false
-    }
+    await runBusyAction(
+      {
+        setBusy: (active) => (saving.value = active),
+        clearError: () => (error.value = null),
+        setError: (cause) => (error.value = errorText(cause)),
+      },
+      async () => {
+        await auth.updateProfile({
+          name: blankToNull(name.value),
+          headline: blankToNull(headline.value),
+          bio: blankToNull(bio.value),
+          specialty: specialty.value || null,
+          grade: grade.value || null,
+          experienceYears: experienceYears.value,
+          company: blankToNull(company.value),
+          university: blankToNull(university.value),
+          interests: interests.value,
+          resumeAssetId: resumeAssetId.value,
+        })
+        // Сервер нормализует значения (обрезает пробелы и т.п.) — синхронизируем
+        // локальные поля, иначе форма ошибочно останется «грязной» сразу после сохранения.
+        if (auth.user) {
+          name.value = auth.user.name ?? ''
+          headline.value = auth.user.headline ?? ''
+          bio.value = auth.user.bio ?? ''
+          specialty.value = auth.user.specialty ?? ''
+          grade.value = auth.user.grade ?? ''
+          experienceYears.value = auth.user.experienceYears
+          company.value = auth.user.company?.name ?? ''
+          university.value = auth.user.university?.name ?? ''
+          interests.value = auth.user.interests.map((interest) => interest.name)
+          resumeAssetId.value = auth.user.resumeAssetId
+        }
+        await afterSave()
+      },
+    )
   }
 
   return reactive({

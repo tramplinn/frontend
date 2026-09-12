@@ -8,6 +8,7 @@ import { useCursorInsert } from '@/composables/useCursorInsert'
 import { useDebounce } from '@/composables/useDebounce'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
+import { runBusyAction } from '@/lib/asyncAction'
 
 const PREVIEW_DEBOUNCE_MS = 400
 const AUTOSAVE_DEBOUNCE_MS = 700
@@ -143,22 +144,23 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     if (!(await flushAutosave())) return
     const current = loaded.value
     if (!current) return
-    saving.value = true
-    saveError.value = null
-    try {
-      const saved = await updateLesson(current.id, { status })
-      syncing = true
-      loaded.value = saved
-      title.value = saved.title
-      bodyMd.value = saved.bodyMd
-      html.value = saved.bodyHtml
-      syncing = false
-      savedAt.value = new Date()
-    } catch (cause) {
-      saveError.value = cause
-    } finally {
-      saving.value = false
-    }
+    await runBusyAction(
+      {
+        setBusy: (active) => (saving.value = active),
+        clearError: () => (saveError.value = null),
+        setError: (cause) => (saveError.value = cause),
+      },
+      async () => {
+        const saved = await updateLesson(current.id, { status })
+        syncing = true
+        loaded.value = saved
+        title.value = saved.title
+        bodyMd.value = saved.bodyMd
+        html.value = saved.bodyHtml
+        syncing = false
+        savedAt.value = new Date()
+      },
+    )
   }
 
   function setSource(element: Element | ComponentPublicInstance | null): void {
