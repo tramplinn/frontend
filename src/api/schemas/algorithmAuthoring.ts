@@ -28,7 +28,7 @@ export const testCaseSchema = z.object({
 })
 
 export const templateAuthorSchema = z.object({
-  language: z.string(),
+  language: algorithmLanguageSchema,
   starterCode: z.string(),
   solutionCode: z.string(),
   validatedAt: z.string().nullable(),

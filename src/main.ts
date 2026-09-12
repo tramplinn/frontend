@@ -12,7 +12,7 @@ initTheme()
 // Ловит провалы динамических import() вне навигации роутера (например, лениво
 // подгружаемые модули внутри компонентов) — см. src/lib/staleChunk.ts.
 window.addEventListener('vite:preloadError', (event) => {
-  reloadOnStaleChunk((event as CustomEvent<Error>).detail)
+  reloadOnStaleChunk(event.payload)
 })
 
 createApp(App).use(createPinia()).use(router).mount('#app')

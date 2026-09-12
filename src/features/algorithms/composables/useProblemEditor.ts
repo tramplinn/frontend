@@ -336,7 +336,9 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
 
   /** Полностью заменяет тесты предложенными ассистентом — старые не сопоставляются
       с новыми построчно, поэтому это удаление всех и добавление заново, а не патч. */
-  async function applyAssistantCases(cases: TestCaseFields[]): Promise<void> {
+  async function applyAssistantCases(
+    cases: Pick<TestCaseFields, 'input' | 'expectedOutput' | 'isSample'>[],
+  ): Promise<void> {
     const problem = loaded.value
     if (!problem) return
     await saveQueue
