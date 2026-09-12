@@ -257,7 +257,10 @@ input::placeholder {
   color: var(--text-muted);
 }
 .pair-arrow {
-  align-self: center;
+  display: flex;
+  align-items: center;
+  align-self: end;
+  height: var(--ctl-sm);
   color: var(--accent);
 }
 .group-card {
