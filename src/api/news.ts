@@ -23,6 +23,10 @@ export function listNewsDrafts(limit = 50, offset = 0): Promise<NewsPage> {
   return request('/authoring/news', { schema: newsPageSchema, query: { limit, offset } })
 }
 
+export function getDraftNews(newsId: string): Promise<News> {
+  return request(`/authoring/news/${newsId}`, { schema: newsSchema })
+}
+
 export function createNews(draft: NewsDraft): Promise<News> {
   return request('/authoring/news', { method: 'POST', body: toPayload(draft), schema: newsSchema })
 }

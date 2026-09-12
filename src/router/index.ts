@@ -148,6 +148,13 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresTeacher: true },
   },
   {
+    path: '/manage/news/:news',
+    name: 'manage-news-item',
+    component: () => import('@/views/manage/NewsEditorView.vue'),
+    props: true,
+    meta: { requiresAuth: true, requiresTeacher: true },
+  },
+  {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('@/views/admin/UsersView.vue'),

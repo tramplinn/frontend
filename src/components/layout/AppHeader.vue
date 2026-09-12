@@ -42,6 +42,7 @@ const SIMPLE_LABELS: Record<string, string> = {
   'manage-lesson': 'контент / урок',
   'manage-quiz': 'контент / тест',
   'manage-news': 'новости',
+  'manage-news-item': 'новости / статья',
   'admin-users': 'пользователи',
 }
 
