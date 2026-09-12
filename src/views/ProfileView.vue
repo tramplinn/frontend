@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import {
-  linkUrl,
-  logoutEverywhere,
-  requestEmailLinkCode,
-  unlinkIdentity,
-  verifyEmailLinkCode,
-} from '@/api/auth'
-import type { IdentityProvider } from '@/api/schemas/common'
-import type { DeveloperGrade, PublicProfile, Specialty } from '@/api/schemas/users'
+import { logoutEverywhere } from '@/api/auth'
+import type { PublicProfile } from '@/api/schemas/users'
 import { getPublicProfile } from '@/api/users'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
 import ResumeField from '@/components/profile/ResumeField.vue'
@@ -20,12 +13,9 @@ import ComboInput from '@/components/ui/ComboInput.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import OtpInput from '@/components/ui/OtpInput.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
-import { useCompanySuggestions } from '@/composables/useCompanySuggestions'
-import { useInterestSuggestions } from '@/composables/useInterestSuggestions'
-import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
-import { useUniversitySuggestions } from '@/composables/useUniversitySuggestions'
+import { useIdentityLinking } from '@/composables/useIdentityLinking'
+import { useProfileForm } from '@/composables/useProfileForm'
 import { errorText } from '@/lib/errors'
-import { blankToNull } from '@/lib/forms'
 import { GRADES, SPECIALTIES } from '@/lib/profile'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
@@ -35,111 +25,23 @@ const auth = useAuthStore()
 const progress = useProgressStore()
 const router = useRouter()
 const publicProfile = ref<PublicProfile | null>(null)
-const name = ref(auth.user?.name ?? '')
-const headline = ref(auth.user?.headline ?? '')
-const bio = ref(auth.user?.bio ?? '')
-const specialty = ref<Specialty | ''>(auth.user?.specialty ?? '')
-const grade = ref<DeveloperGrade | ''>(auth.user?.grade ?? '')
-const experienceYears = ref<number | null>(auth.user?.experienceYears ?? null)
-const company = ref(auth.user?.company?.name ?? '')
-const university = ref(auth.user?.university?.name ?? '')
-const interests = ref(auth.user?.interests.map((interest) => interest.name) ?? [])
-const resumeAssetId = ref(auth.user?.resumeAssetId ?? null)
-const resumeUrl = ref(auth.user?.resumeUrl ?? null)
-const companySuggestions = useCompanySuggestions()
-const universitySuggestions = useUniversitySuggestions()
-const interestSuggestions = useInterestSuggestions()
-const saving = ref(false)
 const signingOut = ref(false)
-const busyAction = ref<string | null>(null)
-const anyBusy = computed(() => busyAction.value !== null)
 const error = ref<string | null>(null)
 
 const specialtyOptions = [{ value: '', label: 'не выбрано' }, ...SPECIALTIES]
 const gradeOptions = [{ value: '', label: 'не выбрано' }, ...GRADES]
 
-const identities = computed(() => auth.user?.identities ?? [])
-const canUnlink = computed(() => identities.value.length > 1)
-const linkedProviders = computed(() => new Set(identities.value.map((item) => item.provider)))
-const unlinked = computed(() => auth.providers.filter((item) => !linkedProviders.value.has(item)))
-const emailLinked = computed(() => linkedProviders.value.has('email'))
-
-const emailLinkStep = ref<'idle' | 'request' | 'code'>('idle')
-const linkEmail = ref('')
-const linkCode = ref('')
-
-function sameInterests(current: string[], original: { name: string }[]): boolean {
-  return (
-    current.length === original.length &&
-    current.every((name, index) => name === original[index]?.name)
-  )
-}
-
-const dirty = computed(() => {
-  const user = auth.user
-  if (!user) return false
-  return (
-    name.value !== (user.name ?? '') ||
-    headline.value !== (user.headline ?? '') ||
-    bio.value !== (user.bio ?? '') ||
-    specialty.value !== (user.specialty ?? '') ||
-    grade.value !== (user.grade ?? '') ||
-    experienceYears.value !== user.experienceYears ||
-    company.value !== (user.company?.name ?? '') ||
-    university.value !== (user.university?.name ?? '') ||
-    resumeAssetId.value !== user.resumeAssetId ||
-    !sameInterests(interests.value, user.interests)
-  )
-})
-
-useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения профиля. Уйти со страницы?')
-
 async function loadPublicProfile(): Promise<void> {
   if (auth.user) publicProfile.value = await getPublicProfile(auth.user.login)
 }
+
+const form = useProfileForm(loadPublicProfile)
+const identity = useIdentityLinking()
 
 onMounted(() => {
   void loadPublicProfile().catch((cause: unknown) => (error.value = errorText(cause)))
   void auth.loadProviders()
 })
-
-async function saveProfile(): Promise<void> {
-  saving.value = true
-  error.value = null
-  try {
-    await auth.updateProfile({
-      name: blankToNull(name.value),
-      headline: blankToNull(headline.value),
-      bio: blankToNull(bio.value),
-      specialty: specialty.value || null,
-      grade: grade.value || null,
-      experienceYears: experienceYears.value,
-      company: blankToNull(company.value),
-      university: blankToNull(university.value),
-      interests: interests.value,
-      resumeAssetId: resumeAssetId.value,
-    })
-    // Сервер нормализует значения (обрезает пробелы и т.п.) — синхронизируем
-    // локальные поля, иначе форма ошибочно останется «грязной» сразу после сохранения.
-    if (auth.user) {
-      name.value = auth.user.name ?? ''
-      headline.value = auth.user.headline ?? ''
-      bio.value = auth.user.bio ?? ''
-      specialty.value = auth.user.specialty ?? ''
-      grade.value = auth.user.grade ?? ''
-      experienceYears.value = auth.user.experienceYears
-      company.value = auth.user.company?.name ?? ''
-      university.value = auth.user.university?.name ?? ''
-      interests.value = auth.user.interests.map((interest) => interest.name)
-      resumeAssetId.value = auth.user.resumeAssetId
-    }
-    await loadPublicProfile()
-  } catch (cause) {
-    error.value = errorText(cause)
-  } finally {
-    saving.value = false
-  }
-}
 
 async function signOut(all = false): Promise<void> {
   signingOut.value = true
@@ -159,88 +61,24 @@ async function signOut(all = false): Promise<void> {
     signingOut.value = false
   }
 }
-
-async function link(provider: IdentityProvider): Promise<void> {
-  busyAction.value = `link:${provider}`
-  error.value = null
-  try {
-    const { authorizeUrl } = await linkUrl(provider, '/me')
-    window.location.assign(authorizeUrl)
-  } catch {
-    error.value = 'Не удалось начать привязку.'
-    busyAction.value = null
-  }
-}
-
-async function unlink(provider: IdentityProvider): Promise<void> {
-  busyAction.value = `unlink:${provider}`
-  error.value = null
-  try {
-    await unlinkIdentity(provider)
-    await auth.reload()
-  } catch {
-    error.value = 'Не удалось отвязать способ входа.'
-  } finally {
-    busyAction.value = null
-  }
-}
-
-function startEmailLink(): void {
-  emailLinkStep.value = 'request'
-  error.value = null
-}
-
-function cancelEmailLink(): void {
-  emailLinkStep.value = 'idle'
-  linkEmail.value = ''
-  linkCode.value = ''
-}
-
-async function sendEmailLinkCode(): Promise<void> {
-  const value = linkEmail.value.trim()
-  if (!value) return
-  busyAction.value = 'email-request'
-  error.value = null
-  try {
-    await requestEmailLinkCode(value)
-    emailLinkStep.value = 'code'
-  } catch (cause) {
-    error.value = errorText(cause)
-  } finally {
-    busyAction.value = null
-  }
-}
-
-async function confirmEmailLink(): Promise<void> {
-  if (linkCode.value.length !== 6) return
-  busyAction.value = 'email-confirm'
-  error.value = null
-  try {
-    await verifyEmailLinkCode(linkEmail.value.trim(), linkCode.value)
-    await auth.reload()
-    cancelEmailLink()
-  } catch (cause) {
-    error.value = errorText(cause)
-  } finally {
-    busyAction.value = null
-  }
-}
 </script>
 
 <template>
   <section v-if="auth.user" class="profile">
     <ProfileSummary v-if="publicProfile" :profile="publicProfile" own />
     <div class="columns">
-      <form class="card editor" @submit.prevent="saveProfile">
+      <form class="card editor" @submit.prevent="form.save">
         <header>
           <p>публично</p>
           <h2>о себе</h2>
         </header>
-        <label><span>имя</span><input v-model="name" class="text-field" maxlength="200" /></label>
+        <label
+          ><span>имя</span><input v-model="form.name" class="text-field" maxlength="200"
+        /></label>
         <label
           ><span>коротко о себе</span
           ><input
-            v-model="headline"
+            v-model="form.headline"
             class="text-field"
             maxlength="120"
             placeholder="Что делаете и куда растёте"
@@ -248,17 +86,18 @@ async function confirmEmailLink(): Promise<void> {
         <div class="pair">
           <label
             ><span>направление</span
-            ><AppSelect v-model="specialty" :options="specialtyOptions" label="Направление"
+            ><AppSelect v-model="form.specialty" :options="specialtyOptions" label="Направление"
           /></label>
           <label
-            ><span>грейд</span><AppSelect v-model="grade" :options="gradeOptions" label="Грейд"
+            ><span>грейд</span
+            ><AppSelect v-model="form.grade" :options="gradeOptions" label="Грейд"
           /></label>
         </div>
         <div class="triple">
           <label
             ><span>опыт, лет</span
             ><input
-              v-model.number="experienceYears"
+              v-model.number="form.experienceYears"
               class="text-field"
               type="number"
               min="0"
@@ -267,38 +106,40 @@ async function confirmEmailLink(): Promise<void> {
           <label
             ><span>компания</span
             ><ComboInput
-              v-model="company"
-              :suggestions="companySuggestions"
+              v-model="form.company"
+              :suggestions="form.companySuggestions"
               placeholder="где работаете"
           /></label>
           <label
             ><span>вуз</span
             ><ComboInput
-              v-model="university"
-              :suggestions="universitySuggestions"
+              v-model="form.university"
+              :suggestions="form.universitySuggestions"
               placeholder="где учитесь"
           /></label>
         </div>
         <label
           ><span>интересы</span
           ><TagPicker
-            v-model="interests"
-            :suggestions="interestSuggestions"
+            v-model="form.interests"
+            :suggestions="form.interestSuggestions"
             placeholder="добавить интерес"
           /><small class="hint">Enter или запятая — добавить</small></label
         >
-        <ResumeField v-model:asset-id="resumeAssetId" v-model:url="resumeUrl" />
+        <ResumeField v-model:asset-id="form.resumeAssetId" v-model:url="form.resumeUrl" />
         <label
           ><span>подробнее</span
           ><textarea
-            v-model="bio"
+            v-model="form.bio"
             class="text-field"
             rows="5"
             maxlength="1000"
             placeholder="Стек, цели"
           ></textarea>
         </label>
-        <AppButton type="submit" variant="primary" :loading="saving">сохранить профиль</AppButton>
+        <AppButton type="submit" variant="primary" :loading="form.saving"
+          >сохранить профиль</AppButton
+        >
       </form>
 
       <section class="card account">
@@ -322,48 +163,48 @@ async function confirmEmailLink(): Promise<void> {
         </dl>
         <h3>способы входа</h3>
         <ul class="identities">
-          <li v-for="identity in identities" :key="identity.provider">
+          <li v-for="item in identity.identities" :key="item.provider">
             <span
-              ><strong>{{ providerName(identity.provider) }}</strong
-              ><small v-if="identity.email">{{ identity.email }}</small></span
+              ><strong>{{ providerName(item.provider) }}</strong
+              ><small v-if="item.email">{{ item.email }}</small></span
             >
             <ConfirmButton
-              v-if="canUnlink"
+              v-if="identity.canUnlink"
               label="отвязать"
               confirm-label="точно отвязать?"
-              :loading="busyAction === `unlink:${identity.provider}`"
-              :disabled="anyBusy && busyAction !== `unlink:${identity.provider}`"
-              @confirm="unlink(identity.provider)"
+              :loading="identity.busyAction === `unlink:${item.provider}`"
+              :disabled="identity.anyBusy && identity.busyAction !== `unlink:${item.provider}`"
+              @confirm="identity.unlink(item.provider)"
             />
             <small v-else>единственный вход</small>
           </li>
         </ul>
-        <div v-if="unlinked.length || !emailLinked" class="links">
+        <div v-if="identity.unlinked.length || !identity.emailLinked" class="links">
           <AppButton
-            v-for="provider in unlinked"
+            v-for="provider in identity.unlinked"
             :key="provider"
             size="sm"
-            :loading="busyAction === `link:${provider}`"
-            :disabled="anyBusy && busyAction !== `link:${provider}`"
-            @click="link(provider)"
+            :loading="identity.busyAction === `link:${provider}`"
+            :disabled="identity.anyBusy && identity.busyAction !== `link:${provider}`"
+            @click="identity.link(provider)"
             >привязать {{ providerName(provider) }}</AppButton
           >
           <AppButton
-            v-if="!emailLinked && emailLinkStep === 'idle'"
+            v-if="!identity.emailLinked && identity.emailLinkStep === 'idle'"
             size="sm"
-            :disabled="anyBusy"
-            @click="startEmailLink"
+            :disabled="identity.anyBusy"
+            @click="identity.startEmailLink"
             >привязать почту</AppButton
           >
         </div>
 
         <form
-          v-if="emailLinkStep === 'request'"
+          v-if="identity.emailLinkStep === 'request'"
           class="email-link-form"
-          @submit.prevent="sendEmailLinkCode"
+          @submit.prevent="identity.sendEmailLinkCode"
         >
           <input
-            v-model="linkEmail"
+            v-model="identity.linkEmail"
             type="email"
             class="text-field"
             placeholder="почта"
@@ -374,29 +215,42 @@ async function confirmEmailLink(): Promise<void> {
             type="submit"
             size="sm"
             variant="primary"
-            :loading="busyAction === 'email-request'"
+            :loading="identity.busyAction === 'email-request'"
             >получить код</AppButton
           >
-          <AppButton type="button" size="sm" :disabled="anyBusy" @click="cancelEmailLink"
+          <AppButton
+            type="button"
+            size="sm"
+            :disabled="identity.anyBusy"
+            @click="identity.cancelEmailLink"
             >отмена</AppButton
           >
         </form>
 
         <form
-          v-else-if="emailLinkStep === 'code'"
+          v-else-if="identity.emailLinkStep === 'code'"
           class="email-link-form"
-          @submit.prevent="confirmEmailLink"
+          @submit.prevent="identity.confirmEmailLink"
         >
-          <p class="hint">код отправлен на {{ linkEmail }}</p>
-          <OtpInput v-model="linkCode" autofocus :disabled="anyBusy" @complete="confirmEmailLink" />
+          <p class="hint">код отправлен на {{ identity.linkEmail }}</p>
+          <OtpInput
+            v-model="identity.linkCode"
+            autofocus
+            :disabled="identity.anyBusy"
+            @complete="identity.confirmEmailLink"
+          />
           <AppButton
             type="submit"
             size="sm"
             variant="primary"
-            :loading="busyAction === 'email-confirm'"
+            :loading="identity.busyAction === 'email-confirm'"
             >привязать</AppButton
           >
-          <AppButton type="button" size="sm" :disabled="anyBusy" @click="cancelEmailLink"
+          <AppButton
+            type="button"
+            size="sm"
+            :disabled="identity.anyBusy"
+            @click="identity.cancelEmailLink"
             >отмена</AppButton
           >
         </form>
@@ -412,7 +266,9 @@ async function confirmEmailLink(): Promise<void> {
         </div>
       </section>
     </div>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="error || form.error || identity.error" class="error" role="alert">
+      {{ error || form.error || identity.error }}
+    </p>
   </section>
 </template>
 
