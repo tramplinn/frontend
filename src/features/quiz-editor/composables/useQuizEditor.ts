@@ -67,11 +67,57 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     return drafts.value.get(questionId)
   }
 
+  /** jsonb не хранит порядок ключей объекта — сравнение через JSON.stringify
+      ложно считало бы вопрос «не сохранённым» просто из-за перестановки ключей
+      после круга через базу. Массивы сравниваются по позициям (порядок значим:
+      от него зависит нумерация left-N/right-N), объекты — как наборы ключей. */
+  function deepEqual(left: unknown, right: unknown): boolean {
+    if (left === right) return true
+    if (Array.isArray(left) || Array.isArray(right)) {
+      return (
+        Array.isArray(left) &&
+        Array.isArray(right) &&
+        left.length === right.length &&
+        left.every((item, index) => deepEqual(item, right[index]))
+      )
+    }
+    if (left && right && typeof left === 'object' && typeof right === 'object') {
+      const leftEntries = Object.entries(left as Record<string, unknown>)
+      const rightRecord = right as Record<string, unknown>
+      return (
+        leftEntries.length === Object.keys(rightRecord).length &&
+        leftEntries.every(([key, value]) => deepEqual(value, rightRecord[key]))
+      )
+    }
+    return false
+  }
+
+  /** Сравнивает по тому же каноническому виду, что реально уходит на сервер
+      (через toQuestionOptions/toQuestionAnswer), а не по сырому EditableQuestion:
+      после смены типа поля от старого типа (например, options от single) ещё
+      лежат в черновике неиспользуемыми — сравнение в лоб никогда не сходилось бы. */
   function isDirty(questionId: string): boolean {
     const question = loaded.value?.questions.find((item) => item.id === questionId)
     const draft = drafts.value.get(questionId)
     if (!question || !draft) return false
-    return JSON.stringify(draft) !== JSON.stringify(toEditableQuestion(question))
+    return !deepEqual(
+      {
+        promptMd: draft.promptMd,
+        type: draft.type,
+        options: toQuestionOptions(draft),
+        answer: toQuestionAnswer(draft),
+        explainMd: draft.explainMd.trim() === '' ? null : draft.explainMd,
+        attachmentIds: draft.attachments.map((asset) => asset.id),
+      },
+      {
+        promptMd: question.promptMd,
+        type: question.type,
+        options: question.options,
+        answer: question.answer,
+        explainMd: question.explainMd,
+        attachmentIds: question.attachments.map((asset) => asset.id),
+      },
+    )
   }
 
   function isSaving(questionId: string): boolean {
