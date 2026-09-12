@@ -9,10 +9,13 @@ import { errorText } from '@/lib/errors'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 
-const props = withDefaults(defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md' }>(), {
-  label: 'войти',
-  size: 'md',
-})
+const props = withDefaults(
+  defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md' }>(),
+  {
+    label: 'войти',
+    size: 'md',
+  },
+)
 
 type Step = 'providers' | 'email-code'
 

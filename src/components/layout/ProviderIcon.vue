@@ -34,9 +34,7 @@ defineProps<{ provider: IdentityProvider }>()
     aria-hidden="true"
   >
     <rect width="20" height="20" rx="5" fill="#fc3f1d" />
-    <text x="10" y="14.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">
-      Я
-    </text>
+    <text x="10" y="14.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Я</text>
   </svg>
 
   <svg v-else class="provider-icon" viewBox="0 0 20 20" aria-hidden="true">
