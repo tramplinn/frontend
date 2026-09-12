@@ -7,12 +7,11 @@ import type {
   TeacherAssistantDocument,
   TeacherAssistantPatch,
   TeacherAssistantSurface,
-  TeacherAssistantTemplate,
-  TeacherAssistantTestCase,
 } from '@/api/schemas/teacherAssistant'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useFloatingPanel } from '@/composables/useFloatingPanel'
 import { errorText } from '@/lib/errors'
+import { changesFor as diffChangesFor, type PatchField, patchFor } from '@/lib/teacherAssistantDiff'
 
 const props = defineProps<{
   surface: TeacherAssistantSurface
@@ -33,26 +32,6 @@ const prompts = computed(() =>
     : ['оформи условие', 'проверь однозначность', 'добавь ограничения'],
 )
 
-const fieldLabels: Record<keyof Omit<TeacherAssistantPatch, 'explanation'>, string> = {
-  title: 'название',
-  bodyMd: 'текст урока',
-  statementMd: 'условие',
-  difficulty: 'сложность',
-  tags: 'темы',
-  timeLimitMs: 'лимит времени',
-  memoryLimitKb: 'лимит памяти',
-  testCases: 'тесты',
-  templates: 'решения по языкам',
-}
-
-type PatchField = keyof typeof fieldLabels
-type DiffKind = 'same' | 'remove' | 'add'
-
-interface DiffLine {
-  kind: DiffKind
-  text: string
-}
-
 interface UserTurn {
   role: 'user'
   content: string
@@ -67,89 +46,8 @@ type ChatTurn = UserTurn | AssistantTurn
 
 const turns = ref<ChatTurn[]>([])
 
-const patchFields = Object.keys(fieldLabels) as PatchField[]
-
-function isTestCase(value: unknown): value is TeacherAssistantTestCase {
-  return typeof value === 'object' && value !== null && 'expectedOutput' in value
-}
-
-function isTemplate(value: unknown): value is TeacherAssistantTemplate {
-  return typeof value === 'object' && value !== null && 'starterCode' in value
-}
-
-/** Тесты и решения — структуры, а не текст, поэтому рендерим их в читаемый блок
-    построчно: тем же линейным diff'ом ниже это сравнивается как обычный текст. */
-function textOf(value: unknown): string {
-  if (Array.isArray(value)) {
-    if (value.length === 0) return ''
-    if (isTestCase(value[0])) {
-      return (value as TeacherAssistantTestCase[])
-        .map(
-          (item, index) =>
-            `${String(index + 1)}. ${item.isSample ? 'пример' : 'скрытый'}\n` +
-            `вход: ${item.input}\nвывод: ${item.expectedOutput}`,
-        )
-        .join('\n\n')
-    }
-    if (isTemplate(value[0])) {
-      return (value as TeacherAssistantTemplate[])
-        .map(
-          (item) =>
-            `${item.language}\nзаготовка:\n${item.starterCode}\nрешение:\n${item.solutionCode}`,
-        )
-        .join('\n\n')
-    }
-    return value.join(', ')
-  }
-  if (value === undefined || value === null) return ''
-  if (typeof value === 'string') return value
-  if (typeof value === 'number') return value.toString()
-  if (typeof value === 'boolean') return value ? 'true' : 'false'
-  return ''
-}
-
-/** Линейный diff сохраняет общий контекст сверху и снизу. Большой переписанный
-    фрагмент остаётся двумя цельными блоками и не подвешивает браузер на длинном уроке. */
-function diffLines(beforeValue: unknown, afterValue: unknown): DiffLine[] {
-  const before = textOf(beforeValue).split('\n')
-  const after = textOf(afterValue).split('\n')
-  let prefix = 0
-  while (prefix < before.length && prefix < after.length && before[prefix] === after[prefix]) {
-    prefix += 1
-  }
-  let suffix = 0
-  while (
-    suffix < before.length - prefix &&
-    suffix < after.length - prefix &&
-    before[before.length - suffix - 1] === after[after.length - suffix - 1]
-  ) {
-    suffix += 1
-  }
-
-  return [
-    ...before.slice(0, prefix).map((text) => ({ kind: 'same' as const, text })),
-    ...before
-      .slice(prefix, before.length - suffix)
-      .map((text) => ({ kind: 'remove' as const, text })),
-    ...after.slice(prefix, after.length - suffix).map((text) => ({ kind: 'add' as const, text })),
-    ...(suffix === 0
-      ? []
-      : before.slice(before.length - suffix).map((text) => ({ kind: 'same' as const, text }))),
-  ]
-}
-
 function changesFor(turn: AssistantTurn) {
-  const current = turn.suggestion
-  return patchFields
-    .filter(
-      (field) =>
-        current[field] !== null && textOf(current[field]) !== textOf(props.document[field]),
-    )
-    .map((field) => ({
-      field,
-      label: fieldLabels[field],
-      lines: diffLines(props.document[field], current[field]),
-    }))
+  return diffChangesFor(props.document, turn.suggestion)
 }
 
 function setLog(element: Element | ComponentPublicInstance | null): void {
@@ -181,25 +79,8 @@ async function ask(text = instruction.value): Promise<void> {
   }
 }
 
-function patchFor(turn: AssistantTurn, fields: PatchField[]): TeacherAssistantPatch {
-  const current = turn.suggestion
-  const has = (field: PatchField): boolean => fields.includes(field)
-  return {
-    explanation: current.explanation,
-    title: has('title') ? current.title : null,
-    bodyMd: has('bodyMd') ? current.bodyMd : null,
-    statementMd: has('statementMd') ? current.statementMd : null,
-    difficulty: has('difficulty') ? current.difficulty : null,
-    tags: has('tags') ? current.tags : null,
-    timeLimitMs: has('timeLimitMs') ? current.timeLimitMs : null,
-    memoryLimitKb: has('memoryLimitKb') ? current.memoryLimitKb : null,
-    testCases: has('testCases') ? current.testCases : null,
-    templates: has('templates') ? current.templates : null,
-  }
-}
-
 function applyOneFor(turn: AssistantTurn, field: PatchField): void {
-  emit('apply', patchFor(turn, [field]))
+  emit('apply', patchFor(turn.suggestion, [field]))
   discardFor(turn, field)
 }
 
@@ -209,7 +90,7 @@ function discardFor(turn: AssistantTurn, field: PatchField): void {
 
 function applyAllFor(turn: AssistantTurn): void {
   const fields = changesFor(turn).map((change) => change.field)
-  emit('apply', patchFor(turn, fields))
+  emit('apply', patchFor(turn.suggestion, fields))
   turn.suggestion = {
     ...turn.suggestion,
     ...Object.fromEntries(fields.map((field) => [field, null])),
