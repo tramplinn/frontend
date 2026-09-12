@@ -10,6 +10,7 @@ import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 const PREVIEW_DEBOUNCE_MS = 400
+const AUTOSAVE_DEBOUNCE_MS = 700
 
 export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   const loaded = ref<Lesson | null>(null)
@@ -24,10 +25,16 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   const saveError = ref<unknown>(null)
   const savedAt = ref<Date | null>(null)
   const source = ref<HTMLTextAreaElement | null>(null)
+  const autosaveCount = ref(0)
 
   const loadGuard = useVersionedLoad()
   const previewGuard = useVersionedLoad()
   const previewDebounce = useDebounce(PREVIEW_DEBOUNCE_MS)
+  const autosaveDebounce = useDebounce(AUTOSAVE_DEBOUNCE_MS)
+  let syncing = false
+  let saveQueue: Promise<void> = Promise.resolve()
+
+  const autosaving = computed(() => autosaveCount.value > 0)
 
   const dirty = computed(
     () =>
@@ -39,18 +46,21 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     const version = loadGuard.start()
     previewGuard.cancel()
     previewDebounce.cancel()
+    autosaveDebounce.cancel()
     pending.value = true
     error.value = null
     loaded.value = null
     try {
       const fetched = await getDraftLesson(toValue(lessonId))
       if (!loadGuard.isCurrent(version)) return
+      syncing = true
       loaded.value = fetched
       title.value = fetched.title
       bodyMd.value = fetched.bodyMd
       html.value = fetched.bodyHtml
       cards.value = []
       savedAt.value = null
+      syncing = false
     } catch (cause) {
       if (loadGuard.isCurrent(version)) error.value = cause
     } finally {
@@ -73,21 +83,69 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     }
   }
 
-  async function save(status?: 'draft' | 'published'): Promise<void> {
+  /** Параллельные вызовы (автосейв + явное действие) выстраиваются в очередь,
+      иначе два PATCH одновременно могли бы затереть результат друг друга. */
+  function enqueueSave(action: () => Promise<void>): Promise<boolean> {
+    let succeeded = false
+    const task = saveQueue.then(async () => {
+      autosaveCount.value += 1
+      saveError.value = null
+      try {
+        await action()
+        savedAt.value = new Date()
+        succeeded = true
+      } catch (cause) {
+        saveError.value = cause
+      } finally {
+        autosaveCount.value -= 1
+      }
+    })
+    saveQueue = task
+    return task.then(() => succeeded)
+  }
+
+  /** Сохраняет только название и текст — смену статуса делает setStatus(). */
+  async function saveContent(): Promise<boolean> {
+    if (!dirty.value) return true
+    const current = loaded.value
+    if (!current) return true
+    return enqueueSave(async () => {
+      if (!dirty.value) return
+      const saved = await updateLesson(current.id, {
+        title: title.value,
+        bodyMd: bodyMd.value,
+      })
+      const latest = loaded.value
+      if (!latest || latest.id !== saved.id) return
+      latest.title = saved.title
+      latest.bodyMd = saved.bodyMd
+      latest.bodyHtml = saved.bodyHtml
+    })
+  }
+
+  function scheduleSave(): void {
+    autosaveDebounce.schedule(() => void saveContent())
+  }
+
+  async function flushAutosave(): Promise<boolean> {
+    autosaveDebounce.cancel()
+    return saveContent()
+  }
+
+  async function setStatus(status: 'draft' | 'published'): Promise<void> {
+    if (!(await flushAutosave())) return
     const current = loaded.value
     if (!current) return
     saving.value = true
     saveError.value = null
     try {
-      const saved = await updateLesson(current.id, {
-        title: title.value,
-        bodyMd: bodyMd.value,
-        ...(status === undefined ? {} : { status }),
-      })
+      const saved = await updateLesson(current.id, { status })
+      syncing = true
       loaded.value = saved
       title.value = saved.title
       bodyMd.value = saved.bodyMd
       html.value = saved.bodyHtml
+      syncing = false
       savedAt.value = new Date()
     } catch (cause) {
       saveError.value = cause
@@ -117,6 +175,9 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   watch(bodyMd, () => {
     previewDebounce.schedule(() => void refreshPreview())
   })
+  watch([title, bodyMd], () => {
+    if (!syncing) scheduleSave()
+  })
 
   onMounted(() => {
     void load()
@@ -124,10 +185,12 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
   onUnmounted(() => {
     previewDebounce.cancel()
     previewGuard.cancel()
+    autosaveDebounce.cancel()
   })
 
   return {
     assetError: assetInsert.error,
+    autosaving,
     bodyMd,
     cards,
     dirty,
@@ -141,11 +204,11 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
     onPaste: assetInsert.onPaste,
     pending,
     previewError,
-    save,
     saveError,
     savedAt,
     saving,
     setSource,
+    setStatus,
     title,
     uploadingAsset: assetInsert.uploading,
   }

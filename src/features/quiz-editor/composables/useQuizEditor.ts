@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
+import { computed, onMounted, onUnmounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 
 import {
   createQuestion,
@@ -22,6 +22,7 @@ import {
 } from '@/features/quiz-editor/model/questionDraft'
 
 const MODULE_WIDE = 'module'
+const AUTOSAVE_DEBOUNCE_MS = 700
 
 export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   const loaded = ref<QuizAuthor | null>(null)
@@ -29,9 +30,18 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   const pending = ref(true)
   const error = ref<unknown>(null)
   const busy = ref<string | null>(null)
+  const autosavingIds = ref(new Set<string>())
   let loadVersion = 0
+  const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+  let saveQueue: Promise<void> = Promise.resolve()
+
+  function clearTimers(): void {
+    for (const timer of saveTimers.values()) clearTimeout(timer)
+    saveTimers.clear()
+  }
 
   async function load(): Promise<void> {
+    clearTimers()
     const version = ++loadVersion
     const targetQuizId = toValue(quizId)
     pending.value = true
@@ -56,11 +66,29 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     return drafts.value.get(questionId)
   }
 
+  function isDirty(questionId: string): boolean {
+    const question = loaded.value?.questions.find((item) => item.id === questionId)
+    const draft = drafts.value.get(questionId)
+    if (!question || !draft) return false
+    return JSON.stringify(draft) !== JSON.stringify(toEditableQuestion(question))
+  }
+
+  function isSaving(questionId: string): boolean {
+    return autosavingIds.value.has(questionId)
+  }
+
   function patch(questionId: string, changes: Partial<EditableQuestion>): void {
     const current = draftOf(questionId)
-    if (current) {
-      drafts.value = new Map(drafts.value).set(questionId, { ...current, ...changes })
-    }
+    if (!current) return
+    drafts.value = new Map(drafts.value).set(questionId, { ...current, ...changes })
+    clearTimeout(saveTimers.get(questionId))
+    saveTimers.set(
+      questionId,
+      setTimeout(() => {
+        saveTimers.delete(questionId)
+        void saveQuestion(questionId)
+      }, AUTOSAVE_DEBOUNCE_MS),
+    )
   }
 
   function toggleCorrect(questionId: string, index: number): void {
@@ -105,15 +133,37 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     }
   }
 
-  async function save(question: QuizQuestionAuthor): Promise<void> {
-    const draft = draftOf(question.id)
-    if (!draft) return
-    busy.value = question.id
-    error.value = null
-    try {
+  /** Параллельные сохранения разных вопросов выстраиваются в очередь —
+      иначе конкурентные PATCH могли бы прийти на сервер не по порядку. */
+  function enqueueSave(questionId: string, action: () => Promise<void>): Promise<boolean> {
+    let succeeded = false
+    const task = saveQueue.then(async () => {
+      autosavingIds.value = new Set(autosavingIds.value).add(questionId)
+      error.value = null
+      try {
+        await action()
+        succeeded = true
+      } catch (cause) {
+        error.value = cause
+      } finally {
+        const next = new Set(autosavingIds.value)
+        next.delete(questionId)
+        autosavingIds.value = next
+      }
+    })
+    saveQueue = task
+    return task.then(() => succeeded)
+  }
+
+  async function saveQuestion(questionId: string): Promise<boolean> {
+    if (!isDirty(questionId)) return true
+    return enqueueSave(questionId, async () => {
+      const draft = draftOf(questionId)
+      const question = loaded.value?.questions.find((item) => item.id === questionId)
+      if (!draft || !question || !isDirty(questionId)) return
       const answer = toQuestionAnswer(draft)
       const explainMd = draft.explainMd.trim() === '' ? null : draft.explainMd
-      const updated = await updateQuestion(question.id, {
+      const updated = await updateQuestion(questionId, {
         promptMd: draft.promptMd,
         type: draft.type,
         options: toQuestionOptions(draft),
@@ -122,11 +172,15 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
         attachmentIds: draft.attachments.map((asset) => asset.id),
       })
       replaceQuestion({ ...updated, answer, explainMd })
-    } catch (cause) {
-      error.value = cause
-    } finally {
-      busy.value = null
-    }
+    })
+  }
+
+  /** Останавливает отложенные таймеры и сохраняет всё немедленно — перед
+      публикацией или сменой темы не должно оставаться неотправленных правок. */
+  async function flushAutosaves(): Promise<boolean> {
+    clearTimers()
+    const results = await Promise.all([...drafts.value.keys()].map((id) => saveQuestion(id)))
+    return results.every(Boolean)
   }
 
   async function add(): Promise<void> {
@@ -185,6 +239,8 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
 
   async function remove(questionId: string): Promise<void> {
     const quiz = loaded.value
+    clearTimeout(saveTimers.get(questionId))
+    saveTimers.delete(questionId)
     busy.value = questionId
     try {
       await deleteQuestion(questionId)
@@ -207,6 +263,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
   async function togglePublished(): Promise<void> {
     const quiz = loaded.value
     if (!quiz) return
+    if (!(await flushAutosaves())) return
     busy.value = 'quiz'
     try {
       const updated = await updateQuiz(quiz.id, {
@@ -222,16 +279,14 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
 
   /** Черновик считается несохранённым, пока отличается от последней подтверждённой версии вопроса. */
   const dirty = computed(() =>
-    (loaded.value?.questions ?? []).some((question) => {
-      const draft = drafts.value.get(question.id)
-      return draft !== undefined
-        ? JSON.stringify(draft) !== JSON.stringify(toEditableQuestion(question))
-        : false
-    }),
+    (loaded.value?.questions ?? []).some((question) => isDirty(question.id)),
   )
   useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения теста. Уйти со страницы?')
 
   onMounted(() => void load())
+  onUnmounted(() => {
+    clearTimers()
+  })
   watch(
     () => toValue(quizId),
     () => void load(),
@@ -276,6 +331,8 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     error,
     busy,
     dirty,
+    isDirty,
+    isSaving,
     draftOf,
     patch,
     toggleCorrect,
@@ -284,7 +341,6 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     removeOption,
     attachFile,
     detachFile,
-    save,
     add,
     remove,
     togglePublished,

@@ -17,6 +17,8 @@ const {
   pending,
   error,
   busy,
+  isDirty,
+  isSaving,
   draftOf,
   patch,
   toggleCorrect,
@@ -25,7 +27,6 @@ const {
   removeOption,
   attachFile,
   detachFile,
-  save,
   add,
   remove,
   togglePublished,
@@ -63,6 +64,8 @@ const {
             :draft="draftOf(question.id)!"
             :number="index + 1"
             :busy="busy"
+            :dirty="isDirty(question.id)"
+            :autosaving="isSaving(question.id)"
             @patch="(changes) => patch(question.id, changes)"
             @toggle-correct="(at) => toggleCorrect(question.id, at)"
             @set-option="(at, value) => setOption(question.id, at, value)"
@@ -70,7 +73,6 @@ const {
             @remove-option="(at) => removeOption(question.id, at)"
             @attach="(file) => attachFile(question.id, file)"
             @detach="(assetId) => detachFile(question.id, assetId)"
-            @save="save(question)"
             @remove="remove(question.id)"
           />
         </template>

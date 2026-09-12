@@ -14,6 +14,7 @@ const props = defineProps<{ lesson: string }>()
 
 const {
   uploadingAsset,
+  autosaving,
   dragging,
   assetError,
   onPaste,
@@ -28,11 +29,11 @@ const {
   loaded,
   pending,
   previewError,
-  save,
   saveError,
   savedAt,
   saving,
   setSource,
+  setStatus,
   title,
 } = useLessonEditor(() => props.lesson)
 
@@ -49,7 +50,8 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
         <input v-model="title" class="title-input" aria-label="Название урока" />
         <div class="head-side">
           <StatusChip :status="loaded.status" />
-          <span v-if="dirty" class="dirty">есть несохранённые правки</span>
+          <span v-if="autosaving" class="dirty">сохраняю…</span>
+          <span v-else-if="dirty" class="dirty">сохранится автоматически</span>
           <span v-else-if="savedAt" class="saved">
             сохранено в {{ savedAt.toLocaleTimeString('ru-RU', { timeStyle: 'short' }) }}
           </span>
@@ -81,16 +83,15 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
       <p v-if="saveError" class="save-error" role="alert">{{ errorText(saveError) }}</p>
 
       <footer class="actions">
-        <AppButton variant="secondary" :loading="saving" @click="save()">сохранить</AppButton>
         <AppButton
           v-if="loaded.status === 'draft'"
           variant="primary"
           :loading="saving"
-          @click="save('published')"
+          @click="setStatus('published')"
         >
           опубликовать
         </AppButton>
-        <AppButton v-else variant="quiet" :loading="saving" @click="save('draft')">
+        <AppButton v-else variant="quiet" :loading="saving" @click="setStatus('draft')">
           снять с публикации
         </AppButton>
       </footer>

@@ -15,6 +15,8 @@ defineProps<{
   draft: EditableQuestion
   number: number
   busy: string | null
+  dirty: boolean
+  autosaving: boolean
 }>()
 
 const emit = defineEmits<{
@@ -25,7 +27,6 @@ const emit = defineEmits<{
   removeOption: [index: number]
   attach: [file: File]
   detach: [assetId: string]
-  save: []
   remove: []
 }>()
 
@@ -156,9 +157,9 @@ function pickAttachment(event: Event): void {
     />
 
     <div class="question-actions">
-      <AppButton size="sm" variant="primary" :loading="busy === question.id" @click="emit('save')">
-        сохранить вопрос
-      </AppButton>
+      <span v-if="autosaving" class="save-state">сохраняю…</span>
+      <span v-else-if="dirty" class="save-state">сохранится автоматически</span>
+      <span v-else class="save-state saved">сохранено</span>
       <ConfirmButton :loading="busy === question.id" @confirm="emit('remove')" />
     </div>
   </li>
@@ -303,7 +304,17 @@ function pickAttachment(event: Event): void {
 }
 
 .question-actions {
+  justify-content: space-between;
   padding-left: var(--space-8);
+}
+
+.save-state {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.save-state.saved {
+  color: var(--success);
 }
 
 @media (max-width: 620px) {
