@@ -213,16 +213,16 @@ async function confirmEmailLink(): Promise<void> {
             ><span>грейд</span><AppSelect v-model="grade" :options="gradeOptions" label="Грейд"
           /></label>
         </div>
-        <label
-          ><span>опыт, лет</span
-          ><input
-            v-model.number="experienceYears"
-            class="text-field years"
-            type="number"
-            min="0"
-            max="80"
-        /></label>
-        <div class="pair">
+        <div class="triple">
+          <label
+            ><span>опыт, лет</span
+            ><input
+              v-model.number="experienceYears"
+              class="text-field"
+              type="number"
+              min="0"
+              max="80"
+          /></label>
           <label
             ><span>компания</span
             ><ComboInput
@@ -244,7 +244,8 @@ async function confirmEmailLink(): Promise<void> {
             v-model="interests"
             :suggestions="interestSuggestions"
             placeholder="добавить интерес"
-        /></label>
+          /><small class="hint">Enter или запятая — добавить</small></label
+        >
         <ResumeField v-model:asset-id="resumeAssetId" v-model:url="resumeUrl" />
         <label
           ><span>подробнее</span
@@ -425,8 +426,10 @@ header h2 {
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
 }
-.years {
-  width: 120px;
+.triple {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-3);
 }
 .facts {
   display: grid;
@@ -515,7 +518,8 @@ header h2 {
   .card {
     padding: var(--space-4);
   }
-  .pair {
+  .pair,
+  .triple {
     grid-template-columns: 1fr;
   }
 }

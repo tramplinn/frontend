@@ -33,12 +33,15 @@ function pick(name: string): void {
     <input
       :value="modelValue"
       type="text"
-      class="text-field"
+      class="text-field input"
       :placeholder="placeholder"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       @focus="open = true"
       @blur="open = false"
     />
+    <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true" class="caret">
+      <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" />
+    </svg>
     <ul v-if="open && options.length > 0" class="suggestions" role="listbox">
       <li v-for="name in options" :key="name">
         <button type="button" @mousedown.prevent="pick(name)">{{ name }}</button>
@@ -50,6 +53,20 @@ function pick(name: string): void {
 <style scoped>
 .combo {
   position: relative;
+}
+
+.input {
+  width: 100%;
+  padding-right: var(--space-8);
+}
+
+.caret {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .suggestions {
