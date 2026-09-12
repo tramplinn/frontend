@@ -5,6 +5,7 @@ import type { IdentityProvider } from '@/api/schemas/common'
 import AppButton from '@/components/ui/AppButton.vue'
 import BrandMark from '@/components/layout/BrandMark.vue'
 import ProviderIcon from '@/components/layout/ProviderIcon.vue'
+import OtpInput from '@/components/ui/OtpInput.vue'
 import { errorText } from '@/lib/errors'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
@@ -161,16 +162,7 @@ async function submitCode(): Promise<void> {
 
           <form v-else class="email-form" @submit.prevent="submitCode">
             <p class="hint">код отправлен на {{ email }}</p>
-            <input
-              v-model="code"
-              inputmode="numeric"
-              pattern="\d{6}"
-              maxlength="6"
-              class="text-field"
-              placeholder="код из письма"
-              autocomplete="one-time-code"
-              required
-            />
+            <OtpInput v-model="code" autofocus :disabled="busy" @complete="submitCode" />
             <AppButton type="submit" variant="primary" :loading="busy">войти</AppButton>
             <button type="button" class="link-btn" :disabled="busy" @click="sendCode">
               отправить код ещё раз

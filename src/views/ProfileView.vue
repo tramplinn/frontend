@@ -18,6 +18,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ComboInput from '@/components/ui/ComboInput.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import OtpInput from '@/components/ui/OtpInput.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
 import { useCompanySuggestions } from '@/composables/useCompanySuggestions'
 import { useInterestSuggestions } from '@/composables/useInterestSuggestions'
@@ -345,16 +346,7 @@ async function confirmEmailLink(): Promise<void> {
           @submit.prevent="confirmEmailLink"
         >
           <p class="hint">код отправлен на {{ linkEmail }}</p>
-          <input
-            v-model="linkCode"
-            inputmode="numeric"
-            pattern="\d{6}"
-            maxlength="6"
-            class="text-field"
-            placeholder="код из письма"
-            autocomplete="one-time-code"
-            required
-          />
+          <OtpInput v-model="linkCode" autofocus :disabled="anyBusy" @complete="confirmEmailLink" />
           <AppButton
             type="submit"
             size="sm"
