@@ -157,9 +157,13 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
 
     <div v-if="failedCase" class="case case--failed">
       <div class="case-head">
-        <strong>{{ failedCase.position === null ? 'тест' : `тест ${failedCase.position + 1}` }}</strong>
+        <strong>{{
+          failedCase.position === null ? 'тест' : `тест ${failedCase.position + 1}`
+        }}</strong>
         <span class="bad">{{ verdictLabel(verdict) }}</span>
-        <span v-if="failedCase.runtimeMs !== null" class="muted">{{ failedCase.runtimeMs }} мс</span>
+        <span v-if="failedCase.runtimeMs !== null" class="muted"
+          >{{ failedCase.runtimeMs }} мс</span
+        >
       </div>
       <pre v-if="failedCase.compileOutput" class="stderr">{{ failedCase.compileOutput }}</pre>
       <template v-else>
