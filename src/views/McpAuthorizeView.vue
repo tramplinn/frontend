@@ -10,6 +10,9 @@ import {
 import type { McpAuthorizationRequest } from '@/api/schemas/auth'
 import AppButton from '@/components/ui/AppButton.vue'
 import { errorText } from '@/lib/errors'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const authorization = ref<McpAuthorizationRequest | null>(null)
@@ -20,7 +23,7 @@ const requestId = typeof route.query.request === 'string' ? route.query.request 
 
 onMounted(async () => {
   if (!requestId) {
-    error.value = 'Некорректный запрос авторизации'
+    error.value = t('mcp.badRequest')
     return
   }
   try {
@@ -58,29 +61,28 @@ async function deny(): Promise<void> {
 <template>
   <section class="authorize">
     <div class="card">
-      <p class="eyebrow">авторизация агента</p>
-      <h1>Разрешить доступ к Tramplin?</h1>
+      <p class="eyebrow">{{ t('mcp.eyebrow') }}</p>
+      <h1>{{ t('mcp.title') }}</h1>
 
       <template v-if="authorization">
         <p class="description">
-          {{ authorization.clientName }} сможет читать и редактировать учебные материалы от вашего
-          имени. Публикация и удаление контента недоступны.
+          {{ t('mcp.description', { client: authorization.clientName }) }}
         </p>
         <div class="scope">
-          <strong>Разрешение</strong>
-          <span>{{ authorization.scope }} · черновики курсов и заданий</span>
+          <strong>{{ t('mcp.permission') }}</strong>
+          <span>{{ t('mcp.scope', { scope: authorization.scope }) }}</span>
         </div>
         <div class="actions">
           <AppButton variant="primary" :loading="approving" :disabled="denying" @click="approve">
-            разрешить
+            {{ t('mcp.allow') }}
           </AppButton>
           <AppButton variant="quiet" :loading="denying" :disabled="approving" @click="deny">
-            отменить
+            {{ t('mcp.deny') }}
           </AppButton>
         </div>
       </template>
 
-      <p v-else-if="!error" class="description">Проверяем запрос…</p>
+      <p v-else-if="!error" class="description">{{ t('mcp.checking') }}</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
     </div>
   </section>

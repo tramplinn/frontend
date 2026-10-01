@@ -12,6 +12,9 @@ import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useContentManagement } from '@/features/content/composables/useContentManagement'
 import { errorText } from '@/lib/errors'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 /* CourseTreeItem получает весь объект целиком (как runner в ProblemEditorPanel) —
    он используется и внутри карточки трека, и в плоском списке курсов ниже. */
@@ -44,13 +47,13 @@ const {
 <template>
   <section>
     <header class="head">
-      <h1 class="heading">контент</h1>
+      <h1 class="heading">{{ t('content.heading') }}</h1>
     </header>
 
     <p v-if="actionError" class="action-error" role="alert">{{ errorText(actionError) }}</p>
 
     <div v-if="publishReport" class="publish-report" role="status">
-      <p>опубликовано: {{ publishReport.published.length }}</p>
+      <p>{{ t('content.publishedCount', { count: publishReport.published.length }) }}</p>
       <ul v-if="publishReport.skipped.length > 0" class="publish-skips">
         <li v-for="skip in publishReport.skipped" :key="skip.id">
           «{{ skip.title }}» — {{ skip.reason }}
@@ -60,39 +63,45 @@ const {
 
     <LoadState :pending="pending" :error="error" @retry="load">
       <TabsRoot default-value="tracks">
-        <TabsList class="tabs" aria-label="Раздел контента">
-          <TabsTrigger value="tracks" class="tab">треки</TabsTrigger>
-          <TabsTrigger value="courses" class="tab">курсы</TabsTrigger>
+        <TabsList class="tabs" :aria-label="t('content.sections')">
+          <TabsTrigger value="tracks" class="tab">{{ t('content.tracksTab') }}</TabsTrigger>
+          <TabsTrigger value="courses" class="tab">{{ t('content.coursesTab') }}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tracks">
           <InlineCreate
-            label="трек"
-            placeholder="название трека"
+            :label="t('content.track')"
+            :placeholder="t('content.trackTitle')"
             class="tab-create"
             :saving="busy"
             @create="addTrack"
           />
 
-          <p v-if="tracks.length === 0" class="empty">треков пока нет</p>
+          <p v-if="tracks.length === 0" class="empty">{{ t('content.noTracks') }}</p>
 
           <div v-else class="tracks">
             <article v-for="track in tracks" :key="track.id" class="track">
               <header class="track-head">
                 <h2 class="track-title">{{ track.title }}</h2>
                 <StatusChip :status="track.status" />
-                <RowMenu class="actions" :disabled="busy" :label="`Действия: ${track.title}`">
-                  <RowMenuItem @select="toggleEditing(track.id)">изменить трек</RowMenuItem>
+                <RowMenu
+                  class="actions"
+                  :disabled="busy"
+                  :label="t('manage.actionsFor', { title: track.title })"
+                >
+                  <RowMenuItem @select="toggleEditing(track.id)">{{
+                    t('content.editTrack')
+                  }}</RowMenuItem>
                   <RowMenuItem
                     @select="run(() => updateTrack(track.id, { status: flip(track.status) }))"
                   >
                     {{ publishLabel(track.status) }}
                   </RowMenuItem>
                   <RowMenuItem @select="publishTrackCascade(track)">
-                    опубликовать всё содержимое
+                    {{ t('manage.publishAll') }}
                   </RowMenuItem>
                   <RowMenuItem danger @select="run(() => deleteTrack(track.id))">
-                    удалить трек
+                    {{ t('content.deleteTrack') }}
                   </RowMenuItem>
                 </RowMenu>
               </header>
@@ -131,14 +140,14 @@ const {
 
         <TabsContent value="courses">
           <InlineCreate
-            label="курс"
-            placeholder="название курса"
+            :label="t('content.course')"
+            :placeholder="t('content.courseTitle')"
             class="tab-create"
             :saving="busy"
             @create="addStandaloneCourse"
           />
 
-          <p v-if="allCourses.length === 0" class="empty">курсов пока нет</p>
+          <p v-if="allCourses.length === 0" class="empty">{{ t('content.noCourses') }}</p>
 
           <ul v-else class="courses">
             <CourseTreeItem

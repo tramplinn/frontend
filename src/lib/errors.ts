@@ -1,27 +1,34 @@
 import { ApiError, ContractError, NetworkError } from '@/api/errors'
+import { translate } from '@/i18n'
 
+export type MissingContentKind = 'lesson' | 'quiz'
+
+/** Текст собираем при показе, а не при создании: ошибка переживает смену языка. */
 export class MissingContentError extends Error {
-  constructor(what: string) {
-    super(`${what} не найден. Возможно, ссылка устарела.`)
+  readonly kind: MissingContentKind
+
+  constructor(kind: MissingContentKind) {
+    super(`${kind} not found`)
+    this.kind = kind
     this.name = 'MissingContentError'
   }
 }
 
 export function errorText(error: unknown): string {
   if (error instanceof MissingContentError) {
-    return error.message
+    return translate(`errors.missing.${error.kind}`)
   }
   if (error instanceof ApiError) {
     if (error.status >= 500) {
-      return 'Сервис временно недоступен. Попробуйте позже.'
+      return translate('errors.unavailable')
     }
     return error.message
   }
   if (error instanceof NetworkError) {
-    return 'Сервер не отвечает. Проверьте соединение.'
+    return translate('errors.network')
   }
   if (error instanceof ContractError) {
-    return 'Сервер вернул неожиданный ответ.'
+    return translate('errors.contract')
   }
-  return 'Что-то пошло не так.'
+  return translate('errors.unknown')
 }

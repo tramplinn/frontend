@@ -4,6 +4,7 @@ import type { Ref } from 'vue'
 import { uploadAsset } from '@/api/assets'
 import { assetMimeSchema } from '@/api/schemas/assets'
 import { assetMarkdown } from '@/lib/assetMarkdown'
+import { translate } from '@/i18n'
 
 type Replace = (placeholder: string, markdown: string) => void
 type Insert = (text: string) => void
@@ -35,21 +36,26 @@ export function useAssetInsert(insert: Insert, replace: Replace): AssetInsert {
       for (const file of files) {
         const mime = assetMimeSchema.safeParse(file.type)
         if (!mime.success) {
-          error.value = `Тип ${file.type || 'неизвестен'} не разрешён. Можно: ${ACCEPTED}`
+          error.value = translate('assets.typeNotAllowed', {
+            type: file.type || translate('assets.unknownType'),
+            accepted: ACCEPTED,
+          })
           continue
         }
         const named =
           file.name === ''
-            ? new File([file], `вставка-${String(Date.now())}.png`, { type: file.type })
+            ? new File([file], `${translate('assets.pastedName')}-${String(Date.now())}.png`, {
+                type: file.type,
+              })
             : file
-        const placeholder = `![загружаю ${named.name}…]()`
+        const placeholder = `![${translate('assets.uploading', { name: named.name })}]()`
         insert(placeholder)
         try {
           const asset = await uploadAsset(named, mime.data)
           replace(placeholder, assetMarkdown(asset))
         } catch {
           replace(placeholder, '')
-          error.value = `Не удалось загрузить ${named.name}`
+          error.value = translate('assets.uploadFailed', { name: named.name })
         }
       }
     } finally {

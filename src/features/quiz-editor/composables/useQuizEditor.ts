@@ -4,6 +4,7 @@ import { getDraftModule, getDraftQuiz, updateQuiz } from '@/api/authoring'
 import type { ModuleTree, QuizAuthor } from '@/api/schemas/content'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useQuestionDrafts } from '@/features/quiz-editor/composables/useQuestionDrafts'
+import { translate } from '@/i18n'
 
 const MODULE_WIDE = 'module'
 
@@ -47,7 +48,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     if (!flushed) {
       // flushAutosaves сам пишет в error.value настоящую причину сбоя PATCH;
       // пусто здесь — значит какой-то вопрос просто ещё не заполнен до конца.
-      if (!error.value) error.value = new Error('Не все вопросы сохранены — заполните их до конца')
+      if (!error.value) error.value = new Error(translate('quizEditor.unsavedQuestions'))
       return
     }
     busy.value = 'quiz'
@@ -63,7 +64,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     }
   }
 
-  useUnsavedChangesGuard(questions.dirty, 'Есть несохранённые изменения теста. Уйти со страницы?')
+  useUnsavedChangesGuard(questions.dirty, () => translate('unsaved.quiz'))
 
   onMounted(() => void load())
   onUnmounted(() => {
@@ -78,8 +79,11 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     const lessons =
       module.value?.items.flatMap((item) => (item.kind === 'lesson' ? [item.lesson] : [])) ?? []
     return [
-      { value: MODULE_WIDE, label: 'по всему модулю' },
-      ...lessons.map((lesson) => ({ value: lesson.id, label: `по уроку «${lesson.title}»` })),
+      { value: MODULE_WIDE, label: translate('quizEditor.moduleWide') },
+      ...lessons.map((lesson) => ({
+        value: lesson.id,
+        label: translate('quizEditor.byLesson', { title: lesson.title }),
+      })),
     ]
   })
 

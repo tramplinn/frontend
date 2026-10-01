@@ -6,8 +6,9 @@ import ProgressBar from '@/components/ui/ProgressBar.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useProgressStore } from '@/stores/progress'
-import { withCount } from '@/lib/plural'
+import { useI18n } from '@/i18n'
 
+const { t, tc } = useI18n()
 const auth = useAuthStore()
 const progress = useProgressStore()
 
@@ -42,21 +43,25 @@ onMounted(() => void load())
   <CatalogView v-if="!auth.isAuthenticated" />
 
   <section v-else>
-    <h1 class="heading">моё обучение</h1>
+    <h1 class="heading">{{ t('home.heading') }}</h1>
 
     <LoadState :pending="pending" :error="error" @retry="load">
       <div v-if="started.length === 0" class="blank">
-        <p class="blank-text">Вы ещё не начали ни одного курса.</p>
-        <RouterLink :to="{ name: 'catalog' }" class="blank-link">открыть каталог →</RouterLink>
+        <p class="blank-text">{{ t('home.empty') }}</p>
+        <RouterLink :to="{ name: 'catalog' }" class="blank-link">{{
+          t('home.openCatalog')
+        }}</RouterLink>
       </div>
 
       <template v-else>
         <p class="total">
-          {{ withCount(progress.completedCount, 'урок', 'урока', 'уроков') }} пройдено
+          {{
+            t('home.completedLessons', { lessons: tc('units.lessons', progress.completedCount) })
+          }}
         </p>
 
         <div v-if="inProgress.length > 0" class="block">
-          <h2 class="block-title">продолжить</h2>
+          <h2 class="block-title">{{ t('home.continue') }}</h2>
           <div class="grid">
             <RouterLink
               v-for="course in inProgress"
@@ -70,7 +75,7 @@ onMounted(() => void load())
                 <ProgressBar
                   :value="course.completed"
                   :max="course.total"
-                  :label="`Прогресс: ${course.title}`"
+                  :label="t('home.courseProgress', { title: course.title })"
                 />
                 <span class="card-count">{{ course.completed }}/{{ course.total }}</span>
               </span>
@@ -79,7 +84,7 @@ onMounted(() => void load())
         </div>
 
         <div v-if="finished.length > 0" class="block">
-          <h2 class="block-title">пройдено</h2>
+          <h2 class="block-title">{{ t('home.finished') }}</h2>
           <div class="grid">
             <RouterLink
               v-for="course in finished"
@@ -89,7 +94,7 @@ onMounted(() => void load())
             >
               <span class="card-title">{{ course.title }}</span>
               <span class="card-count card-count--done">
-                {{ withCount(course.total, 'урок', 'урока', 'уроков') }}
+                {{ tc('units.lessons', course.total) }}
               </span>
             </RouterLink>
           </div>

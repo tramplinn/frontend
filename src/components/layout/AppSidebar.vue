@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 
 import BrandMark from '@/components/layout/BrandMark.vue'
 import SectionIcon from '@/components/layout/SectionIcon.vue'
+import { useI18n } from '@/i18n'
 import type { Section } from '@/lib/sections'
 import { visibleSections } from '@/lib/sections'
 import { useAuthStore } from '@/stores/auth'
@@ -15,6 +16,7 @@ const auth = useAuthStore()
 const content = useContentStore()
 const progress = useProgressStore()
 const route = useRoute()
+const { t } = useI18n()
 const mobileOpen = ref(false)
 
 const sections = computed(() =>
@@ -48,7 +50,7 @@ watch(
     <div class="sidebar-head">
       <RouterLink :to="{ name: 'home' }" class="brand">
         <BrandMark />
-        <span>трамплин</span>
+        <span>{{ t('app.brand') }}</span>
       </RouterLink>
 
       <button
@@ -56,7 +58,7 @@ watch(
         class="menu-toggle"
         aria-controls="sidebar-navigation"
         :aria-expanded="mobileOpen"
-        :aria-label="mobileOpen ? 'Закрыть меню' : 'Меню'"
+        :aria-label="mobileOpen ? t('nav.closeMenu') : t('nav.menu')"
         @click="mobileOpen = !mobileOpen"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
@@ -99,22 +101,22 @@ watch(
           <rect class="launcher-success" x="2" y="12" width="6" height="6" rx="2" />
           <rect class="launcher-purple" x="12" y="12" width="6" height="6" rx="2" />
         </svg>
-        все разделы
+        {{ t('nav.allSections') }}
       </RouterLink>
 
       <div v-for="[group, items] in groups" :key="group" class="group">
-        <p class="group-title">{{ group }}</p>
-        <nav class="nav" :aria-label="group">
+        <p class="group-title">{{ t(`sections.groups.${group}`) }}</p>
+        <nav class="nav" :aria-label="t(`sections.groups.${group}`)">
           <RouterLink v-for="section in items" :key="section.key" :to="section.to" class="item">
             <SectionIcon :name="section.key" />
-            <span class="item-title">{{ section.title }}</span>
+            <span class="item-title">{{ t(`sections.${section.messages}.title`) }}</span>
           </RouterLink>
         </nav>
       </div>
 
       <div v-if="continuing.length > 0" class="group">
-        <p class="group-title">продолжить</p>
-        <nav class="nav" aria-label="Продолжить обучение">
+        <p class="group-title">{{ t('nav.continue') }}</p>
+        <nav class="nav" :aria-label="t('nav.continueLearning')">
           <RouterLink
             v-for="course in continuing"
             :key="course.slug"

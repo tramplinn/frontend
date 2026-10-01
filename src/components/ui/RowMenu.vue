@@ -5,9 +5,12 @@ import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
 } from 'reka-ui'
+import { useI18n } from '@/i18n'
 
-const props = withDefaults(defineProps<{ label?: string; disabled?: boolean }>(), {
-  label: 'действия',
+const { t } = useI18n()
+
+const props = withDefaults(defineProps<{ label?: string | undefined; disabled?: boolean }>(), {
+  label: undefined,
   disabled: false,
 })
 </script>
@@ -17,7 +20,11 @@ const props = withDefaults(defineProps<{ label?: string; disabled?: boolean }>()
        и класс с места вызова во фрагмент не пробрасывается. -->
   <div class="row-menu">
     <DropdownMenuRoot>
-      <DropdownMenuTrigger class="trigger" :aria-label="props.label" :disabled="props.disabled">
+      <DropdownMenuTrigger
+        class="trigger"
+        :aria-label="props.label ?? t('ui.actions')"
+        :disabled="props.disabled"
+      >
         <svg width="16" height="4" viewBox="0 0 16 4" aria-hidden="true">
           <circle cx="2" cy="2" r="1.6" />
           <circle cx="8" cy="2" r="1.6" />

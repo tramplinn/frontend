@@ -11,8 +11,11 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
-import { DIFFICULTY_LABELS, DIFFICULTY_ORDER, languageLabel } from '@/lib/algorithms'
+import { DIFFICULTY_ORDER, difficultyLabel, languageLabel } from '@/lib/algorithms'
 import { errorText } from '@/lib/errors'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 
@@ -24,10 +27,9 @@ const busy = ref<string | null>(null)
 
 const difficulty = ref<AlgorithmDifficulty>('easy')
 
-const difficultyOptions = DIFFICULTY_ORDER.map((value) => ({
-  value,
-  label: DIFFICULTY_LABELS[value],
-}))
+const difficultyOptions = computed(() =>
+  DIFFICULTY_ORDER.map((value) => ({ value, label: difficultyLabel(value) })),
+)
 
 const published = computed(
   () => problems.value.filter((item) => item.status === 'published').length,
@@ -78,20 +80,24 @@ onMounted(() => void load())
   <section class="page">
     <header class="head">
       <div>
-        <h1>алгозадачи</h1>
+        <h1>{{ t('library.heading') }}</h1>
         <p v-if="problems.length > 0" class="muted">
-          опубликовано {{ published }} из {{ problems.length }}
+          {{ t('library.publishedOf', { published, total: problems.length }) }}
         </p>
       </div>
       <InlineCreate
-        label="алгозадачу"
-        placeholder="название новой задачи"
+        :label="t('library.problem')"
+        :placeholder="t('library.newTitle')"
         :saving="busy === 'new'"
         :show-slug="false"
         @create="create"
       >
         <template #fields>
-          <AppSelect v-model="difficulty" :options="difficultyOptions" label="Сложность" />
+          <AppSelect
+            v-model="difficulty"
+            :options="difficultyOptions"
+            :label="t('library.difficulty')"
+          />
         </template>
       </InlineCreate>
     </header>
@@ -99,7 +105,7 @@ onMounted(() => void load())
     <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
     <LoadState :pending="pending" :error="error" @retry="load">
-      <p v-if="problems.length === 0" class="muted empty">Задач пока нет. Создай первую выше.</p>
+      <p v-if="problems.length === 0" class="muted empty">{{ t('library.empty') }}</p>
 
       <ul v-else class="list">
         <li v-for="item in problems" :key="item.id" class="row">
@@ -112,8 +118,12 @@ onMounted(() => void load())
               <DifficultyChip :difficulty="item.difficulty" />
               <StatusChip :status="item.status" />
               <span class="counts">
-                тестов: {{ item.testCases.length }} · примеров:
-                {{ item.testCases.filter((test) => test.isSample).length }}
+                {{
+                  t('library.counts', {
+                    tests: item.testCases.length,
+                    samples: item.testCases.filter((test) => test.isSample).length,
+                  })
+                }}
               </span>
               <span v-if="item.templates.length > 0" class="counts">
                 {{ item.templates.map((tpl) => languageLabel(tpl.language)).join(' · ') }}

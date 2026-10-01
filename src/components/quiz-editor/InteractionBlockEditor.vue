@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ type: 'matching' | 'grouping'; lines: string[] }>()
 const emit = defineEmits<{ change: [lines: string[]] }>()
@@ -106,36 +109,41 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
 <template>
   <div class="interaction-editor">
     <div class="intro">
-      <span>{{ type === 'matching' ? 'пары для связывания' : 'категории и элементы' }}</span>
-      <small>студент увидит их перемешанными</small>
+      <span>{{
+        type === 'matching' ? t('quizEditor.matchingPairs') : t('quizEditor.groupsAndItems')
+      }}</span>
+      <small>{{ t('quizEditor.shuffled') }}</small>
     </div>
 
     <template v-if="type === 'matching'">
       <div v-for="(pair, index) in pairs" :key="index" class="pair-row">
         <label
-          ><span>понятие</span
+          ><span>{{ t('quizEditor.term') }}</span
           ><input
             :value="pair.left"
-            placeholder="новое понятие"
+            :placeholder="t('quizEditor.newTerm')"
             @input="setPair(index, 'left', ($event.target as HTMLInputElement).value)"
         /></label>
         <span class="pair-arrow" aria-hidden="true">→</span>
         <label
-          ><span>соответствие</span
+          ><span>{{ t('quizEditor.match') }}</span
           ><input
             :value="pair.right"
-            placeholder="соответствие"
+            :placeholder="t('quizEditor.match')"
             @input="setPair(index, 'right', ($event.target as HTMLInputElement).value)"
         /></label>
         <AppButton
           size="sm"
           variant="quiet"
           @click="writePairs(pairs.filter((_, at) => at !== index))"
-          >убрать</AppButton
+          >{{ t('manage.remove') }}</AppButton
         >
       </div>
-      <AppButton size="sm" variant="quiet" @click="writePairs([...pairs, { left: '', right: '' }])"
-        >+ пара</AppButton
+      <AppButton
+        size="sm"
+        variant="quiet"
+        @click="writePairs([...pairs, { left: '', right: '' }])"
+        >{{ t('quizEditor.addPair') }}</AppButton
       >
     </template>
 
@@ -143,17 +151,17 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
       <article v-for="(group, groupIndex) in groups" :key="groupIndex" class="group-card">
         <div class="group-head">
           <label
-            ><span>название блока</span
+            ><span>{{ t('quizEditor.groupName') }}</span
             ><input
               :value="group.name"
-              placeholder="новый блок"
+              :placeholder="t('quizEditor.newGroup')"
               @input="setGroup(groupIndex, ($event.target as HTMLInputElement).value)"
           /></label>
           <AppButton
             size="sm"
             variant="quiet"
             @click="writeGroups(groups.filter((_, at) => at !== groupIndex))"
-            >убрать блок</AppButton
+            >{{ t('quizEditor.removeGroup') }}</AppButton
           >
         </div>
         <div class="items">
@@ -161,7 +169,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             <button
               type="button"
               class="move"
-              aria-label="Переместить элемент выше"
+              :aria-label="t('quizEditor.itemUp')"
               :disabled="itemIndex === 0"
               @click="moveItem(groupIndex, itemIndex, -1)"
             >
@@ -170,7 +178,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             <button
               type="button"
               class="move"
-              aria-label="Переместить элемент ниже"
+              :aria-label="t('quizEditor.itemDown')"
               :disabled="itemIndex === group.items.length - 1"
               @click="moveItem(groupIndex, itemIndex, 1)"
             >
@@ -178,27 +186,29 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             </button>
             <input
               :value="item"
-              placeholder="новый элемент"
-              :aria-label="`Элемент блока ${group.name}`"
+              :placeholder="t('quizEditor.newItem')"
+              :aria-label="t('quizEditor.itemOf', { group: group.name })"
               @input="setItem(groupIndex, itemIndex, ($event.target as HTMLInputElement).value)"
             />
             <button
               type="button"
               class="remove"
-              aria-label="Убрать элемент"
+              :aria-label="t('quizEditor.removeItem')"
               @click="removeItem(groupIndex, itemIndex)"
             >
               ×
             </button>
           </div>
-          <AppButton size="sm" variant="quiet" @click="addItem(groupIndex)">+ элемент</AppButton>
+          <AppButton size="sm" variant="quiet" @click="addItem(groupIndex)">{{
+            t('quizEditor.addItem')
+          }}</AppButton>
         </div>
       </article>
       <AppButton
         size="sm"
         variant="quiet"
         @click="writeGroups([...groups, { name: '', items: [''] }])"
-        >+ блок</AppButton
+        >{{ t('quizEditor.addGroup') }}</AppButton
       >
     </template>
   </div>

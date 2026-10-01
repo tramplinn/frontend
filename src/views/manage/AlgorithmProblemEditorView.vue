@@ -14,8 +14,11 @@ import StatusChip from '@/components/ui/StatusChip.vue'
 import TagPicker from '@/components/ui/TagPicker.vue'
 import { useTagSuggestions } from '@/composables/useTagSuggestions'
 import { ALL_LANGUAGES, useProblemEditor } from '@/features/algorithms/composables/useProblemEditor'
-import { DIFFICULTY_LABELS, DIFFICULTY_ORDER } from '@/lib/algorithms'
+import { DIFFICULTY_ORDER, difficultyLabel } from '@/lib/algorithms'
 import { renderMarkdown } from '@/lib/markdown'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ problem: string }>()
 
@@ -57,10 +60,9 @@ const {
   usedLanguages,
 } = useProblemEditor(() => props.problem)
 
-const difficultyOptions = DIFFICULTY_ORDER.map((value) => ({
-  value,
-  label: DIFFICULTY_LABELS[value],
-}))
+const difficultyOptions = computed(() =>
+  DIFFICULTY_ORDER.map((value) => ({ value, label: difficultyLabel(value) })),
+)
 
 const currentTemplateDraft = computed(
   () => templateDrafts.value.get(editedLanguage.value) ?? { starterCode: '', solutionCode: '' },
@@ -123,9 +125,9 @@ const canValidate = computed(() => {
         <div class="head-main">
           <h1>{{ loaded.title }}</h1>
           <StatusChip :status="loaded.status" />
-          <span v-if="autosaving" class="save-state">сохраняю…</span>
-          <span v-else-if="dirty" class="save-state">сохранится автоматически</span>
-          <span v-else-if="savedAt" class="saved">сохранено</span>
+          <span v-if="autosaving" class="save-state">{{ t('manage.saving') }}</span>
+          <span v-else-if="dirty" class="save-state">{{ t('manage.autosave') }}</span>
+          <span v-else-if="savedAt" class="saved">{{ t('manage.saved') }}</span>
         </div>
         <div class="head-actions">
           <AppButton
@@ -134,33 +136,35 @@ const canValidate = computed(() => {
             :disabled="loaded.status === 'draft' && publishBlockers.length > 0"
             @click="togglePublished"
           >
-            {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
+            {{ loaded.status === 'published' ? t('manage.unpublish') : t('manage.publish') }}
           </AppButton>
-          <BackLink :to="{ name: 'manage-algorithms' }">к библиотеке</BackLink>
+          <BackLink :to="{ name: 'manage-algorithms' }">{{
+            t('problemEditor.toLibrary')
+          }}</BackLink>
         </div>
       </header>
 
       <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
       <section class="card meta">
-        <h2>основное</h2>
+        <h2>{{ t('problemEditor.basics') }}</h2>
         <div class="grid">
           <label class="field">
-            <span>название</span>
+            <span>{{ t('fields.title') }}</span>
             <input v-model="fields.title" type="text" class="form-field" />
           </label>
 
           <div class="field">
-            <span>сложность</span>
+            <span>{{ t('problemEditor.difficulty') }}</span>
             <AppSelect
               v-model="fields.difficulty"
               :options="difficultyOptions"
-              label="Сложность задачи"
+              :label="t('problemEditor.difficultyLabel')"
             />
           </div>
 
           <div class="field">
-            <span>темы</span>
+            <span>{{ t('manage.topics') }}</span>
             <TagPicker
               v-model="fields.tags"
               :suggestions="tagSuggestions"
@@ -169,7 +173,7 @@ const canValidate = computed(() => {
           </div>
 
           <label class="field">
-            <span>лимит времени, мс</span>
+            <span>{{ t('problemEditor.timeLimit') }}</span>
             <input
               v-model.number="fields.timeLimitMs"
               type="number"
@@ -180,7 +184,7 @@ const canValidate = computed(() => {
           </label>
 
           <label class="field">
-            <span>лимит памяти, КиБ</span>
+            <span>{{ t('problemEditor.memoryLimit') }}</span>
             <input
               v-model.number="fields.memoryLimitKb"
               type="number"
@@ -195,8 +199,8 @@ const canValidate = computed(() => {
         <MarkdownEditor
           v-model="fields.statementMd"
           :html="statementPreview"
-          source-label="Условие задачи в Markdown"
-          empty-text="Начните писать условие"
+          :source-label="t('problemEditor.statementSource')"
+          :empty-text="t('problemEditor.startStatement')"
           min-height="420px"
           :dragging="dragging"
           :uploading="uploadingAsset"
@@ -211,14 +215,16 @@ const canValidate = computed(() => {
 
       <section class="cases">
         <div class="cases-head">
-          <h2>тесты</h2>
-          <AppButton size="sm" :loading="busy === 'new-case'" @click="addCase">+ тест</AppButton>
+          <h2>{{ t('problemEditor.tests') }}</h2>
+          <AppButton size="sm" :loading="busy === 'new-case'" @click="addCase">{{
+            t('problemEditor.addTest')
+          }}</AppButton>
         </div>
 
-        <p v-if="loaded.testCases.length === 0" class="muted">Добавьте публичный и скрытый тест.</p>
+        <p v-if="loaded.testCases.length === 0" class="muted">{{ t('problemEditor.addTests') }}</p>
         <template v-else>
           <p v-if="loaded.status === 'draft' && (hasNoSample || hasNoHidden)" class="hint">
-            Для публикации нужен публичный и скрытый тест.
+            {{ t('problemEditor.needTests') }}
           </p>
 
           <ul class="case-list">

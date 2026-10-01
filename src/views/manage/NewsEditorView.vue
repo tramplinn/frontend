@@ -9,6 +9,9 @@ import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useNewsEditor } from '@/features/news/composables/useNewsEditor'
 import { errorText } from '@/lib/errors'
+import { useI18n } from '@/i18n'
+
+const { d, t } = useI18n()
 
 const props = defineProps<{ news: string }>()
 
@@ -58,22 +61,22 @@ function onFiles(event: Event): void {
   <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded" class="editor">
       <header class="head">
-        <input v-model="title" class="title-input" aria-label="Заголовок новости" />
+        <input v-model="title" class="title-input" :aria-label="t('newsEditor.title')" />
         <div class="head-side">
           <StatusChip :status="loaded.status" />
-          <span v-if="autosaving" class="dirty">сохраняю…</span>
+          <span v-if="autosaving" class="dirty">{{ t('manage.saving') }}</span>
           <span v-else-if="savedAt" class="saved">
-            сохранено в {{ savedAt.toLocaleTimeString('ru-RU', { timeStyle: 'short' }) }}
+            {{ t('manage.savedAt', { time: d(savedAt, { timeStyle: 'short' }) }) }}
           </span>
-          <BackLink :to="{ name: 'manage-news' }">к списку</BackLink>
+          <BackLink :to="{ name: 'manage-news' }">{{ t('manage.toList') }}</BackLink>
         </div>
       </header>
 
       <input
         v-model="summary"
         class="summary-input"
-        placeholder="анонс"
-        aria-label="Анонс новости"
+        :placeholder="t('newsEditor.lead')"
+        :aria-label="t('newsEditor.leadLabel')"
       />
 
       <p v-if="actionError" class="save-error" role="alert">{{ actionError }}</p>
@@ -89,9 +92,9 @@ function onFiles(event: Event): void {
 
       <div class="photos">
         <div class="photos-head">
-          <span class="photos-title">фото</span>
+          <span class="photos-title">{{ t('newsEditor.photos') }}</span>
           <AppButton size="sm" variant="quiet" :disabled="busy" @click="pickPhotos">
-            + фото
+            {{ t('newsEditor.addPhoto') }}
           </AppButton>
         </div>
         <NewsPhotoStrip
@@ -106,7 +109,7 @@ function onFiles(event: Event): void {
       <MarkdownEditor
         v-model="bodyMd"
         :html="html"
-        source-label="Исходник новости"
+        :source-label="t('newsEditor.source')"
         :dragging="dragging"
         :uploading="uploadingAsset"
         :asset-error="assetError"
@@ -126,10 +129,10 @@ function onFiles(event: Event): void {
           :loading="saving"
           @click="setStatus('published')"
         >
-          опубликовать
+          {{ t('manage.publish') }}
         </AppButton>
         <AppButton v-else variant="quiet" :loading="saving" @click="setStatus('draft')">
-          снять с публикации
+          {{ t('manage.unpublish') }}
         </AppButton>
       </footer>
     </section>

@@ -6,7 +6,10 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import CodeEditor from '@/components/ui/CodeEditor.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import { useI18n } from '@/i18n'
 import { languageLabel } from '@/lib/algorithms'
+
+const { d, t } = useI18n()
 
 const props = defineProps<{
   languages: readonly AlgorithmLanguage[]
@@ -33,20 +36,22 @@ const options = computed(() =>
 )
 
 const validatedLabel = computed(() => {
-  if (!props.saved) return 'сохранится автоматически'
-  if (!props.saved.validatedAt) return 'эталонное решение не проверено'
-  return `проверено ${new Date(props.saved.validatedAt).toLocaleString('ru-RU')}`
+  if (!props.saved) return t('template.autosave')
+  if (!props.saved.validatedAt) return t('template.unverified')
+  return t('template.verifiedAt', {
+    date: d(props.saved.validatedAt, { dateStyle: 'short', timeStyle: 'short' }),
+  })
 })
 </script>
 
 <template>
   <section class="templates">
     <header class="head">
-      <h2>решения по языкам</h2>
+      <h2>{{ t('template.heading') }}</h2>
       <AppSelect
         :model-value="props.language"
         :options="options"
-        label="Язык шаблона"
+        :label="t('template.language')"
         :disabled="props.busy"
         @update:model-value="(value) => emit('update:language', value)"
       />
@@ -57,25 +62,25 @@ const validatedLabel = computed(() => {
 
     <div class="pair">
       <div class="field">
-        <span class="label">заготовка для студента</span>
+        <span class="label">{{ t('template.starter') }}</span>
         <CodeEditor
           :model-value="props.draft.starterCode"
           :language="props.language"
           :highlight-active-line="false"
           min-height="220px"
-          aria-label="Заготовка кода"
+          :aria-label="t('template.starterLabel')"
           @update:model-value="(value) => emit('patch', { starterCode: value })"
         />
       </div>
 
       <div class="field">
-        <span class="label">эталонное решение</span>
+        <span class="label">{{ t('template.solution') }}</span>
         <CodeEditor
           :model-value="props.draft.solutionCode"
           :language="props.language"
           :highlight-active-line="false"
           min-height="220px"
-          aria-label="Эталонное решение"
+          :aria-label="t('template.solutionLabel')"
           @update:model-value="(value) => emit('patch', { solutionCode: value })"
         />
       </div>
@@ -88,18 +93,18 @@ const validatedLabel = computed(() => {
         :disabled="!props.canValidate"
         @click="emit('validate')"
       >
-        прогнать по тестам
+        {{ t('template.validate') }}
       </AppButton>
       <ConfirmButton
         v-if="props.saved"
-        label="убрать язык"
-        confirm-label="точно убрать?"
+        :label="t('template.removeLanguage')"
+        :confirm-label="t('template.confirmRemove')"
         :loading="props.busy"
         @confirm="emit('remove')"
       />
     </div>
 
-    <p v-if="!props.canValidate" class="hint">Добавьте хотя бы один тест и эталонное решение.</p>
+    <p v-if="!props.canValidate" class="hint">{{ t('template.needTests') }}</p>
   </section>
 </template>
 

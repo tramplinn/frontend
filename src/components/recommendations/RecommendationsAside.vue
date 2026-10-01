@@ -4,6 +4,9 @@ import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import { useRecommendations } from '@/features/recommendations/composables/useRecommendations'
 import { hours } from '@/lib/hours'
 import RecommendationRow from './RecommendationRow.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const { courses, algorithms, pending, error, load } = useRecommendations()
 </script>
@@ -12,7 +15,7 @@ const { courses, algorithms, pending, error, load } = useRecommendations()
   <aside v-if="pending || error || algorithms.length > 0 || courses.length > 0" class="aside">
     <LoadState :pending="pending" :error="error" @retry="load">
       <div v-if="algorithms.length > 0" class="block">
-        <h2 class="heading">рекомендуем алгосы</h2>
+        <h2 class="heading">{{ t('recommend.algorithms') }}</h2>
         <div class="list">
           <RecommendationRow
             v-for="item in algorithms"
@@ -27,7 +30,7 @@ const { courses, algorithms, pending, error, load } = useRecommendations()
       </div>
 
       <div v-if="courses.length > 0" class="block">
-        <h2 class="heading">рекомендуем курсы</h2>
+        <h2 class="heading">{{ t('recommend.courses') }}</h2>
         <div class="list">
           <RecommendationRow
             v-for="item in courses"

@@ -12,6 +12,9 @@ import {
   type PlacementMap,
   unplacedItems,
 } from '@/features/quiz-runner/model/interactions'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ question: QuizQuestion; reviewing: boolean }>()
 const emit = defineEmits<{ answer: [value: unknown] }>()
@@ -80,7 +83,7 @@ function place(targetId: string): void {
           @drop.prevent="place(left.id)"
           @click="place(left.id)"
         >
-          {{ matchingLabel(question, placements, left.id) ?? 'выберите соответствие' }}
+          {{ matchingLabel(question, placements, left.id) ?? t('quiz.chooseMatch') }}
         </button>
       </div>
     </template>
@@ -92,7 +95,7 @@ function place(targetId: string): void {
         class="group-zone"
         :class="{ 'group-zone--over': dragOverTarget === group.id }"
         role="button"
-        :aria-label="`Поместить выбранный элемент в группу ${group.label}`"
+        :aria-label="t('quiz.placeInGroup', { group: group.label })"
         :tabindex="reviewing ? -1 : 0"
         @dragenter.prevent="hover(group.id)"
         @dragover.prevent

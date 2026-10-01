@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{ modelValue: string; length?: number; disabled?: boolean; autofocus?: boolean }>(),
@@ -89,7 +92,7 @@ if (props.autofocus) focusCell(0)
 </script>
 
 <template>
-  <div class="otp" role="group" aria-label="код из письма">
+  <div class="otp" role="group" :aria-label="t('ui.otpCode')">
     <input
       v-for="(digit, index) in digits"
       :key="index"

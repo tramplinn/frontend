@@ -5,7 +5,10 @@ import AppButton from '@/components/ui/AppButton.vue'
 import FilterChip from '@/components/ui/FilterChip.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmCatalog } from '@/features/algorithms/composables/useAlgorithmCatalog'
-import { DIFFICULTY_LABELS, DIFFICULTY_ORDER, languageLabel } from '@/lib/algorithms'
+import { DIFFICULTY_ORDER, difficultyLabel, languageLabel } from '@/lib/algorithms'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const {
   difficulty,
@@ -35,31 +38,36 @@ function toggleTag(id: string): void {
   <section class="page">
     <header class="head">
       <div>
-        <h1>алгосы</h1>
+        <h1>{{ t('algorithms.heading') }}</h1>
       </div>
       <p v-if="total > 0" class="counter">
-        решено {{ solvedCount }} из {{ items.length }} на странице · всего {{ total }}
+        {{ t('algorithms.solvedStats', { solved: solvedCount, shown: items.length, total }) }}
       </p>
     </header>
 
     <div class="filters">
       <label class="search">
-        <span class="visually-hidden">Поиск по названию</span>
-        <input v-model="search" type="search" class="text-field" placeholder="поиск по названию" />
+        <span class="visually-hidden">{{ t('algorithms.searchLabel') }}</span>
+        <input
+          v-model="search"
+          type="search"
+          class="text-field"
+          :placeholder="t('algorithms.searchPlaceholder')"
+        />
       </label>
 
-      <div class="chips" role="group" aria-label="Сложность">
+      <div class="chips" role="group" :aria-label="t('algorithms.difficultyLabel')">
         <FilterChip
           v-for="value in DIFFICULTY_ORDER"
           :key="value"
           :pressed="difficulty === value"
           @click="toggleDifficulty(value)"
         >
-          {{ DIFFICULTY_LABELS[value] }}
+          {{ difficultyLabel(value) }}
         </FilterChip>
       </div>
 
-      <div v-if="tags.length > 0" class="chips" role="group" aria-label="Темы">
+      <div v-if="tags.length > 0" class="chips" role="group" :aria-label="t('algorithms.topics')">
         <FilterChip
           v-for="tag in tags"
           :key="tag.id"
@@ -73,7 +81,7 @@ function toggleTag(id: string): void {
 
     <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="items.length === 0" class="muted empty">
-        Ничего не нашлось. Попробуй снять фильтры.
+        {{ t('algorithms.nothingFound') }}
       </p>
 
       <ul v-else class="list">
@@ -95,16 +103,24 @@ function toggleTag(id: string): void {
             </span>
 
             <span class="attempts">
-              {{ item.attempts > 0 ? `попыток: ${item.attempts}` : 'не начата' }}
+              {{
+                item.attempts > 0
+                  ? t('algorithms.attempts', { count: item.attempts })
+                  : t('algorithms.notStarted')
+              }}
             </span>
           </RouterLink>
         </li>
       </ul>
 
       <div v-if="total > items.length || page > 0" class="pager">
-        <AppButton size="sm" :disabled="page === 0" @click="page -= 1">назад</AppButton>
-        <span class="muted">страница {{ page + 1 }}</span>
-        <AppButton size="sm" :disabled="!hasMore" @click="page += 1">дальше</AppButton>
+        <AppButton size="sm" :disabled="page === 0" @click="page -= 1">{{
+          t('algorithms.back')
+        }}</AppButton>
+        <span class="muted">{{ t('algorithms.page', { page: page + 1 }) }}</span>
+        <AppButton size="sm" :disabled="!hasMore" @click="page += 1">{{
+          t('algorithms.next')
+        }}</AppButton>
       </div>
     </LoadState>
   </section>

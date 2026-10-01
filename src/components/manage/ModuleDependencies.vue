@@ -6,6 +6,9 @@ import { addModuleDependency, removeModuleDependency } from '@/api/authoring'
 import type { ModuleDependency, ModuleTree } from '@/api/schemas/content'
 import { ApiError } from '@/api/errors'
 import AppCheckbox from '@/components/ui/AppCheckbox.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   module: ModuleTree
@@ -42,8 +45,8 @@ async function toggle(dependsOnId: string, checked: boolean): Promise<void> {
   } catch (cause) {
     error.value =
       cause instanceof ApiError && cause.code === 'conflict'
-        ? 'Так получился бы цикл: этот модуль уже зависит от текущего.'
-        : 'Не удалось изменить связь.'
+        ? t('content.cycle')
+        : t('content.linkFailed')
   } finally {
     busy.value = null
   }
@@ -52,9 +55,9 @@ async function toggle(dependsOnId: string, checked: boolean): Promise<void> {
 
 <template>
   <div class="deps">
-    <p class="title">нужно пройти до этого модуля</p>
+    <p class="title">{{ t('content.prerequisites') }}</p>
 
-    <p v-if="candidates.length === 0" class="empty">в курсе больше нет модулей</p>
+    <p v-if="candidates.length === 0" class="empty">{{ t('content.noOtherModules') }}</p>
 
     <div v-else class="list">
       <div v-for="item in candidates" :key="item.id" class="row">

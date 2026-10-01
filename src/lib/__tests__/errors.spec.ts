@@ -5,8 +5,8 @@ import { MissingContentError, errorText } from '@/lib/errors'
 
 describe('errorText', () => {
   it('keeps safe domain messages', () => {
-    expect(errorText(new MissingContentError('Курс'))).toBe(
-      'Курс не найден. Возможно, ссылка устарела.',
+    expect(errorText(new MissingContentError('lesson'))).toBe(
+      'Урок не найден. Возможно, ссылка устарела.',
     )
     expect(errorText(new ApiError(400, 'bad_request', 'Проверьте данные', {}))).toBe(
       'Проверьте данные',

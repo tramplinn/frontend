@@ -3,6 +3,9 @@ import { ref } from 'vue'
 
 import { uploadAsset } from '@/api/assets'
 import AppButton from '@/components/ui/AppButton.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const assetId = defineModel<string | null>('assetId', { required: true })
 const url = defineModel<string | null>('url', { required: true })
@@ -19,7 +22,7 @@ async function pick(event: Event): Promise<void> {
     return
   }
   if (file.type !== 'application/pdf') {
-    error.value = 'Резюме принимается только в формате PDF'
+    error.value = t('profile.resumeOnlyPdf')
     return
   }
   error.value = null
@@ -29,7 +32,7 @@ async function pick(event: Event): Promise<void> {
     assetId.value = asset.id
     url.value = asset.url
   } catch {
-    error.value = `Не удалось загрузить ${file.name}`
+    error.value = t('profile.resumeUploadFailed', { name: file.name })
   } finally {
     uploading.value = false
   }
@@ -43,10 +46,12 @@ function drop(): void {
 
 <template>
   <div class="resume">
-    <span class="label">резюме</span>
+    <span class="label">{{ t('profile.resume') }}</span>
     <div class="body">
-      <a v-if="url" :href="url" target="_blank" rel="noopener" class="preview">открыть PDF</a>
-      <span v-else class="preview preview--empty">не загружено</span>
+      <a v-if="url" :href="url" target="_blank" rel="noopener" class="preview">{{
+        t('profile.openPdf')
+      }}</a>
+      <span v-else class="preview preview--empty">{{ t('profile.notUploaded') }}</span>
 
       <div class="actions">
         <label class="upload">
@@ -57,9 +62,13 @@ function drop(): void {
             :disabled="uploading"
             @change="pick"
           />
-          <span class="upload-text">{{ uploading ? 'загружаю…' : 'выбрать файл' }}</span>
+          <span class="upload-text">{{
+            uploading ? t('profile.uploading') : t('profile.chooseFile')
+          }}</span>
         </label>
-        <AppButton v-if="url" size="sm" variant="quiet" @click="drop">убрать</AppButton>
+        <AppButton v-if="url" size="sm" variant="quiet" @click="drop">{{
+          t('profile.remove')
+        }}</AppButton>
       </div>
     </div>
     <p v-if="error" class="error" role="alert">{{ error }}</p>

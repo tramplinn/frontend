@@ -2,13 +2,12 @@
 import { computed } from 'vue'
 
 import { useTheme } from '@/composables/useTheme'
+import { useI18n } from '@/i18n'
 
 const { choice, cycle } = useTheme()
+const { t } = useI18n()
 
-const label = computed(
-  () =>
-    ({ system: 'тема: как в системе', light: 'тема: светлая', dark: 'тема: тёмная' })[choice.value],
-)
+const label = computed(() => t(`theme.${choice.value}`))
 </script>
 
 <template>

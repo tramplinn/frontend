@@ -12,87 +12,91 @@ export type SectionKey =
   | 'algorithm-library'
   | 'users'
 
+export type SectionGroup = 'learning' | 'teaching' | 'system'
+
+/** Ключ раздела в словаре `sections.*`: там лежат его название и краткое описание. */
+export type SectionMessages =
+  | 'news'
+  | 'learning'
+  | 'catalog'
+  | 'algorithms'
+  | 'people'
+  | 'content'
+  | 'newsDesk'
+  | 'algorithmLibrary'
+  | 'users'
+
 export interface Section {
   key: SectionKey
-  title: string
-  summary: string
+  messages: SectionMessages
   to: RouteLocationRaw
   access: SectionAccess
-  group: 'обучение' | 'преподавание' | 'система'
+  group: SectionGroup
 }
 
 export const SECTIONS: Section[] = [
   {
     key: 'news',
-    title: 'новости',
-    summary: 'Что происходит',
+    messages: 'news',
     to: { name: 'home' },
     access: 'everyone',
-    group: 'обучение',
+    group: 'learning',
   },
   {
     key: 'learning',
-    title: 'моё обучение',
-    summary: 'Что начато и что продолжить',
+    messages: 'learning',
     to: { name: 'learning' },
     access: 'everyone',
-    group: 'обучение',
+    group: 'learning',
   },
   {
     key: 'catalog',
-    title: 'курсы',
-    summary: 'Каталог по трекам',
+    messages: 'catalog',
     to: { name: 'catalog' },
     access: 'everyone',
-    group: 'обучение',
+    group: 'learning',
   },
   {
     key: 'algorithms',
-    title: 'алгосы',
-    summary: 'Тренажёр задач вне курсов',
+    messages: 'algorithms',
     to: { name: 'algorithms' },
     access: 'everyone',
-    group: 'обучение',
+    group: 'learning',
   },
   {
     key: 'people',
-    title: 'люди',
-    summary: 'Профили и прогресс участников',
+    messages: 'people',
     to: { name: 'people' },
     access: 'everyone',
-    group: 'обучение',
+    group: 'learning',
   },
   {
     key: 'content',
-    title: 'контент',
-    summary: 'Треки, курсы, модули и уроки',
+    messages: 'content',
     to: { name: 'manage-content' },
     access: 'teacher',
-    group: 'преподавание',
+    group: 'teaching',
   },
   {
     key: 'news-desk',
-    title: 'новости',
-    summary: 'Лента главной страницы',
+    messages: 'newsDesk',
     to: { name: 'manage-news' },
     access: 'teacher',
-    group: 'преподавание',
+    group: 'teaching',
   },
   {
     key: 'algorithm-library',
-    title: 'алгозадачи',
-    summary: 'Условия, тесты и эталонные решения',
+    messages: 'algorithmLibrary',
     to: { name: 'manage-algorithms' },
     access: 'teacher',
-    group: 'преподавание',
+    group: 'teaching',
   },
   {
     key: 'users',
-    title: 'пользователи',
-    summary: 'Роли и доступ',
+    messages: 'users',
     to: { name: 'admin-users' },
     access: 'admin',
-    group: 'система',
+    group: 'system',
   },
 ]
 

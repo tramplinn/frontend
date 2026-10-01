@@ -4,6 +4,9 @@ import type { RouteLocationRaw } from 'vue-router'
 
 import type { ModuleTree } from '@/api/schemas/content'
 import { useProgressStore } from '@/stores/progress'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 interface FlowItem {
   kind: 'lesson' | 'quiz' | 'practice'
@@ -73,15 +76,15 @@ function target(item: FlowItem): RouteLocationRaw {
 
 function label(item: FlowItem, direction: 'previous' | 'next'): string {
   if (item.kind === 'quiz') {
-    return direction === 'next' ? 'перейти к тесту' : 'к тесту'
+    return direction === 'next' ? t('pager.toQuiz') : t('pager.backToQuiz')
   }
-  if (item.kind === 'practice') return 'к практике'
-  return direction === 'next' ? 'следующий урок' : 'предыдущий урок'
+  if (item.kind === 'practice') return t('pager.toPractice')
+  return direction === 'next' ? t('pager.nextLesson') : t('pager.previousLesson')
 }
 </script>
 
 <template>
-  <nav class="pager" aria-label="Материалы модуля">
+  <nav class="pager" :aria-label="t('pager.label')">
     <RouterLink
       v-if="siblings.previous"
       class="side"
@@ -93,7 +96,7 @@ function label(item: FlowItem, direction: 'previous' | 'next'): string {
     </RouterLink>
     <span v-else class="side side--empty" aria-hidden="true"></span>
 
-    <ol class="dots" :aria-label="`Пройдено ${String(done)} из ${String(flow.length)}`">
+    <ol class="dots" :aria-label="t('pager.done', { done, total: flow.length })">
       <li v-for="item in flow" :key="item.id">
         <RouterLink
           class="dot"
@@ -103,11 +106,11 @@ function label(item: FlowItem, direction: 'previous' | 'next'): string {
             'dot--quiz': item.kind === 'quiz',
           }"
           :to="target(item)"
-          :title="item.kind === 'quiz' ? `Тест: ${item.title}` : item.title"
+          :title="item.kind === 'quiz' ? t('pager.quizTitle', { title: item.title }) : item.title"
           :aria-current="item.id === props.currentId ? 'page' : undefined"
         >
           <span class="visually-hidden">
-            {{ item.kind === 'quiz' ? `Тест: ${item.title}` : item.title }}
+            {{ item.kind === 'quiz' ? t('pager.quizTitle', { title: item.title }) : item.title }}
           </span>
         </RouterLink>
       </li>

@@ -3,15 +3,18 @@ import { computed, nextTick, ref } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
 import { slugify } from '@/lib/slug'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
     label: string
-    placeholder?: string
+    placeholder?: string | undefined
     saving?: boolean
     showSlug?: boolean
   }>(),
-  { placeholder: 'название', saving: false, showSlug: true },
+  { placeholder: undefined, saving: false, showSlug: true },
 )
 
 const emit = defineEmits<{ create: [value: { title: string; slug: string }] }>()
@@ -53,7 +56,7 @@ function submit(): void {
           ref="input"
           v-model="title"
           class="text-field input"
-          :placeholder="props.placeholder"
+          :placeholder="props.placeholder ?? t('manage.titlePlaceholder')"
           :aria-label="props.label"
           @keydown.esc="open = false"
         />
@@ -67,9 +70,11 @@ function submit(): void {
         :disabled="!valid"
         :loading="props.saving"
       >
-        создать
+        {{ t('manage.create') }}
       </AppButton>
-      <AppButton size="sm" variant="quiet" @click="open = false">отмена</AppButton>
+      <AppButton size="sm" variant="quiet" @click="open = false">{{
+        t('manage.cancel')
+      }}</AppButton>
     </form>
   </div>
 </template>

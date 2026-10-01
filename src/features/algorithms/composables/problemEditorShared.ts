@@ -1,6 +1,7 @@
 import { algorithmLanguageSchema } from '@/api/schemas/algorithmAuthoring'
 import type { ProblemAuthor, TestCase } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
+import { translate } from '@/i18n'
 
 export interface ProblemFields {
   title: string
@@ -20,7 +21,7 @@ export interface TestCaseFields {
 
 export const ALL_LANGUAGES = algorithmLanguageSchema.options
 export const AUTOSAVE_DEBOUNCE_MS = 700
-export const INCOMPLETE_FIELDS_MESSAGE = 'Не все поля заполнены — сохранение отложено'
+export const incompleteFieldsMessage = (): string => translate('problemEditor.incomplete')
 
 export function toFields(problem: ProblemAuthor): ProblemFields {
   return {

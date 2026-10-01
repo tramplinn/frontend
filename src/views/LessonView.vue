@@ -18,6 +18,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
 import type { LessonLocation } from '@/stores/content'
 import { useProgressStore } from '@/stores/progress'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ course: string; module: string; lesson: string }>()
 
@@ -55,13 +58,13 @@ async function load(): Promise<void> {
     const found = content.findLesson(target.course, target.module, target.lesson)
     location.value = found
     if (!found) {
-      error.value = new MissingContentError('Урок')
+      error.value = new MissingContentError('lesson')
       return
     }
     await Promise.all([
       progress.load().catch(() => {
         if (version === loadVersion) {
-          progressError.value = 'Прогресс временно недоступен.'
+          progressError.value = t('lesson.progressUnavailable')
         }
       }),
       listInterviewCards(found.lesson.id)
@@ -89,7 +92,7 @@ async function toggleCompleted(): Promise<void> {
     {
       setBusy: (active) => (saving.value = active),
       clearError: () => (progressError.value = null),
-      setError: () => (progressError.value = 'Не удалось сохранить отметку. Попробуйте ещё раз.'),
+      setError: () => (progressError.value = t('lesson.markFailed')),
     },
     async () => {
       if (isCompleted.value) {
@@ -114,7 +117,7 @@ watch(
       <template #header>
         <h1 class="title">{{ location.lesson.title }}</h1>
         <span v-if="location.lesson.estMinutes !== null" class="meta">
-          {{ location.lesson.estMinutes }} мин
+          {{ t('units.minutes', { minutes: location.lesson.estMinutes }) }}
         </span>
       </template>
 
@@ -122,7 +125,7 @@ watch(
 
       <template #after-sheet>
         <p v-if="cardsError" class="support-error" role="status">
-          Вопросы к собеседованию временно недоступны.
+          {{ t('lesson.interviewUnavailable') }}
         </p>
         <InterviewCards :cards="cards" />
       </template>
@@ -135,11 +138,11 @@ watch(
             :loading="saving"
             @click="toggleCompleted"
           >
-            {{ isCompleted ? 'пройдено' : 'отметить пройденным' }}
+            {{ isCompleted ? t('lesson.completed') : t('lesson.markCompleted') }}
           </AppButton>
           <SignInButton
             v-else
-            label="войти, чтобы отмечать прогресс"
+            :label="t('lesson.signInToTrack')"
             :next-path="`/courses/${props.course}/${props.module}/lessons/${props.lesson}`"
           />
           <p v-if="progressError" class="action-error" role="alert">{{ progressError }}</p>

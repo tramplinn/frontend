@@ -8,7 +8,9 @@ import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useLessonEditor } from '@/features/lesson-editor/composables/useLessonEditor'
 import { errorText } from '@/lib/errors'
-import { withCount } from '@/lib/plural'
+import { useI18n } from '@/i18n'
+
+const { d, t, tc } = useI18n()
 
 const props = defineProps<{ lesson: string }>()
 
@@ -48,22 +50,22 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
   <LoadState :pending="pending" :error="error" @retry="load">
     <section v-if="loaded" class="editor">
       <header class="head">
-        <input v-model="title" class="title-input" aria-label="Название урока" />
+        <input v-model="title" class="title-input" :aria-label="t('lessonEditor.title')" />
         <div class="head-side">
           <StatusChip :status="loaded.status" />
-          <span v-if="autosaving" class="dirty">сохраняю…</span>
-          <span v-else-if="dirty" class="dirty">сохранится автоматически</span>
+          <span v-if="autosaving" class="dirty">{{ t('manage.saving') }}</span>
+          <span v-else-if="dirty" class="dirty">{{ t('manage.autosave') }}</span>
           <span v-else-if="savedAt" class="saved">
-            сохранено в {{ savedAt.toLocaleTimeString('ru-RU', { timeStyle: 'short' }) }}
+            {{ t('manage.savedAt', { time: d(savedAt, { timeStyle: 'short' }) }) }}
           </span>
-          <BackLink :to="{ name: 'manage-content' }">к списку</BackLink>
+          <BackLink :to="{ name: 'manage-content' }">{{ t('manage.toList') }}</BackLink>
         </div>
       </header>
 
       <MarkdownEditor
         v-model="bodyMd"
         :html="html"
-        source-label="Исходник урока"
+        :source-label="t('lessonEditor.source')"
         :dragging="dragging"
         :uploading="uploadingAsset"
         :asset-error="assetError"
@@ -76,7 +78,7 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
       >
         <template #source-meta>
           <span v-if="cards.length > 0" class="pane-meta">
-            {{ withCount(cards.length, 'карточка', 'карточки', 'карточек') }}
+            {{ tc('units.cards', cards.length) }}
           </span>
         </template>
       </MarkdownEditor>
@@ -90,10 +92,10 @@ function applyAssistantPatch(patch: TeacherAssistantPatch): void {
           :loading="saving"
           @click="setStatus('published')"
         >
-          опубликовать
+          {{ t('manage.publish') }}
         </AppButton>
         <AppButton v-else variant="quiet" :loading="saving" @click="setStatus('draft')">
-          снять с публикации
+          {{ t('manage.unpublish') }}
         </AppButton>
       </footer>
 

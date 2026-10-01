@@ -10,6 +10,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmPractice } from '@/features/algorithms/composables/useAlgorithmPractice'
+import { type MessageKey, useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ course: string; module: string; set: string }>()
 
@@ -30,10 +33,15 @@ const {
 const closing = ref(false)
 const summary = ref('')
 
-const SESSION_LABELS: Record<string, string> = {
-  active: 'идёт',
-  completed: 'завершена',
-  expired: 'время вышло',
+const SESSION_LABELS: Record<string, MessageKey> = {
+  active: 'practice.status.active',
+  completed: 'practice.status.completed',
+  expired: 'practice.status.expired',
+}
+
+function sessionLabel(status: string): string {
+  const key = SESSION_LABELS[status]
+  return key ? t(key) : status
 }
 </script>
 
@@ -42,35 +50,37 @@ const SESSION_LABELS: Record<string, string> = {
     <article v-if="practiceSet && session" class="practice">
       <header class="head">
         <div>
-          <BackLink :to="{ name: 'course', params: { course: props.course } }">к курсу</BackLink>
+          <BackLink :to="{ name: 'course', params: { course: props.course } }">{{
+            t('practice.toCourse')
+          }}</BackLink>
           <h1>{{ practiceSet.title }}</h1>
           <p v-if="practiceSet.description" class="muted">{{ practiceSet.description }}</p>
         </div>
 
         <div class="session-state">
           <strong v-if="timerText" class="timer">{{ timerText }}</strong>
-          <span class="status">{{ SESSION_LABELS[session.status] ?? session.status }}</span>
+          <span class="status">{{ sessionLabel(session.status) }}</span>
           <AppButton size="sm" :disabled="session.status !== 'active'" @click="closing = !closing">
-            завершить
+            {{ t('practice.finish') }}
           </AppButton>
         </div>
       </header>
 
       <div v-if="closing && session.status === 'active'" class="closing">
         <label class="field">
-          <span>что вынес из этой сессии</span>
-          <textarea v-model="summary" rows="3" placeholder="Необязательно" />
+          <span>{{ t('practice.takeaway') }}</span>
+          <textarea v-model="summary" rows="3" :placeholder="t('practice.optional')" />
         </label>
         <div class="closing-actions">
           <AppButton :loading="finishing" @click="finish(summary.trim() || null)">
-            завершить сессию
+            {{ t('practice.finishSession') }}
           </AppButton>
-          <AppButton variant="quiet" @click="closing = false">отмена</AppButton>
+          <AppButton variant="quiet" @click="closing = false">{{ t('profile.cancel') }}</AppButton>
         </div>
       </div>
 
       <div class="workspace">
-        <aside class="tasks" aria-label="Задачи набора">
+        <aside class="tasks" :aria-label="t('practice.tasks')">
           <button
             v-for="(item, index) in practiceSet.problems"
             :key="item.problemId"
@@ -80,7 +90,12 @@ const SESSION_LABELS: Record<string, string> = {
             @click="selectedId = item.problemId"
           >
             <span class="task-title">
-              <span v-if="solvedIds.has(item.problemId)" class="tick" aria-label="решена">✓</span>
+              <span
+                v-if="solvedIds.has(item.problemId)"
+                class="tick"
+                :aria-label="t('algorithms.solved')"
+                >✓</span
+              >
               {{ index + 1 }}. {{ item.title }}
             </span>
             <DifficultyChip :difficulty="item.difficulty" />
@@ -95,7 +110,7 @@ const SESSION_LABELS: Record<string, string> = {
           </div>
         </main>
 
-        <p v-else-if="practiceSet.problems.length === 0" class="muted">в наборе пока нет задач</p>
+        <p v-else-if="practiceSet.problems.length === 0" class="muted">{{ t('practice.empty') }}</p>
       </div>
 
       <!-- В mock interview ассистент выключен: он бы свёл на нет смысл тренировки. -->

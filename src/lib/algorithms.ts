@@ -1,22 +1,10 @@
 import type { AlgorithmDifficulty, AlgorithmVerdict } from '@/api/schemas/algorithms'
-
-export const DIFFICULTY_LABELS: Record<AlgorithmDifficulty, string> = {
-  easy: 'лёгкая',
-  medium: 'средняя',
-  hard: 'сложная',
-}
+import { translate } from '@/i18n'
 
 export const DIFFICULTY_ORDER: AlgorithmDifficulty[] = ['easy', 'medium', 'hard']
 
-export const VERDICT_LABELS: Record<AlgorithmVerdict, string> = {
-  accepted: 'зачтено',
-  wrong_answer: 'неверный ответ',
-  compile_error: 'ошибка компиляции',
-  runtime_error: 'ошибка выполнения',
-  time_limit: 'превышено время',
-  memory_limit: 'превышена память',
-  output_limit: 'слишком большой вывод',
-  internal_error: 'внутренняя ошибка',
+export function difficultyLabel(difficulty: AlgorithmDifficulty): string {
+  return translate(`algorithms.difficulty.${difficulty}`)
 }
 
 export const LANGUAGE_LABELS: Record<string, string> = {
@@ -35,7 +23,7 @@ export function languageLabel(key: string): string {
 }
 
 export function verdictLabel(verdict: AlgorithmVerdict | null): string {
-  return verdict ? VERDICT_LABELS[verdict] : 'нет вердикта'
+  return verdict ? translate(`algorithms.verdicts.${verdict}`) : translate('algorithms.noVerdict')
 }
 
 /** Только accepted считается успехом — остальные вердикты красим как отказ. */
@@ -44,5 +32,5 @@ export function isAccepted(verdict: AlgorithmVerdict | null): boolean {
 }
 
 export function memoryLabel(kb: number): string {
-  return `${String(Math.round(kb / 1024))} МиБ`
+  return translate('units.mebibytes', { value: Math.round(kb / 1024) })
 }

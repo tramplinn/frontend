@@ -4,6 +4,9 @@ import { computed, nextTick, ref } from 'vue'
 import type { Course, Track } from '@/api/schemas/content'
 import AppButton from '@/components/ui/AppButton.vue'
 import { slugify } from '@/lib/slug'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ track: Track; courses: Course[]; busy: boolean }>()
 
@@ -57,7 +60,9 @@ function attach(courseId: string): void {
 
 <template>
   <div class="add">
-    <AppButton v-if="!open" size="sm" variant="quiet" @click="reveal">+ курс</AppButton>
+    <AppButton v-if="!open" size="sm" variant="quiet" @click="reveal">{{
+      t('content.addCourse')
+    }}</AppButton>
 
     <div v-else class="panel">
       <form class="row" @submit.prevent="create">
@@ -66,21 +71,21 @@ function attach(courseId: string): void {
             ref="input"
             v-model="title"
             class="text-field input"
-            placeholder="название курса"
-            aria-label="Название курса"
+            :placeholder="t('content.courseTitle')"
+            :aria-label="t('content.courseTitleLabel')"
             @keydown.esc="close"
           />
           <span v-if="slug" class="slug">{{ slug }}</span>
         </div>
         <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="busy">
-          создать новый
+          {{ t('content.createNew') }}
         </AppButton>
-        <AppButton size="sm" variant="quiet" @click="close">отмена</AppButton>
+        <AppButton size="sm" variant="quiet" @click="close">{{ t('manage.cancel') }}</AppButton>
       </form>
 
       <div v-if="available.length > 0" class="existing">
-        <p class="existing-title">или добавить существующий</p>
-        <p v-if="matching.length === 0" class="empty">по запросу ничего не нашлось</p>
+        <p class="existing-title">{{ t('content.addExisting') }}</p>
+        <p v-if="matching.length === 0" class="empty">{{ t('content.noMatches') }}</p>
         <div v-else class="options">
           <AppButton
             v-for="course in matching"

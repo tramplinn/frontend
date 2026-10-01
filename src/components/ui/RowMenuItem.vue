@@ -2,10 +2,13 @@
 import { DropdownMenuItem } from 'reka-ui'
 
 import { useArmedConfirm } from '@/composables/useArmedConfirm'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
-  defineProps<{ danger?: boolean; disabled?: boolean; confirmLabel?: string }>(),
-  { danger: false, disabled: false, confirmLabel: 'точно удалить?' },
+  defineProps<{ danger?: boolean; disabled?: boolean; confirmLabel?: string | undefined }>(),
+  { danger: false, disabled: false, confirmLabel: undefined },
 )
 
 const emit = defineEmits<{ select: [] }>()
@@ -30,7 +33,7 @@ function select(event: Event): void {
     :disabled="props.disabled"
     @select="select"
   >
-    <template v-if="armed">{{ props.confirmLabel }}</template>
+    <template v-if="armed">{{ props.confirmLabel ?? t('ui.confirmDelete') }}</template>
     <slot v-else />
   </DropdownMenuItem>
 </template>

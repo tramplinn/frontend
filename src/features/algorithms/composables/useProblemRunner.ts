@@ -17,6 +17,7 @@ import type {
   AlgorithmSubmission,
 } from '@/api/schemas/algorithms'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
+import { translate } from '@/i18n'
 
 const POLL_DELAYS_MS = [1000, 2000, 3000] as const
 
@@ -71,9 +72,9 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
   const queueStatus = computed(() => {
     const current = result.value
     if (!current) return null
-    if (current.status === 'queued') return 'в очереди'
-    if (current.status === 'running') return 'выполняется'
-    return current.verdict ?? 'ошибка выполнения'
+    if (current.status === 'queued') return translate('problemEditor.queued')
+    if (current.status === 'running') return translate('problemEditor.running')
+    return current.verdict ?? translate('algorithms.verdicts.runtime_error')
   })
 
   const canExecute = computed(

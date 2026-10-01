@@ -1,4 +1,5 @@
 import { errorSchema } from './schemas/common'
+import { translate } from '@/i18n'
 
 export class ApiError extends Error {
   readonly status: number
@@ -47,5 +48,10 @@ export async function toApiError(response: Response): Promise<ApiError> {
   if (parsed.success) {
     return new ApiError(response.status, parsed.data.code, parsed.data.message, parsed.data.details)
   }
-  return new ApiError(response.status, 'http_error', `Ошибка ${String(response.status)}`, {})
+  return new ApiError(
+    response.status,
+    'http_error',
+    translate('errors.http', { status: response.status }),
+    {},
+  )
 }

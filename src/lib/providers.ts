@@ -1,13 +1,17 @@
 import type { IdentityProvider } from '@/api/schemas/common'
+import { translate } from '@/i18n'
 
-/** Названия провайдеров пишем так, как они сами себя называют. */
-const PROVIDER_NAMES: Record<IdentityProvider, string> = {
-  github: 'GitHub',
-  yandex: 'Яндекс ID',
-  gitlab: 'GitLab',
-  email: 'Почта',
-}
-
+/** Названия провайдеров пишем так, как они сами себя называют; переводим только те,
+    у которых есть официальное название на другом языке. */
 export function providerName(provider: IdentityProvider): string {
-  return PROVIDER_NAMES[provider]
+  switch (provider) {
+    case 'github':
+      return 'GitHub'
+    case 'gitlab':
+      return 'GitLab'
+    case 'yandex':
+      return translate('providers.yandex')
+    case 'email':
+      return translate('providers.email')
+  }
 }

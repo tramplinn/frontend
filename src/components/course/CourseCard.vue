@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { Course } from '@/api/schemas/content'
 import { hours } from '@/lib/hours'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ course: Course }>()
 </script>
@@ -29,7 +32,7 @@ const props = defineProps<{ course: Course }>()
       <span v-if="props.course.summary" class="summary">{{ props.course.summary }}</span>
     </span>
 
-    <span class="action">открыть</span>
+    <span class="action">{{ t('course.open') }}</span>
   </RouterLink>
 </template>
 

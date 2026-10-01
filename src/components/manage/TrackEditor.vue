@@ -9,6 +9,9 @@ import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { ACCENT_COLOR_PLACEHOLDER, blankToNull } from '@/lib/forms'
+import { translate, useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ track: Track; busy: boolean }>()
 
@@ -23,11 +26,11 @@ const description = ref(props.track.description ?? '')
 const color = ref(props.track.color ?? '')
 
 const fields: EditorField<TrackDraft>[] = [
-  { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
-  { key: 'slug', label: 'адрес', model: slug, mono: true, toValue: (raw) => raw.trim() },
+  { key: 'title', label: 'fields.title', model: title, toValue: (raw) => raw.trim() },
+  { key: 'slug', label: 'fields.slug', model: slug, mono: true, toValue: (raw) => raw.trim() },
   {
     key: 'description',
-    label: 'описание',
+    label: 'fields.description',
     model: description,
     width: 'wide',
     multiline: true,
@@ -35,7 +38,7 @@ const fields: EditorField<TrackDraft>[] = [
   },
   {
     key: 'color',
-    label: 'цвет',
+    label: 'fields.color',
     model: color,
     placeholder: ACCENT_COLOR_PLACEHOLDER,
     toValue: blankToNull,
@@ -43,7 +46,7 @@ const fields: EditorField<TrackDraft>[] = [
 ]
 
 const { valid, buildPatch, dirty } = useEntityForm(title, slug, fields)
-useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения трека. Уйти со страницы?')
+useUnsavedChangesGuard(dirty, () => translate('unsaved.track'))
 
 function save(): void {
   if (!valid.value) {
@@ -59,9 +62,11 @@ function save(): void {
 
     <div class="actions">
       <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="props.busy">
-        сохранить
+        {{ t('manage.save') }}
       </AppButton>
-      <AppButton size="sm" variant="quiet" @click="emit('cancel')">отмена</AppButton>
+      <AppButton size="sm" variant="quiet" @click="emit('cancel')">{{
+        t('manage.cancel')
+      }}</AppButton>
     </div>
   </form>
 </template>

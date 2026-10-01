@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { logoutEverywhere } from '@/api/auth'
@@ -16,10 +16,13 @@ import TagPicker from '@/components/ui/TagPicker.vue'
 import { useIdentityLinking } from '@/composables/useIdentityLinking'
 import { useProfileForm } from '@/composables/useProfileForm'
 import { errorText } from '@/lib/errors'
-import { GRADES, SPECIALTIES } from '@/lib/profile'
+import { GRADES, SPECIALTIES, gradeName } from '@/lib/profile'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 import { useProgressStore } from '@/stores/progress'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const auth = useAuthStore()
 const progress = useProgressStore()
@@ -28,8 +31,14 @@ const publicProfile = ref<PublicProfile | null>(null)
 const signingOut = ref(false)
 const error = ref<string | null>(null)
 
-const specialtyOptions = [{ value: '', label: 'не выбрано' }, ...SPECIALTIES]
-const gradeOptions = [{ value: '', label: 'не выбрано' }, ...GRADES]
+const specialtyOptions = computed(() => [
+  { value: '', label: t('profile.notSelected') },
+  ...SPECIALTIES,
+])
+const gradeOptions = computed(() => [
+  { value: '', label: t('profile.notSelected') },
+  ...GRADES.map(({ value }) => ({ value, label: gradeName(value) ?? value })),
+])
 
 async function loadPublicProfile(): Promise<void> {
   if (auth.user) publicProfile.value = await getPublicProfile(auth.user.login)
@@ -56,7 +65,7 @@ async function signOut(all = false): Promise<void> {
     progress.reset()
     await router.push({ name: 'home' })
   } catch {
-    error.value = all ? 'Не удалось завершить сеансы.' : 'Не удалось выйти. Попробуйте ещё раз.'
+    error.value = all ? t('profile.endSessionsFailed') : t('profile.signOutFailed')
   } finally {
     signingOut.value = false
   }
@@ -70,33 +79,40 @@ async function signOut(all = false): Promise<void> {
     <div class="columns">
       <form class="card editor" @submit.prevent="form.save">
         <header>
-          <p>публично</p>
-          <h2>о себе</h2>
+          <p>{{ t('profile.public') }}</p>
+          <h2>{{ t('profile.about') }}</h2>
         </header>
         <label
-          ><span>имя</span><input v-model="form.name" class="text-field" maxlength="200"
+          ><span>{{ t('profile.name') }}</span
+          ><input v-model="form.name" class="text-field" maxlength="200"
         /></label>
         <label
-          ><span>коротко о себе</span
+          ><span>{{ t('profile.headline') }}</span
           ><input
             v-model="form.headline"
             class="text-field"
             maxlength="120"
-            placeholder="Что делаете и куда растёте"
+            :placeholder="t('profile.headlinePlaceholder')"
         /></label>
         <div class="pair">
           <label
-            ><span>направление</span
-            ><AppSelect v-model="form.specialty" :options="specialtyOptions" label="Направление"
+            ><span>{{ t('profile.specialty') }}</span
+            ><AppSelect
+              v-model="form.specialty"
+              :options="specialtyOptions"
+              :label="t('profile.specialtyLabel')"
           /></label>
           <label
-            ><span>грейд</span
-            ><AppSelect v-model="form.grade" :options="gradeOptions" label="Грейд"
+            ><span>{{ t('profile.grade') }}</span
+            ><AppSelect
+              v-model="form.grade"
+              :options="gradeOptions"
+              :label="t('profile.gradeLabel')"
           /></label>
         </div>
         <div class="triple">
           <label
-            ><span>опыт, лет</span
+            ><span>{{ t('profile.experienceYears') }}</span
             ><input
               v-model.number="form.experienceYears"
               class="text-field"
@@ -105,64 +121,64 @@ async function signOut(all = false): Promise<void> {
               max="80"
           /></label>
           <label
-            ><span>компания</span
+            ><span>{{ t('profile.company') }}</span
             ><ComboInput
               v-model="form.company"
               :suggestions="form.companySuggestions"
-              placeholder="где работаете"
+              :placeholder="t('profile.companyPlaceholder')"
           /></label>
           <label
-            ><span>вуз</span
+            ><span>{{ t('profile.university') }}</span
             ><ComboInput
               v-model="form.university"
               :suggestions="form.universitySuggestions"
-              placeholder="где учитесь"
+              :placeholder="t('profile.universityPlaceholder')"
           /></label>
         </div>
         <label
-          ><span>интересы</span
+          ><span>{{ t('profile.interests') }}</span
           ><TagPicker
             v-model="form.interests"
             :suggestions="form.interestSuggestions"
-            placeholder="добавить интерес"
-          /><small class="hint">Enter или запятая — добавить</small></label
+            :placeholder="t('profile.addInterest')"
+          /><small class="hint">{{ t('profile.interestsHint') }}</small></label
         >
         <ResumeField v-model:asset-id="form.resumeAssetId" v-model:url="form.resumeUrl" />
         <label
-          ><span>подробнее</span
+          ><span>{{ t('profile.details') }}</span
           ><textarea
             v-model="form.bio"
             class="text-field"
             rows="5"
             maxlength="1000"
-            placeholder="Стек, цели"
+            :placeholder="t('profile.detailsPlaceholder')"
           ></textarea>
         </label>
-        <AppButton type="submit" variant="primary" :loading="form.saving"
-          >сохранить профиль</AppButton
-        >
+        <AppButton type="submit" variant="primary" :loading="form.saving">{{
+          t('profile.save')
+        }}</AppButton>
       </form>
 
       <section class="card account">
         <header>
-          <p>приватно</p>
-          <h2>аккаунт</h2>
+          <p>{{ t('profile.private') }}</p>
+          <h2>{{ t('profile.account') }}</h2>
         </header>
         <dl class="facts">
           <div>
-            <dt>логин</dt>
+            <dt>{{ t('profile.login') }}</dt>
             <dd>{{ auth.user.login }}</dd>
           </div>
           <div v-if="auth.user.email">
-            <dt>почта</dt>
+            <dt>{{ t('profile.email') }}</dt>
             <dd>{{ auth.user.email }}</dd>
           </div>
           <div v-if="auth.user.studentNumber">
-            <dt>номер студента</dt>
+            <dt>{{ t('profile.studentId') }}</dt>
             <dd>{{ auth.user.studentNumber }}</dd>
           </div>
         </dl>
-        <h3>способы входа</h3>
+        <h3>{{ t('profile.signInMethods') }}</h3>
         <ul class="identities">
           <li v-for="item in identity.identities" :key="item.provider">
             <span
@@ -171,13 +187,13 @@ async function signOut(all = false): Promise<void> {
             >
             <ConfirmButton
               v-if="identity.canUnlink"
-              label="отвязать"
-              confirm-label="точно отвязать?"
+              :label="t('profile.unlink')"
+              :confirm-label="t('profile.confirmUnlink')"
               :loading="identity.busyAction === `unlink:${item.provider}`"
               :disabled="identity.anyBusy && identity.busyAction !== `unlink:${item.provider}`"
               @confirm="identity.unlink(item.provider)"
             />
-            <small v-else>единственный вход</small>
+            <small v-else>{{ t('profile.onlyMethod') }}</small>
           </li>
         </ul>
         <div v-if="identity.unlinked.length || !identity.emailLinked" class="links">
@@ -188,14 +204,14 @@ async function signOut(all = false): Promise<void> {
             :loading="identity.busyAction === `link:${provider}`"
             :disabled="identity.anyBusy && identity.busyAction !== `link:${provider}`"
             @click="identity.link(provider)"
-            >привязать {{ providerName(provider) }}</AppButton
+            >{{ t('profile.linkProvider', { provider: providerName(provider) }) }}</AppButton
           >
           <AppButton
             v-if="!identity.emailLinked && identity.emailLinkStep === 'idle'"
             size="sm"
             :disabled="identity.anyBusy"
             @click="identity.startEmailLink"
-            >привязать почту</AppButton
+            >{{ t('profile.linkEmail') }}</AppButton
           >
         </div>
 
@@ -208,7 +224,7 @@ async function signOut(all = false): Promise<void> {
             v-model="identity.linkEmail"
             type="email"
             class="text-field"
-            placeholder="почта"
+            :placeholder="t('profile.email')"
             autocomplete="email"
             required
           />
@@ -217,14 +233,14 @@ async function signOut(all = false): Promise<void> {
             size="sm"
             variant="primary"
             :loading="identity.busyAction === 'email-request'"
-            >получить код</AppButton
+            >{{ t('profile.getCode') }}</AppButton
           >
           <AppButton
             type="button"
             size="sm"
             :disabled="identity.anyBusy"
             @click="identity.cancelEmailLink"
-            >отмена</AppButton
+            >{{ t('profile.cancel') }}</AppButton
           >
         </form>
 
@@ -233,7 +249,7 @@ async function signOut(all = false): Promise<void> {
           class="email-link-form"
           @submit.prevent="identity.confirmEmailLink"
         >
-          <p class="hint">код отправлен на {{ identity.linkEmail }}</p>
+          <p class="hint">{{ t('auth.codeSent', { email: identity.linkEmail }) }}</p>
           <OtpInput
             v-model="identity.linkCode"
             autofocus
@@ -245,21 +261,23 @@ async function signOut(all = false): Promise<void> {
             size="sm"
             variant="primary"
             :loading="identity.busyAction === 'email-confirm'"
-            >привязать</AppButton
+            >{{ t('profile.link') }}</AppButton
           >
           <AppButton
             type="button"
             size="sm"
             :disabled="identity.anyBusy"
             @click="identity.cancelEmailLink"
-            >отмена</AppButton
+            >{{ t('profile.cancel') }}</AppButton
           >
         </form>
         <div class="sessions">
-          <AppButton :loading="signingOut" @click="signOut(false)">выйти</AppButton>
+          <AppButton :loading="signingOut" @click="signOut(false)">{{
+            t('profile.signOut')
+          }}</AppButton>
           <ConfirmButton
-            label="выйти везде"
-            confirm-label="завершить все сеансы?"
+            :label="t('profile.signOutEverywhere')"
+            :confirm-label="t('profile.confirmSignOutEverywhere')"
             size="md"
             :loading="signingOut"
             @confirm="signOut(true)"

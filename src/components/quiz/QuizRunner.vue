@@ -8,6 +8,9 @@ import QuizFileAnswer from '@/components/quiz/QuizFileAnswer.vue'
 import QuizInteractionAnswer from '@/components/quiz/QuizInteractionAnswer.vue'
 import QuizQuestionFrame from '@/components/quiz/QuizQuestionFrame.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ quiz: Quiz; submitting: boolean; attempt: QuizAttempt | null }>()
 const emit = defineEmits<{ submit: [answers: Record<string, unknown>] }>()
@@ -52,7 +55,7 @@ function setTextAnswer(questionId: string, event: Event): void {
           class="text-input"
           type="text"
           :disabled="isReviewing"
-          placeholder="ответ"
+          :placeholder="t('quiz.answer')"
           @input="setTextAnswer(question.id, $event)"
         />
 
@@ -73,7 +76,7 @@ function setTextAnswer(questionId: string, event: Event): void {
     </ol>
 
     <AppButton v-if="!isReviewing" type="submit" variant="primary" :loading="props.submitting">
-      проверить
+      {{ t('quiz.check') }}
     </AppButton>
   </form>
 </template>

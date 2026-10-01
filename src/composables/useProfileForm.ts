@@ -9,6 +9,7 @@ import { runBusyAction } from '@/lib/asyncAction'
 import { errorText } from '@/lib/errors'
 import { blankToNull } from '@/lib/forms'
 import { useAuthStore } from '@/stores/auth'
+import { translate } from '@/i18n'
 
 function sameInterests(current: string[], original: { name: string }[]): boolean {
   return (
@@ -56,7 +57,7 @@ export function useProfileForm(afterSave: () => void | Promise<void>) {
     )
   })
 
-  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения профиля. Уйти со страницы?')
+  useUnsavedChangesGuard(dirty, () => translate('unsaved.profile'))
 
   async function save(): Promise<void> {
     await runBusyAction(

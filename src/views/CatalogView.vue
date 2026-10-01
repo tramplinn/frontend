@@ -6,6 +6,9 @@ import { useRoute } from 'vue-router'
 import CourseCard from '@/components/course/CourseCard.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useContentStore } from '@/stores/content'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const content = useContentStore()
 const route = useRoute()
@@ -47,13 +50,13 @@ watch(
 
 <template>
   <section>
-    <h1 class="heading">курсы</h1>
+    <h1 class="heading">{{ t('catalog.heading') }}</h1>
 
     <LoadState :pending="pending" :error="error" @retry="load">
-      <p v-if="content.tracks.length === 0" class="empty">пока ничего не опубликовано</p>
+      <p v-if="content.tracks.length === 0" class="empty">{{ t('catalog.empty') }}</p>
 
       <TabsRoot v-else v-model="active">
-        <TabsList class="tabs" aria-label="Треки">
+        <TabsList class="tabs" :aria-label="t('catalog.tracks')">
           <TabsTrigger
             v-for="track in content.tracks"
             :key="track.id"
@@ -66,7 +69,7 @@ watch(
 
         <TabsContent v-for="track in content.tracks" :key="track.id" :value="track.slug">
           <p v-if="track.description" class="track-description">{{ track.description }}</p>
-          <p v-if="track.courses.length === 0" class="empty">в треке пока нет курсов</p>
+          <p v-if="track.courses.length === 0" class="empty">{{ t('catalog.emptyTrack') }}</p>
           <div v-else class="grid">
             <CourseCard v-for="link in track.courses" :key="link.course.id" :course="link.course" />
           </div>

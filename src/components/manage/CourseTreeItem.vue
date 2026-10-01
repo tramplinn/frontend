@@ -6,6 +6,9 @@ import InlineCreate from '@/components/manage/InlineCreate.vue'
 import ModuleCard from '@/components/manage/ModuleCard.vue'
 import type { Course } from '@/api/schemas/content'
 import type { useContentManagement } from '@/features/content/composables/useContentManagement'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 /* Курс + его дерево модулей нужны и внутри карточки трека, и в плоском
    списке всех курсов — вместо копии одного и того же блока шаблона в двух
@@ -86,14 +89,14 @@ const {
     />
 
     <div v-if="openSlug === props.course.slug" class="modules">
-      <p v-if="loadingCourse" class="hint">загружаем…</p>
-      <p v-else-if="courseError" class="error">курс не открылся</p>
+      <p v-if="loadingCourse" class="hint">{{ t('content.loading') }}</p>
+      <p v-else-if="courseError" class="error">{{ t('content.courseFailed') }}</p>
 
       <template v-else-if="openCourse">
-        <p v-if="openCourse.modules.length === 0" class="hint">в курсе нет модулей</p>
+        <p v-if="openCourse.modules.length === 0" class="hint">{{ t('content.noModules') }}</p>
 
         <p v-if="courseEmptyForStudents" class="warn">
-          Курс опубликован, но студенты увидят пустую страницу: ни один модуль не опубликован.
+          {{ t('content.emptyPublished') }}
         </p>
 
         <ModuleCard
@@ -126,8 +129,8 @@ const {
         />
 
         <InlineCreate
-          label="модуль"
-          placeholder="название модуля"
+          :label="t('content.module')"
+          :placeholder="t('content.moduleTitle')"
           :saving="busy"
           @create="addModule"
         />

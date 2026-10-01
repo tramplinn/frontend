@@ -4,6 +4,9 @@ import RowMenu from '@/components/ui/RowMenu.vue'
 import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { contentStatusAction } from '@/features/content/model/contentTree'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -38,22 +41,26 @@ const emit = defineEmits<{
       <span class="course-title">{{ props.course.title }}</span>
       <StatusChip :status="props.course.status" />
       <span v-if="props.standalone" class="track-titles">
-        {{ props.trackTitles.length > 0 ? props.trackTitles.join(', ') : 'без трека' }}
+        {{ props.trackTitles.length > 0 ? props.trackTitles.join(', ') : t('content.noTrack') }}
       </span>
     </button>
 
-    <RowMenu :disabled="props.busy" :label="`Действия: ${props.course.title}`">
+    <RowMenu :disabled="props.busy" :label="t('manage.actionsFor', { title: props.course.title })">
       <RowMenuItem @select="emit('publish')">
         {{ contentStatusAction(props.course.status) }}
       </RowMenuItem>
-      <RowMenuItem @select="emit('publishCascade')">опубликовать всё содержимое</RowMenuItem>
-      <RowMenuItem @select="emit('edit')">изменить курс</RowMenuItem>
+      <RowMenuItem @select="emit('publishCascade')">{{ t('manage.publishAll') }}</RowMenuItem>
+      <RowMenuItem @select="emit('edit')">{{ t('content.editCourse') }}</RowMenuItem>
       <template v-if="!props.standalone">
-        <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше в треке</RowMenuItem>
-        <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже в треке</RowMenuItem>
-        <RowMenuItem @select="emit('detach')">убрать из трека</RowMenuItem>
+        <RowMenuItem :disabled="props.first" @select="emit('move', -1)">{{
+          t('content.upInTrack')
+        }}</RowMenuItem>
+        <RowMenuItem :disabled="props.last" @select="emit('move', 1)">{{
+          t('content.downInTrack')
+        }}</RowMenuItem>
+        <RowMenuItem @select="emit('detach')">{{ t('content.detach') }}</RowMenuItem>
       </template>
-      <RowMenuItem danger @select="emit('remove')">удалить курс</RowMenuItem>
+      <RowMenuItem danger @select="emit('remove')">{{ t('content.deleteCourse') }}</RowMenuItem>
     </RowMenu>
   </div>
 </template>

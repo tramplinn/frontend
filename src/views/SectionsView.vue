@@ -2,11 +2,13 @@
 import { computed } from 'vue'
 
 import SectionIcon from '@/components/layout/SectionIcon.vue'
+import { useI18n } from '@/i18n'
 import type { Section } from '@/lib/sections'
 import { visibleSections } from '@/lib/sections'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const groups = computed(() => {
   const byGroup = new Map<Section['group'], Section[]>()
@@ -22,16 +24,16 @@ const groups = computed(() => {
 
 <template>
   <section>
-    <h1 class="heading">все разделы</h1>
+    <h1 class="heading">{{ t('nav.allSections') }}</h1>
 
     <div v-for="[group, items] in groups" :key="group" class="block">
-      <h2 class="block-title">{{ group }}</h2>
+      <h2 class="block-title">{{ t(`sections.groups.${group}`) }}</h2>
       <div class="grid">
         <RouterLink v-for="section in items" :key="section.key" :to="section.to" class="tile">
           <SectionIcon :name="section.key" />
           <span class="tile-copy">
-            <span class="tile-title">{{ section.title }}</span>
-            <span class="tile-summary">{{ section.summary }}</span>
+            <span class="tile-title">{{ t(`sections.${section.messages}.title`) }}</span>
+            <span class="tile-summary">{{ t(`sections.${section.messages}.summary`) }}</span>
           </span>
         </RouterLink>
       </div>

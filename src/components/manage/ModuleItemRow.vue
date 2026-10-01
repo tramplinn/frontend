@@ -6,7 +6,7 @@ import RowMenu from '@/components/ui/RowMenu.vue'
 import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { contentStatusAction } from '@/features/content/model/contentTree'
-import { withCount } from '@/lib/plural'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{
   item: ModuleItem
@@ -16,6 +16,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ move: [delta: number]; publish: []; remove: [] }>()
+
+const { t, tc } = useI18n()
 
 const content = computed(() =>
   props.item.kind === 'lesson'
@@ -35,10 +37,10 @@ const target = computed(() =>
 
 const removeLabel = computed(() =>
   props.item.kind === 'lesson'
-    ? 'удалить урок'
+    ? t('content.deleteLesson')
     : props.item.kind === 'quiz'
-      ? 'удалить тест'
-      : 'удалить практику',
+      ? t('content.deleteQuiz')
+      : t('content.deletePractice'),
 )
 </script>
 
@@ -48,17 +50,25 @@ const removeLabel = computed(() =>
       <span class="item-title">{{ content.title }}</span>
       <StatusChip :status="content.status" />
       <span v-if="props.item.kind === 'quiz'" class="item-meta">
-        тест · {{ withCount(props.item.quiz.questions.length, 'вопрос', 'вопроса', 'вопросов') }}
+        {{ t('course.quiz') }} · {{ tc('units.questions', props.item.quiz.questions.length) }}
       </span>
       <span v-else-if="props.item.kind === 'practice'" class="item-meta">
-        {{ props.item.practiceSet.mode === 'mock_interview' ? 'интервью' : 'практика' }}
+        {{
+          props.item.practiceSet.mode === 'mock_interview'
+            ? t('course.interview')
+            : t('course.practice')
+        }}
       </span>
     </RouterLink>
 
-    <RowMenu :disabled="props.busy" :label="`Действия: ${content.title}`">
+    <RowMenu :disabled="props.busy" :label="t('manage.actionsFor', { title: content.title })">
       <RowMenuItem @select="emit('publish')">{{ contentStatusAction(content.status) }}</RowMenuItem>
-      <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
-      <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
+      <RowMenuItem :disabled="props.first" @select="emit('move', -1)">{{
+        t('manage.up')
+      }}</RowMenuItem>
+      <RowMenuItem :disabled="props.last" @select="emit('move', 1)">{{
+        t('manage.down')
+      }}</RowMenuItem>
       <RowMenuItem danger @select="emit('remove')">{{ removeLabel }}</RowMenuItem>
     </RowMenu>
   </li>

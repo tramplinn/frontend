@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
+
 withDefaults(
   defineProps<{
     sheetPadding?: 'regular' | 'compact'
@@ -32,7 +36,7 @@ withDefaults(
       v-if="$slots.rail"
       class="learning-rail"
       :class="{ 'learning-rail--reverse-mobile': prioritizeRailEndOnMobile }"
-      aria-label="Дополнительные материалы"
+      :aria-label="t('lesson.extras')"
     >
       <slot name="rail" />
     </aside>

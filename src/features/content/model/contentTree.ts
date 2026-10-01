@@ -1,11 +1,12 @@
 import type { ContentStatus } from '@/api/schemas/common'
 import type { ModuleItem, ModuleTree, Track } from '@/api/schemas/content'
+import { translate } from '@/i18n'
 
 export const toggleContentStatus = (status: ContentStatus): ContentStatus =>
   status === 'published' ? 'draft' : 'published'
 
 export const contentStatusAction = (status: ContentStatus): string =>
-  status === 'published' ? 'снять' : 'опубликовать'
+  translate(status === 'published' ? 'manage.unpublishShort' : 'manage.publish')
 
 export function itemStatus(item: ModuleItem): ContentStatus {
   return item.kind === 'lesson'

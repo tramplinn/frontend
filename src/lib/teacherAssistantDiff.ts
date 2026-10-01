@@ -4,17 +4,18 @@ import type {
   TeacherAssistantTemplate,
   TeacherAssistantTestCase,
 } from '@/api/schemas/teacherAssistant'
+import { translate, type MessageKey } from '@/i18n'
 
-export const fieldLabels: Record<keyof Omit<TeacherAssistantPatch, 'explanation'>, string> = {
-  title: 'название',
-  bodyMd: 'текст урока',
-  statementMd: 'условие',
-  difficulty: 'сложность',
-  tags: 'темы',
-  timeLimitMs: 'лимит времени',
-  memoryLimitKb: 'лимит памяти',
-  testCases: 'тесты',
-  templates: 'решения по языкам',
+export const fieldLabels: Record<keyof Omit<TeacherAssistantPatch, 'explanation'>, MessageKey> = {
+  title: 'assistant.fields.title',
+  bodyMd: 'assistant.fields.bodyMd',
+  statementMd: 'assistant.fields.statementMd',
+  difficulty: 'assistant.fields.difficulty',
+  tags: 'assistant.fields.tags',
+  timeLimitMs: 'assistant.fields.timeLimitMs',
+  memoryLimitKb: 'assistant.fields.memoryLimitKb',
+  testCases: 'assistant.fields.testCases',
+  templates: 'assistant.fields.templates',
 }
 
 export type PatchField = keyof typeof fieldLabels
@@ -50,8 +51,9 @@ function textOf(value: unknown): string {
       return (value as TeacherAssistantTestCase[])
         .map(
           (item, index) =>
-            `${String(index + 1)}. ${item.isSample ? 'пример' : 'скрытый'}\n` +
-            `вход: ${item.input}\nвывод: ${item.expectedOutput}`,
+            `${String(index + 1)}. ${translate(item.isSample ? 'assistant.diff.sample' : 'assistant.diff.hidden')}\n` +
+            `${translate('assistant.diff.input')}: ${item.input}\n` +
+            `${translate('assistant.diff.output')}: ${item.expectedOutput}`,
         )
         .join('\n\n')
     }
@@ -59,7 +61,8 @@ function textOf(value: unknown): string {
       return (value as TeacherAssistantTemplate[])
         .map(
           (item) =>
-            `${item.language}\nзаготовка:\n${item.starterCode}\nрешение:\n${item.solutionCode}`,
+            `${item.language}\n${translate('assistant.diff.starter')}:\n${item.starterCode}\n` +
+            `${translate('assistant.diff.solution')}:\n${item.solutionCode}`,
         )
         .join('\n\n')
     }
@@ -113,7 +116,7 @@ export function changesFor(
     )
     .map((field) => ({
       field,
-      label: fieldLabels[field],
+      label: translate(fieldLabels[field]),
       lines: diffLines(document[field], suggestion[field]),
     }))
 }

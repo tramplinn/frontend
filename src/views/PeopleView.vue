@@ -5,6 +5,9 @@ import { searchPeople } from '@/api/users'
 import type { PublicUser } from '@/api/schemas/users'
 import LoadState from '@/components/ui/LoadState.vue'
 import { gradeName, specialtyName } from '@/lib/profile'
+import { useI18n } from '@/i18n'
+
+const { t, tc } = useI18n()
 
 const SEARCH_DEBOUNCE_MS = 250
 
@@ -44,7 +47,7 @@ function subtitle(person: PublicUser): string {
   const role = [specialtyName(person.specialty), gradeName(person.grade)]
     .filter(Boolean)
     .join(' · ')
-  return person.headline ?? (role || 'учится и развивается')
+  return person.headline ?? (role || t('people.defaultSubtitle'))
 }
 </script>
 
@@ -52,18 +55,18 @@ function subtitle(person: PublicUser): string {
   <section class="people">
     <header class="head">
       <div>
-        <h1>люди</h1>
+        <h1>{{ t('people.heading') }}</h1>
       </div>
-      <p v-if="!pending && !error">{{ total }} профилей</p>
+      <p v-if="!pending && !error">{{ tc('units.profiles', total) }}</p>
     </header>
     <input
       v-model="query"
       class="text-field search"
       type="search"
-      placeholder="имя, логин или направление"
+      :placeholder="t('people.search')"
     />
     <LoadState :pending="pending" :error="error" @retry="search">
-      <p v-if="people.length === 0" class="empty">никого не нашлось</p>
+      <p v-if="people.length === 0" class="empty">{{ t('people.empty') }}</p>
       <div v-else class="grid">
         <RouterLink
           v-for="person in people"

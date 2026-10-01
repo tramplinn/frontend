@@ -1,9 +1,11 @@
 import { computed } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
+import type { MessageKey } from '@/i18n'
+
 export interface EditorField<TDraft> {
   key: keyof TDraft
-  label: string
+  label: MessageKey
   model: Ref<string>
   width?: 'wide' | 'narrow'
   multiline?: boolean

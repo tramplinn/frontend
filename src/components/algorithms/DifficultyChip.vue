@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
-import { DIFFICULTY_LABELS } from '@/lib/algorithms'
+import { difficultyLabel } from '@/lib/algorithms'
 
 const props = defineProps<{ difficulty: AlgorithmDifficulty }>()
 </script>
 
 <template>
   <span class="chip" :class="`chip--${props.difficulty}`">
-    {{ DIFFICULTY_LABELS[props.difficulty] }}
+    {{ difficultyLabel(props.difficulty) }}
   </span>
 </template>
 

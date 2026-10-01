@@ -2,6 +2,9 @@
 import type { AlgorithmProblem } from '@/api/schemas/algorithms'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import { memoryLabel } from '@/lib/algorithms'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ problem: AlgorithmProblem }>()
 </script>
@@ -15,7 +18,8 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
         <span v-for="tag in props.problem.tags" :key="tag.id" class="topic">{{ tag.name }}</span>
       </div>
       <p class="limits">
-        {{ props.problem.timeLimitMs }} мс · {{ memoryLabel(props.problem.memoryLimitKb) }}
+        {{ t('units.ms', { value: props.problem.timeLimitMs }) }} ·
+        {{ memoryLabel(props.problem.memoryLimitKb) }}
         <a
           v-if="props.problem.externalUrl"
           :href="props.problem.externalUrl"
@@ -23,7 +27,7 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
           rel="noopener noreferrer"
           class="external"
         >
-          условие у провайдера ↗
+          {{ t('runner.providerStatement') }}
         </a>
       </p>
     </header>
@@ -33,14 +37,14 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
     <div class="prose" v-html="props.problem.statementHtml" />
 
     <details v-for="sample in props.problem.samples" :key="sample.position" class="sample" open>
-      <summary>пример {{ sample.position + 1 }}</summary>
+      <summary>{{ t('runner.sample', { number: sample.position + 1 }) }}</summary>
       <div class="sample-body">
         <div>
-          <span class="sample-label">ввод</span>
+          <span class="sample-label">{{ t('runner.input') }}</span>
           <pre>{{ sample.input }}</pre>
         </div>
         <div>
-          <span class="sample-label">вывод</span>
+          <span class="sample-label">{{ t('runner.output') }}</span>
           <pre>{{ sample.expectedOutput }}</pre>
         </div>
       </div>

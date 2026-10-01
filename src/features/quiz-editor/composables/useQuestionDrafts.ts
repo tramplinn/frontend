@@ -13,6 +13,7 @@ import {
   toQuestionOptions,
   type EditableQuestion,
 } from '@/features/quiz-editor/model/questionDraft'
+import { translate } from '@/i18n'
 
 const AUTOSAVE_DEBOUNCE_MS = 700
 
@@ -213,10 +214,13 @@ export function useQuestionDrafts(
     error.value = null
     const draft: QuestionDraft = {
       position: quiz.questions.length,
-      promptMd: 'Новый вопрос',
+      promptMd: translate('quizEditor.newQuestion'),
       type: 'single',
-      options: ['Вариант 1', 'Вариант 2'],
-      answer: { value: 'Вариант 1' },
+      options: [
+        translate('quizEditor.option', { number: 1 }),
+        translate('quizEditor.option', { number: 2 }),
+      ],
+      answer: { value: translate('quizEditor.option', { number: 1 }) },
     }
     try {
       const created = await createQuestion(quiz.id, draft)
@@ -233,7 +237,7 @@ export function useQuestionDrafts(
   async function attachFile(questionId: string, file: File): Promise<void> {
     const mime = assetMimeSchema.safeParse(file.type)
     if (!mime.success) {
-      error.value = new Error('Можно прикреплять изображения и PDF')
+      error.value = new Error(translate('quizEditor.onlyImagesPdf'))
       return
     }
     busy.value = `attachment-${questionId}`

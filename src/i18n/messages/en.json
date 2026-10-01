@@ -1,0 +1,773 @@
+{
+  "app": {
+    "title": "Tramplin",
+    "brand": "tramplin",
+    "skipLink": "skip to content"
+  },
+  "locale": {
+    "switcher": "Interface language",
+    "ru": "Русский",
+    "en": "English",
+    "saveFailed": "Language switched but not saved to your profile"
+  },
+  "theme": {
+    "system": "theme: system",
+    "light": "theme: light",
+    "dark": "theme: dark"
+  },
+  "nav": {
+    "breadcrumbs": "Breadcrumbs",
+    "home": "home",
+    "allSections": "all sections",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "continue": "continue",
+    "continueLearning": "Continue learning",
+    "crumbs": {
+      "sections": "all sections",
+      "learning": "my learning",
+      "algorithms": "algorithms",
+      "algorithmProblems": "algorithm problems",
+      "practice": "practice",
+      "newsItem": "news",
+      "catalog": "courses",
+      "profile": "profile",
+      "people": "people",
+      "content": "content",
+      "contentLesson": "content / lesson",
+      "contentQuiz": "content / quiz",
+      "news": "news",
+      "newsArticle": "news / article",
+      "users": "users"
+    }
+  },
+  "sections": {
+    "groups": {
+      "learning": "learning",
+      "teaching": "teaching",
+      "system": "system"
+    },
+    "news": {
+      "title": "news",
+      "summary": "What's happening"
+    },
+    "learning": {
+      "title": "my learning",
+      "summary": "What you've started and what's next"
+    },
+    "catalog": {
+      "title": "courses",
+      "summary": "Catalog by track"
+    },
+    "algorithms": {
+      "title": "algorithms",
+      "summary": "Problem trainer outside courses"
+    },
+    "people": {
+      "title": "people",
+      "summary": "Member profiles and progress"
+    },
+    "content": {
+      "title": "content",
+      "summary": "Tracks, courses, modules and lessons"
+    },
+    "newsDesk": {
+      "title": "news",
+      "summary": "Home page feed"
+    },
+    "algorithmLibrary": {
+      "title": "algorithm problems",
+      "summary": "Statements, tests and reference solutions"
+    },
+    "users": {
+      "title": "users",
+      "summary": "Roles and access"
+    }
+  },
+  "auth": {
+    "signIn": "sign in",
+    "dialog": "Sign in",
+    "lead": "Sign in to continue",
+    "providersFailed": "couldn't load sign-in options — you can continue with email",
+    "orEmail": "or with email",
+    "emailPlaceholder": "email",
+    "getCode": "get code",
+    "codeSent": "code sent to {email}",
+    "resendCode": "resend code",
+    "back": "back"
+  },
+  "providers": {
+    "yandex": "Yandex ID",
+    "email": "Email"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "heading": "feedback",
+    "lead": "An idea, a bug or a question — send it here.",
+    "thanks": "Thank you!",
+    "sent": "Your message has been sent.",
+    "whatHappened": "what happened?",
+    "placeholder": "Describe it briefly — we'll attach the page ourselves",
+    "removeAttachment": "Remove {name}",
+    "uploading": "uploading…",
+    "attach": "attach file",
+    "send": "send",
+    "tooManyFiles": "You can attach up to {max} files",
+    "wrongFileType": "{name}: only images or PDF can be uploaded"
+  },
+  "common": {
+    "close": "Close",
+    "closeLower": "close"
+  },
+  "notFound": {
+    "title": "page not found",
+    "toCourses": "to courses"
+  },
+  "errors": {
+    "missing": {
+      "lesson": "Lesson not found. The link may be outdated.",
+      "quiz": "Quiz not found. The link may be outdated."
+    },
+    "unavailable": "The service is temporarily unavailable. Please try again later.",
+    "network": "The server is not responding. Check your connection.",
+    "contract": "The server returned an unexpected response.",
+    "unknown": "Something went wrong.",
+    "streamNotOpened": "The server did not open the stream",
+    "http": "Error {status}"
+  },
+  "units": {
+    "hours": {
+      "one": "{count} hour",
+      "other": "{count} hours"
+    },
+    "lessons": {
+      "one": "{count} lesson",
+      "other": "{count} lessons"
+    },
+    "quizzes": {
+      "one": "{count} quiz",
+      "other": "{count} quizzes"
+    },
+    "questions": {
+      "one": "{count} question",
+      "other": "{count} questions"
+    },
+    "cards": {
+      "one": "{count} card",
+      "other": "{count} cards"
+    },
+    "people": {
+      "one": "{count} person",
+      "other": "{count} people"
+    },
+    "profiles": {
+      "one": "{count} profile",
+      "other": "{count} profiles"
+    },
+    "minutes": "{minutes} min",
+    "mebibytes": "{value} MiB",
+    "ms": "{value} ms"
+  },
+  "ui": {
+    "codeEditor": "Code editor",
+    "delete": "delete",
+    "confirmDelete": "really delete?",
+    "loading": "loading",
+    "retry": "retry",
+    "otpCode": "code from the email",
+    "progress": "Progress",
+    "actions": "actions",
+    "published": "published",
+    "draft": "draft",
+    "addTag": "add tag",
+    "removeTag": "remove tag {name}"
+  },
+  "assets": {
+    "typeNotAllowed": "Type {type} is not allowed. Allowed: {accepted}",
+    "unknownType": "unknown",
+    "pastedName": "paste",
+    "uploading": "uploading {name}…",
+    "uploadFailed": "Couldn't upload {name}"
+  },
+  "identity": {
+    "linkFailed": "Couldn't start linking.",
+    "unlinkFailed": "Couldn't unlink the sign-in method."
+  },
+  "unsaved": {
+    "default": "You have unsaved changes. Leave the page?",
+    "profile": "You have unsaved profile changes. Leave the page?",
+    "practiceSet": "You have unsaved practice set changes. Leave the page?",
+    "lesson": "You have unsaved lesson changes. Leave the page?",
+    "problem": "You have unsaved problem changes. Leave the page?",
+    "quiz": "You have unsaved quiz changes. Leave the page?",
+    "course": "You have unsaved course changes. Leave the page?",
+    "track": "You have unsaved track changes. Leave the page?",
+    "news": "You have unsaved news changes. Leave the page?",
+    "reflection": "You have an unsaved solution review. Leave the page?",
+    "module": "You have unsaved module changes. Leave the page?"
+  },
+  "profile": {
+    "grades": {
+      "learning": "Learning"
+    },
+    "mine": "my profile",
+    "defaultHeadline": "building a path in software development",
+    "experience": "{years} yrs experience",
+    "resumePdf": "resume (PDF)",
+    "statLessons": "lessons",
+    "statQuizzes": "quizzes",
+    "statProblems": "algorithm problems",
+    "learningNow": "currently learning",
+    "resumeOnlyPdf": "Resumes are accepted only as PDF",
+    "resumeUploadFailed": "Couldn't upload {name}",
+    "resume": "resume",
+    "openPdf": "open PDF",
+    "notUploaded": "not uploaded",
+    "uploading": "uploading…",
+    "chooseFile": "choose file",
+    "remove": "remove",
+    "notSelected": "not selected",
+    "endSessionsFailed": "Couldn't end the sessions.",
+    "signOutFailed": "Couldn't sign out. Please try again.",
+    "public": "public",
+    "about": "about me",
+    "name": "name",
+    "headline": "short bio",
+    "headlinePlaceholder": "What you do and where you're heading",
+    "specialty": "field",
+    "specialtyLabel": "Field",
+    "grade": "grade",
+    "gradeLabel": "Grade",
+    "experienceYears": "experience, years",
+    "company": "company",
+    "companyPlaceholder": "where you work",
+    "university": "university",
+    "universityPlaceholder": "where you study",
+    "interests": "interests",
+    "addInterest": "add an interest",
+    "interestsHint": "Enter or comma to add",
+    "details": "details",
+    "detailsPlaceholder": "Stack, goals",
+    "save": "save profile",
+    "private": "private",
+    "account": "account",
+    "login": "login",
+    "email": "email",
+    "studentId": "student ID",
+    "signInMethods": "sign-in methods",
+    "unlink": "unlink",
+    "confirmUnlink": "really unlink?",
+    "onlyMethod": "only sign-in method",
+    "linkProvider": "link {provider}",
+    "linkEmail": "link email",
+    "getCode": "get code",
+    "cancel": "cancel",
+    "link": "link",
+    "signOut": "sign out",
+    "signOutEverywhere": "sign out everywhere",
+    "confirmSignOutEverywhere": "end all sessions?"
+  },
+  "home": {
+    "heading": "my learning",
+    "empty": "You haven't started any courses yet.",
+    "openCatalog": "open the catalog →",
+    "completedLessons": "{lessons} completed",
+    "continue": "continue",
+    "courseProgress": "Progress: {title}",
+    "finished": "completed"
+  },
+  "catalog": {
+    "heading": "courses",
+    "empty": "nothing has been published yet",
+    "tracks": "Tracks",
+    "emptyTrack": "this track has no courses yet"
+  },
+  "course": {
+    "progress": "Course progress",
+    "lessonsDone": "{done} of {total} lessons",
+    "map": "course map",
+    "mapHint": "Links show the recommended order, not a lock: any module can be opened.",
+    "noModules": "this course has no modules yet",
+    "emptyModule": "this module has no materials yet",
+    "quiz": "quiz",
+    "interview": "interview",
+    "practice": "practice",
+    "open": "open"
+  },
+  "map": {
+    "label": "Course map",
+    "dragHint": "drag an empty spot",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "current": "to current",
+    "fit": "whole map",
+    "close": "close"
+  },
+  "lesson": {
+    "progressUnavailable": "Progress is temporarily unavailable.",
+    "markFailed": "Couldn't save the mark. Please try again.",
+    "interviewUnavailable": "Interview questions are temporarily unavailable.",
+    "completed": "completed",
+    "markCompleted": "mark as completed",
+    "signInToTrack": "sign in to track progress",
+    "interviewQuestions": "interview questions",
+    "showSpoiler": "show",
+    "extras": "Additional materials"
+  },
+  "pager": {
+    "toQuiz": "go to the quiz",
+    "backToQuiz": "to the quiz",
+    "toPractice": "to practice",
+    "nextLesson": "next lesson",
+    "previousLesson": "previous lesson",
+    "label": "Module materials",
+    "done": "{done} of {total} completed",
+    "quizTitle": "Quiz: {title}"
+  },
+  "quiz": {
+    "best": "best result: {score} of {max}",
+    "retry": "retake",
+    "fileType": "You can upload an image or a PDF",
+    "uploadFailed": "Couldn't upload the file",
+    "attach": "attach an image or a PDF",
+    "selfCheck": "I consider the task done",
+    "chooseMatch": "choose a match",
+    "placeInGroup": "Put the selected item into group {group}",
+    "materials": "materials:",
+    "correct": "correct",
+    "incorrect": "incorrect",
+    "answer": "answer",
+    "check": "check"
+  },
+  "news": {
+    "heading": "news",
+    "empty": "No news yet.",
+    "more": "show more",
+    "all": "all news",
+    "photoOf": "Photo {index} of {total}"
+  },
+  "people": {
+    "heading": "people",
+    "defaultSubtitle": "learning and growing",
+    "search": "name, login or field",
+    "empty": "nobody found",
+    "back": "back to people"
+  },
+  "recommend": {
+    "algorithms": "recommended algorithms",
+    "courses": "recommended courses"
+  },
+  "algorithms": {
+    "difficulty": {
+      "easy": "easy",
+      "medium": "medium",
+      "hard": "hard"
+    },
+    "verdicts": {
+      "accepted": "accepted",
+      "wrong_answer": "wrong answer",
+      "compile_error": "compilation error",
+      "runtime_error": "runtime error",
+      "time_limit": "time limit exceeded",
+      "memory_limit": "memory limit exceeded",
+      "output_limit": "output limit exceeded",
+      "internal_error": "internal error"
+    },
+    "noVerdict": "no verdict",
+    "heading": "algorithms",
+    "solvedStats": "solved {solved} of {shown} on this page · {total} total",
+    "searchLabel": "Search by title",
+    "searchPlaceholder": "search by title",
+    "difficultyLabel": "Difficulty",
+    "topics": "Topics",
+    "nothingFound": "Nothing found. Try removing filters.",
+    "attempts": "attempts: {count}",
+    "notStarted": "not started",
+    "back": "back",
+    "page": "page {page}",
+    "next": "next",
+    "toAll": "all problems",
+    "solved": "solved"
+  },
+  "practice": {
+    "status": {
+      "active": "in progress",
+      "completed": "completed",
+      "expired": "time is up"
+    },
+    "toCourse": "back to course",
+    "finish": "finish",
+    "takeaway": "what I took away from this session",
+    "optional": "Optional",
+    "finishSession": "finish session",
+    "tasks": "Set problems",
+    "empty": "this set has no problems yet"
+  },
+  "runner": {
+    "language": "Solution language",
+    "noLanguage": "no available language is configured for this problem",
+    "pastSolutions": "past solutions ({count})",
+    "pastSolutionsLabel": "Past solutions",
+    "reset": "start over",
+    "confirmReset": "really erase the solution?",
+    "unavailable": "not available in the runner:",
+    "source": "Solution source code",
+    "customInput": "custom input for the run",
+    "customStdin": "Custom stdin",
+    "run": "run",
+    "submit": "submit",
+    "failedTest": "test {number} failed",
+    "test": "test",
+    "testNumber": "test {number}",
+    "input": "input",
+    "expected": "expected",
+    "actual": "received",
+    "customRun": "custom input",
+    "sample": "example {number}",
+    "output": "output",
+    "providerStatement": "statement on the provider ↗"
+  },
+  "reflection": {
+    "title": "solution review",
+    "complexity": "complexity",
+    "complexityPlaceholder": "O(n log n) time, O(n) memory",
+    "confidence": "confidence",
+    "confidenceValue": "confidence {value} of 5",
+    "notes": "notes",
+    "notesPlaceholder": "The idea, where you got stuck, what to revisit",
+    "save": "save review"
+  },
+  "template": {
+    "autosave": "saved automatically",
+    "unverified": "reference solution not verified",
+    "verifiedAt": "verified {date}",
+    "heading": "solutions by language",
+    "language": "Template language",
+    "starter": "student starter code",
+    "starterLabel": "Starter code",
+    "solution": "reference solution",
+    "solutionLabel": "Reference solution",
+    "validate": "run against tests",
+    "removeLanguage": "remove language",
+    "confirmRemove": "really remove?",
+    "needTests": "Add at least one test and a reference solution."
+  },
+  "testCase": {
+    "title": "test {number}",
+    "sample": "show in the statement",
+    "weight": "weight",
+    "stdin": "input (stdin)",
+    "expected": "expected output"
+  },
+  "tutor": {
+    "lesson": {
+      "tabLabel": "Ask about the lesson",
+      "panelLabel": "Lesson assistant",
+      "hint": "about a term or an unclear part",
+      "blank": "Ask about a term from the lesson or have a piece of code explained. The assistant sees this lesson's text.",
+      "placeholder": "question about the lesson"
+    },
+    "problem": {
+      "tabLabel": "Ask about the problem",
+      "panelLabel": "Problem assistant",
+      "hint": "suggests an approach, not the full solution",
+      "blank": "Ask about an approach to the problem or a bug in your code. The assistant won't give a ready solution — only hints.",
+      "placeholder": "question about the problem"
+    },
+    "ask": "ask",
+    "clear": "clear",
+    "close": "Close",
+    "guestLimit": "Without signing in, a few questions are available.",
+    "thinking": "thinking…",
+    "question": "Question for the assistant",
+    "stop": "stop"
+  },
+  "mcp": {
+    "badRequest": "Invalid authorization request",
+    "eyebrow": "agent authorization",
+    "title": "Allow access to Tramplin?",
+    "description": "{client} will be able to read and edit course materials on your behalf. Publishing and deleting content are not allowed.",
+    "permission": "Permission",
+    "scope": "{scope} · drafts of courses and assignments",
+    "allow": "allow",
+    "deny": "cancel",
+    "checking": "Checking the request…"
+  },
+  "roles": {
+    "student": "student",
+    "teacher": "teacher",
+    "admin": "admin"
+  },
+  "admin": {
+    "heading": "users",
+    "search": "name, login or email",
+    "role": "Role",
+    "all": "all",
+    "person": "person",
+    "roleColumn": "role",
+    "access": "access",
+    "roleOf": "Role: {login}",
+    "active": "active",
+    "disabled": "disabled"
+  },
+  "fields": {
+    "title": "title",
+    "slug": "slug",
+    "summary": "summary",
+    "description": "description",
+    "color": "color",
+    "hours": "hours"
+  },
+  "manage": {
+    "actionsFor": "Actions: {title}",
+    "publish": "publish",
+    "unpublishShort": "unpublish",
+    "unpublish": "unpublish",
+    "toDraft": "to draft",
+    "publishAll": "publish all content",
+    "save": "save",
+    "cancel": "cancel",
+    "create": "create",
+    "up": "up",
+    "down": "down",
+    "remove": "remove",
+    "confirmRemove": "really remove?",
+    "topics": "topics",
+    "titlePlaceholder": "title",
+    "saving": "saving…",
+    "autosave": "saved automatically",
+    "saved": "saved",
+    "savedAt": "saved at {time}",
+    "toList": "back to list",
+    "toContent": "back to content",
+    "close": "Close",
+    "send": "send",
+    "thinking": "thinking…",
+    "loading": "uploading…",
+    "chooseFile": "choose file",
+    "none": "none",
+    "uploadFailed": "Couldn't upload {name}",
+    "coverOnlyImage": "The cover must be an image: {types}",
+    "cover": "cover",
+    "courseCover": "Cover of course {title}",
+    "startWriting": "Start writing",
+    "uploadingImage": "uploading image…",
+    "preview": "preview"
+  },
+  "content": {
+    "heading": "content",
+    "publishedCount": "published: {count}",
+    "sections": "Content section",
+    "tracksTab": "tracks",
+    "coursesTab": "courses",
+    "track": "track",
+    "trackTitle": "track title",
+    "noTracks": "no tracks yet",
+    "editTrack": "edit track",
+    "deleteTrack": "delete track",
+    "course": "course",
+    "addCourse": "+ course",
+    "courseTitle": "course title",
+    "courseTitleLabel": "Course title",
+    "noCourses": "no courses yet",
+    "createNew": "create new",
+    "addExisting": "or add an existing one",
+    "noMatches": "nothing matches the search",
+    "noTrack": "no track",
+    "editCourse": "edit course",
+    "upInTrack": "up in track",
+    "downInTrack": "down in track",
+    "detach": "remove from track",
+    "deleteCourse": "delete course",
+    "loading": "loading…",
+    "courseFailed": "the course failed to open",
+    "noModules": "the course has no modules",
+    "emptyPublished": "The course is published, but students will see an empty page: no module is published.",
+    "module": "module",
+    "moduleTitle": "module title",
+    "allDrafts": "All lessons and quizzes in the module are drafts",
+    "hidden": "hidden from students",
+    "publishedOf": "{published} of {total} published",
+    "editModule": "edit module",
+    "moduleLinks": "module links",
+    "deleteModule": "delete module",
+    "lesson": "lesson",
+    "lessonTitle": "lesson title",
+    "quiz": "quiz",
+    "quizTitle": "quiz title",
+    "practice": "practice",
+    "practiceTitle": "problem set title",
+    "cycle": "That would create a cycle: this module already depends on the current one.",
+    "linkFailed": "Couldn't change the link.",
+    "prerequisites": "required before this module",
+    "noOtherModules": "the course has no other modules",
+    "deleteLesson": "delete lesson",
+    "deleteQuiz": "delete quiz",
+    "deletePractice": "delete practice"
+  },
+  "photos": {
+    "left": "Move left",
+    "right": "Move right",
+    "remove": "Remove photo"
+  },
+  "assistant": {
+    "prompts": {
+      "clearer": "make it clearer",
+      "fixErrors": "fix mistakes",
+      "addExamples": "add examples",
+      "formatStatement": "format the statement",
+      "checkAmbiguity": "check for ambiguity",
+      "addConstraints": "add constraints"
+    },
+    "open": "Open the assistant",
+    "name": "Assistant",
+    "panel": "Teacher assistant",
+    "title": "assistant",
+    "hint": "suggests edits, you apply them",
+    "noChanges": "No changes needed.",
+    "reject": "reject",
+    "accept": "accept",
+    "changesOf": "Changes to {field}",
+    "applyAll": "apply all",
+    "placeholder": "For example: simplify the intro and add an example",
+    "what": "What to change",
+    "fields": {
+      "title": "title",
+      "bodyMd": "lesson text",
+      "statementMd": "statement",
+      "difficulty": "difficulty",
+      "tags": "topics",
+      "timeLimitMs": "time limit",
+      "memoryLimitKb": "memory limit",
+      "testCases": "tests",
+      "templates": "solutions by language"
+    },
+    "diff": {
+      "sample": "example",
+      "hidden": "hidden",
+      "input": "input",
+      "output": "output",
+      "starter": "starter",
+      "solution": "solution"
+    }
+  },
+  "quizEditor": {
+    "matchingPairs": "pairs to match",
+    "groupsAndItems": "categories and items",
+    "shuffled": "students will see them shuffled",
+    "term": "term",
+    "newTerm": "new term",
+    "match": "match",
+    "addPair": "+ pair",
+    "groupName": "group name",
+    "newGroup": "new group",
+    "removeGroup": "remove group",
+    "itemUp": "Move item up",
+    "itemDown": "Move item down",
+    "newItem": "new item",
+    "itemOf": "Item of group {group}",
+    "removeItem": "Remove item",
+    "addItem": "+ item",
+    "addGroup": "+ group",
+    "types": {
+      "single": "single answer",
+      "multiple": "multiple",
+      "text": "text",
+      "matching": "matching",
+      "grouping": "grouping",
+      "file": "file + self-check"
+    },
+    "prompt": "Question text",
+    "type": "Question type",
+    "correctOption": "Correct option {number}",
+    "option": "Option {number}",
+    "addOption": "+ option",
+    "acceptedAnswers": "accepted answers, one per line",
+    "caseSensitive": "case sensitive",
+    "fileHint": "The student attaches an image or a PDF and marks the task as done themselves.",
+    "materials": "task materials",
+    "attachFile": "+ attach file",
+    "explanation": "explanation, shown after answering",
+    "explanationLabel": "Explanation",
+    "newQuestion": "New question",
+    "onlyImagesPdf": "Only images and PDFs can be attached",
+    "unsavedQuestions": "Not all questions are saved — fill them in completely",
+    "moduleWide": "whole module",
+    "byLesson": "lesson “{title}”",
+    "topic": "Quiz topic",
+    "empty": "the quiz has no questions yet",
+    "addQuestion": "+ question"
+  },
+  "problemEditor": {
+    "incomplete": "Not all fields are filled — saving is postponed",
+    "blockers": {
+      "emptyStatement": "empty statement",
+      "noSample": "no example for the statement",
+      "noHidden": "no hidden test",
+      "unverified": "no reference solution is verified"
+    },
+    "queued": "queued",
+    "running": "running",
+    "toLibrary": "back to library",
+    "basics": "basics",
+    "difficulty": "difficulty",
+    "difficultyLabel": "Problem difficulty",
+    "timeLimit": "time limit, ms",
+    "memoryLimit": "memory limit, KiB",
+    "statementSource": "Problem statement in Markdown",
+    "startStatement": "Start writing the statement",
+    "tests": "tests",
+    "addTest": "+ test",
+    "addTests": "Add a public and a hidden test.",
+    "needTests": "Publishing requires a public and a hidden test."
+  },
+  "library": {
+    "heading": "algorithm problems",
+    "publishedOf": "{published} of {total} published",
+    "problem": "problem",
+    "newTitle": "new problem title",
+    "difficulty": "Difficulty",
+    "empty": "No problems yet. Create the first one above.",
+    "counts": "tests: {tests} · examples: {samples}"
+  },
+  "lessonEditor": {
+    "title": "Lesson title",
+    "source": "Lesson source",
+    "interviewParse": "The :::interview block couldn't be parsed — check the --- separator",
+    "emptyTitle": "The lesson title can't be empty"
+  },
+  "newsEditor": {
+    "heading": "news",
+    "item": "news item",
+    "titlePlaceholder": "news headline",
+    "empty": "No news yet.",
+    "delete": "delete news item",
+    "title": "News headline",
+    "lead": "lead",
+    "leadLabel": "News lead",
+    "photos": "photos",
+    "addPhoto": "+ photo",
+    "source": "News source",
+    "emptyTitle": "The news headline can't be empty",
+    "imageRequired": "{name}: an image is required ({types})"
+  },
+  "practiceEditor": {
+    "modes": {
+      "practice": "practice",
+      "mock_interview": "timed interview"
+    },
+    "noProblems": "the set has no problems",
+    "noDuration": "no duration set for the interview",
+    "settings": "set settings",
+    "mode": "mode",
+    "modeLabel": "Set mode",
+    "duration": "duration, minutes",
+    "save": "save set",
+    "problems": "problems",
+    "empty": "The set is empty. Add problems from the library — that's also where they're created.",
+    "fromLibrary": "Problem from the library",
+    "add": "add to set",
+    "noFree": "No available published problems.",
+    "createInLibrary": "Create in the library"
+  }
+}

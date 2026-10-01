@@ -8,6 +8,7 @@ import { assetMimeSchema, type Asset } from '@/api/schemas/assets'
 import FeedbackIcon from '@/components/layout/FeedbackIcon.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useFloatingPanel } from '@/composables/useFloatingPanel'
+import { useI18n } from '@/i18n'
 import { errorText } from '@/lib/errors'
 import { useAuthStore } from '@/stores/auth'
 
@@ -17,6 +18,7 @@ const ACCEPTED = assetMimeSchema.options.join(',')
 
 const auth = useAuthStore()
 const route = useRoute()
+const { t } = useI18n()
 const { isOpen: open, open: openPanel, close: closePanel } = useFloatingPanel('feedback')
 const message = ref('')
 const attachments = ref<Asset[]>([])
@@ -42,7 +44,7 @@ function close(): void {
 async function attachFiles(files: File[]): Promise<void> {
   if (files.length === 0) return
   if (files.length > MAX_ATTACHMENTS - attachments.value.length) {
-    error.value = `Можно прикрепить не больше ${String(MAX_ATTACHMENTS)} файлов`
+    error.value = t('feedback.tooManyFiles', { max: MAX_ATTACHMENTS })
     return
   }
 
@@ -52,7 +54,7 @@ async function attachFiles(files: File[]): Promise<void> {
     for (const file of files) {
       const mime = assetMimeSchema.safeParse(file.type)
       if (!mime.success) {
-        throw new Error(`${file.name}: можно загрузить изображение или PDF`)
+        throw new Error(t('feedback.wrongFileType', { name: file.name }))
       }
       attachments.value.push(await uploadAsset(file, mime.data))
     }
@@ -120,25 +122,25 @@ async function submit(): Promise<void> {
       v-if="!open"
       type="button"
       class="trigger"
-      aria-label="Обратная связь"
-      title="Обратная связь"
+      :aria-label="t('feedback.title')"
+      :title="t('feedback.title')"
       @click="show"
     >
       <FeedbackIcon />
     </button>
 
     <Transition name="feedback-panel">
-      <aside v-if="open" class="panel" aria-label="Обратная связь">
+      <aside v-if="open" class="panel" :aria-label="t('feedback.title')">
         <header class="panel-header">
           <div>
-            <h2>обратная связь</h2>
-            <p>Идея, ошибка или вопрос — всё сюда.</p>
+            <h2>{{ t('feedback.heading') }}</h2>
+            <p>{{ t('feedback.lead') }}</p>
           </div>
           <button
             type="button"
             class="close"
             :disabled="uploading || submitting"
-            aria-label="Закрыть"
+            :aria-label="t('common.close')"
             @click="close"
           >
             ×
@@ -148,22 +150,24 @@ async function submit(): Promise<void> {
         <div v-if="sent" class="success" role="status">
           <span aria-hidden="true">✓</span>
           <div>
-            <strong>Спасибо!</strong>
-            <p>Сообщение отправлено.</p>
+            <strong>{{ t('feedback.thanks') }}</strong>
+            <p>{{ t('feedback.sent') }}</p>
           </div>
-          <AppButton size="sm" variant="quiet" @click="close">закрыть</AppButton>
+          <AppButton size="sm" variant="quiet" @click="close">{{
+            t('common.closeLower')
+          }}</AppButton>
         </div>
 
         <form v-else class="form" @submit.prevent="submit">
           <label class="field">
-            <span class="label">что случилось?</span>
+            <span class="label">{{ t('feedback.whatHappened') }}</span>
             <textarea
               ref="textarea"
               v-model="message"
               class="message"
               rows="5"
               :maxlength="MAX_MESSAGE"
-              placeholder="Опишите коротко — страницу мы приложим сами"
+              :placeholder="t('feedback.placeholder')"
               @paste="pasteFiles"
             ></textarea>
           </label>
@@ -173,7 +177,7 @@ async function submit(): Promise<void> {
               <span :title="asset.filename">{{ asset.filename }}</span>
               <button
                 type="button"
-                :aria-label="`Убрать ${asset.filename}`"
+                :aria-label="t('feedback.removeAttachment', { name: asset.filename })"
                 :disabled="uploading"
                 @click="detach(asset.id)"
               >
@@ -187,7 +191,7 @@ async function submit(): Promise<void> {
               class="attach"
               :class="{ disabled: uploading || attachments.length >= MAX_ATTACHMENTS }"
             >
-              {{ uploading ? 'загружаю…' : 'прикрепить файл' }}
+              {{ uploading ? t('feedback.uploading') : t('feedback.attach') }}
               <input
                 class="visually-hidden"
                 type="file"
@@ -204,7 +208,7 @@ async function submit(): Promise<void> {
               :disabled="message.trim().length === 0 || uploading"
               :loading="submitting"
             >
-              отправить
+              {{ t('feedback.send') }}
             </AppButton>
           </div>
 

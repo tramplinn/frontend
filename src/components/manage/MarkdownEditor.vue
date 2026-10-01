@@ -2,6 +2,9 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import LessonBody from '@/components/lesson/LessonBody.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -12,7 +15,7 @@ const props = withDefaults(
     uploading?: boolean
     assetError?: string | null
     previewError?: string | null
-    emptyText?: string
+    emptyText?: string | undefined
     minHeight?: string
   }>(),
   {
@@ -20,7 +23,7 @@ const props = withDefaults(
     uploading: false,
     assetError: null,
     previewError: null,
-    emptyText: 'Начните писать',
+    emptyText: undefined,
     minHeight: '60vh',
   },
 )
@@ -53,7 +56,7 @@ onUnmounted(() => {
     <div class="pane">
       <div class="pane-head">
         <span class="pane-title">markdown</span>
-        <span v-if="props.uploading" class="pane-meta">загружаю изображение…</span>
+        <span v-if="props.uploading" class="pane-meta">{{ t('manage.uploadingImage') }}</span>
         <slot v-else name="source-meta" />
       </div>
       <textarea
@@ -73,10 +76,12 @@ onUnmounted(() => {
     </div>
 
     <div class="pane">
-      <div class="pane-head"><span class="pane-title">предпросмотр</span></div>
+      <div class="pane-head">
+        <span class="pane-title">{{ t('manage.preview') }}</span>
+      </div>
       <div class="preview">
         <LessonBody v-if="props.html" :html="props.html" />
-        <span v-else class="empty">{{ props.emptyText }}</span>
+        <span v-else class="empty">{{ props.emptyText ?? t('manage.startWriting') }}</span>
       </div>
       <p v-if="props.previewError" class="error">{{ props.previewError }}</p>
     </div>

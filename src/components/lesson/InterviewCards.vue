@@ -2,13 +2,16 @@
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 
 import type { InterviewCard } from '@/api/schemas/content'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ cards: InterviewCard[] }>()
 </script>
 
 <template>
   <section v-if="props.cards.length > 0" class="cards">
-    <h2 class="heading">вопросы с собеседований</h2>
+    <h2 class="heading">{{ t('lesson.interviewQuestions') }}</h2>
 
     <CollapsibleRoot v-for="card in props.cards" :key="card.id" class="card">
       <CollapsibleTrigger class="question">

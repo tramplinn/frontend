@@ -4,7 +4,10 @@ import type { RouteLocationRaw } from 'vue-router'
 import { useRoute } from 'vue-router'
 
 import SignInButton from '@/components/layout/SignInButton.vue'
+import LocaleSwitcher from '@/components/layout/LocaleSwitcher.vue'
 import ThemeToggle from '@/components/layout/ThemeToggle.vue'
+import type { MessageKey } from '@/i18n'
+import { localeSwitcherEnabled, useI18n } from '@/i18n'
 import { authNextPath } from '@/lib/authNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
@@ -17,6 +20,7 @@ interface Crumb {
 const auth = useAuthStore()
 const content = useContentStore()
 const route = useRoute()
+const { t } = useI18n()
 
 const nextPath = computed(() => authNextPath(route.fullPath, route.query.login))
 
@@ -25,40 +29,40 @@ function param(name: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-const SIMPLE_LABELS: Record<string, string> = {
-  sections: 'все разделы',
-  learning: 'моё обучение',
-  algorithms: 'алгосы',
-  'algorithm-solo': 'алгосы',
-  'manage-algorithms': 'алгозадачи',
-  'manage-algorithm': 'алгозадачи',
-  'manage-practice-set': 'практика',
-  'news-item': 'новость',
-  catalog: 'курсы',
-  profile: 'профиль',
-  people: 'люди',
-  'user-profile': 'профиль',
-  'manage-content': 'контент',
-  'manage-lesson': 'контент / урок',
-  'manage-quiz': 'контент / тест',
-  'manage-news': 'новости',
-  'manage-news-item': 'новости / статья',
-  'admin-users': 'пользователи',
+const SIMPLE_LABELS: Record<string, MessageKey> = {
+  sections: 'nav.crumbs.sections',
+  learning: 'nav.crumbs.learning',
+  algorithms: 'nav.crumbs.algorithms',
+  'algorithm-solo': 'nav.crumbs.algorithms',
+  'manage-algorithms': 'nav.crumbs.algorithmProblems',
+  'manage-algorithm': 'nav.crumbs.algorithmProblems',
+  'manage-practice-set': 'nav.crumbs.practice',
+  'news-item': 'nav.crumbs.newsItem',
+  catalog: 'nav.crumbs.catalog',
+  profile: 'nav.crumbs.profile',
+  people: 'nav.crumbs.people',
+  'user-profile': 'nav.crumbs.profile',
+  'manage-content': 'nav.crumbs.content',
+  'manage-lesson': 'nav.crumbs.contentLesson',
+  'manage-quiz': 'nav.crumbs.contentQuiz',
+  'manage-news': 'nav.crumbs.news',
+  'manage-news-item': 'nav.crumbs.newsArticle',
+  'admin-users': 'nav.crumbs.users',
 }
 
 const crumbs = computed<Crumb[]>(() => {
-  const trail: Crumb[] = [{ label: 'главная', to: { name: 'home' } }]
+  const trail: Crumb[] = [{ label: t('nav.home'), to: { name: 'home' } }]
   const courseSlug = param('course')
   if (!courseSlug) {
     const name = typeof route.name === 'string' ? route.name : ''
     const label = SIMPLE_LABELS[name]
     if (label !== undefined) {
-      trail.push({ label, to: null })
+      trail.push({ label: t(label), to: null })
     }
     return trail
   }
 
-  trail.push({ label: 'курсы', to: { name: 'catalog' } })
+  trail.push({ label: t('nav.crumbs.catalog'), to: { name: 'catalog' } })
   const course = content.courses.get(courseSlug)
   trail.push({
     label: course?.title.toLowerCase() ?? courseSlug,
@@ -91,7 +95,7 @@ const crumbs = computed<Crumb[]>(() => {
 
 <template>
   <header class="header">
-    <nav class="crumbs" aria-label="Хлебные крошки">
+    <nav class="crumbs" :aria-label="t('nav.breadcrumbs')">
       <template v-for="(crumb, index) in crumbs" :key="crumb.label + String(index)">
         <span v-if="index > 0" class="sep" aria-hidden="true">/</span>
         <RouterLink v-if="crumb.to" :to="crumb.to" class="crumb">{{ crumb.label }}</RouterLink>
@@ -100,6 +104,7 @@ const crumbs = computed<Crumb[]>(() => {
     </nav>
 
     <div class="side">
+      <LocaleSwitcher v-if="localeSwitcherEnabled" />
       <ThemeToggle />
       <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" />
     </div>

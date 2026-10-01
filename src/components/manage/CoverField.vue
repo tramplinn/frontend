@@ -4,6 +4,9 @@ import { ref } from 'vue'
 import { uploadAsset } from '@/api/assets'
 import { assetMimeSchema } from '@/api/schemas/assets'
 import AppButton from '@/components/ui/AppButton.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ alt: string }>()
 
@@ -26,7 +29,7 @@ async function pick(event: Event): Promise<void> {
   }
   const mime = assetMimeSchema.safeParse(file.type)
   if (!mime.success || !mime.data.startsWith('image/')) {
-    error.value = `Обложкой может быть только изображение: ${IMAGE_MIMES.join(', ')}`
+    error.value = t('manage.coverOnlyImage', { types: IMAGE_MIMES.join(', ') })
     return
   }
   error.value = null
@@ -36,7 +39,7 @@ async function pick(event: Event): Promise<void> {
     assetId.value = asset.id
     url.value = asset.url
   } catch {
-    error.value = `Не удалось загрузить ${file.name}`
+    error.value = t('manage.uploadFailed', { name: file.name })
   } finally {
     uploading.value = false
   }
@@ -50,10 +53,10 @@ function drop(): void {
 
 <template>
   <div class="cover">
-    <span class="label">обложка</span>
+    <span class="label">{{ t('manage.cover') }}</span>
     <div class="body">
       <img v-if="url" :src="url" :alt="props.alt" class="preview" />
-      <span v-else class="preview preview--empty">нет</span>
+      <span v-else class="preview preview--empty">{{ t('manage.none') }}</span>
 
       <div class="actions">
         <label class="upload">
@@ -64,9 +67,13 @@ function drop(): void {
             :disabled="uploading"
             @change="pick"
           />
-          <span class="upload-text">{{ uploading ? 'загружаю…' : 'выбрать файл' }}</span>
+          <span class="upload-text">{{
+            uploading ? t('manage.loading') : t('manage.chooseFile')
+          }}</span>
         </label>
-        <AppButton v-if="url" size="sm" variant="quiet" @click="drop">убрать</AppButton>
+        <AppButton v-if="url" size="sm" variant="quiet" @click="drop">{{
+          t('manage.remove')
+        }}</AppButton>
       </div>
     </div>
     <p v-if="error" class="error" role="alert">{{ error }}</p>

@@ -6,6 +6,9 @@ import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmSolo } from '@/features/algorithms/composables/useAlgorithmSolo'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ problem: string }>()
 const { error, load, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
@@ -15,8 +18,8 @@ const { error, load, pending, runner, solved } = useAlgorithmSolo(() => props.pr
   <LoadState :pending="pending" :error="error" @retry="load">
     <article class="solo">
       <header class="head">
-        <BackLink :to="{ name: 'algorithms' }">ко всем задачам</BackLink>
-        <span v-if="solved" class="chip solved">решена</span>
+        <BackLink :to="{ name: 'algorithms' }">{{ t('algorithms.toAll') }}</BackLink>
+        <span v-if="solved" class="chip solved">{{ t('algorithms.solved') }}</span>
       </header>
 
       <div v-if="runner.problem.value" class="workspace">

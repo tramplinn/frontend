@@ -4,11 +4,12 @@ import { getProblem, updateProblem, validateTemplate } from '@/api/algorithmAuth
 import type { AlgorithmLanguage, ProblemAuthor } from '@/api/schemas/algorithmAuthoring'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { errorText } from '@/lib/errors'
-import { ALL_LANGUAGES, INCOMPLETE_FIELDS_MESSAGE } from './problemEditorShared'
+import { ALL_LANGUAGES, incompleteFieldsMessage } from './problemEditorShared'
 import type { ProblemFields, SaveCoordinator, TestCaseFields } from './problemEditorShared'
 import { useProblemFieldsDraft } from './useProblemFieldsDraft'
 import { useTemplateDrafts } from './useTemplateDrafts'
 import { useTestCaseDrafts } from './useTestCaseDrafts'
+import { translate } from '@/i18n'
 
 export { ALL_LANGUAGES }
 export type { ProblemFields, TestCaseFields }
@@ -84,11 +85,11 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
   const publishBlockers = computed(() => {
     if (!loaded.value) return []
     const blockers: string[] = []
-    if (hasEmptyStatement.value) blockers.push('пустое условие')
-    if (hasNoSample.value) blockers.push('нет ни одного примера для условия')
-    if (hasNoHidden.value) blockers.push('нет ни одного скрытого теста')
+    if (hasEmptyStatement.value) blockers.push(translate('problemEditor.blockers.emptyStatement'))
+    if (hasNoSample.value) blockers.push(translate('problemEditor.blockers.noSample'))
+    if (hasNoHidden.value) blockers.push(translate('problemEditor.blockers.noHidden'))
     if (templates.hasNoValidatedTemplate.value)
-      blockers.push('ни одно эталонное решение не проверено')
+      blockers.push(translate('problemEditor.blockers.unverified'))
     return blockers
   })
 
@@ -131,7 +132,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     actionError.value = null
     const flushed = await flushAutosaves()
     if (!flushed) {
-      if (!(actionError.value as string | null)) actionError.value = INCOMPLETE_FIELDS_MESSAGE
+      if (!(actionError.value as string | null)) actionError.value = incompleteFieldsMessage()
       return
     }
     const problem = loaded.value
@@ -147,7 +148,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     actionError.value = null
     const flushed = await flushAutosaves()
     if (!flushed) {
-      if (!(actionError.value as string | null)) actionError.value = INCOMPLETE_FIELDS_MESSAGE
+      if (!(actionError.value as string | null)) actionError.value = incompleteFieldsMessage()
       return
     }
     const problem = loaded.value
@@ -157,7 +158,7 @@ export function useProblemEditor(problemId: MaybeRefOrGetter<string>) {
     })
   }
 
-  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения задачи. Уйти со страницы?')
+  useUnsavedChangesGuard(dirty, () => translate('unsaved.problem'))
 
   watch(
     () => toValue(problemId),

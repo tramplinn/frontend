@@ -4,6 +4,9 @@ import { computed, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
+import { translate, useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ runner: ReturnType<typeof useProblemRunner> }>()
 
@@ -44,26 +47,26 @@ const dirty = computed(
     confidence.value !== (progress.value?.confidence ?? null) ||
     notes.value !== (progress.value?.reflectionMd ?? ''),
 )
-useUnsavedChangesGuard(dirty, 'Есть несохранённый разбор решения. Уйти со страницы?')
+useUnsavedChangesGuard(dirty, () => translate('unsaved.reflection'))
 </script>
 
 <template>
   <details class="reflection">
-    <summary>разбор решения</summary>
+    <summary>{{ t('reflection.title') }}</summary>
 
     <div class="body">
       <label class="field">
-        <span>сложность</span>
+        <span>{{ t('reflection.complexity') }}</span>
         <input
           v-model="complexity"
           type="text"
           class="form-field"
-          placeholder="O(n log n) по времени, O(n) памяти"
+          :placeholder="t('reflection.complexityPlaceholder')"
         />
       </label>
 
       <fieldset class="field">
-        <legend>уверенность</legend>
+        <legend>{{ t('reflection.confidence') }}</legend>
         <div class="scale">
           <button
             v-for="value in [1, 2, 3, 4, 5]"
@@ -72,7 +75,7 @@ useUnsavedChangesGuard(dirty, 'Есть несохранённый разбор 
             class="dot"
             :class="{ 'dot--on': confidence !== null && value <= confidence }"
             :aria-pressed="confidence === value"
-            :aria-label="`уверенность ${value} из 5`"
+            :aria-label="t('reflection.confidenceValue', { value })"
             @click="confidence = confidence === value ? null : value"
           >
             {{ value }}
@@ -81,16 +84,16 @@ useUnsavedChangesGuard(dirty, 'Есть несохранённый разбор 
       </fieldset>
 
       <label class="field">
-        <span>заметки</span>
+        <span>{{ t('reflection.notes') }}</span>
         <textarea
           v-model="notes"
           rows="4"
           class="form-field"
-          placeholder="Идея, на чём споткнулся, что повторить"
+          :placeholder="t('reflection.notesPlaceholder')"
         />
       </label>
 
-      <AppButton :loading="savingReflection" @click="save">сохранить разбор</AppButton>
+      <AppButton :loading="savingReflection" @click="save">{{ t('reflection.save') }}</AppButton>
     </div>
   </details>
 </template>

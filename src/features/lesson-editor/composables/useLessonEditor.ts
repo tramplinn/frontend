@@ -9,6 +9,7 @@ import { useDebounce } from '@/composables/useDebounce'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { runBusyAction } from '@/lib/asyncAction'
+import { translate } from '@/i18n'
 
 const PREVIEW_DEBOUNCE_MS = 400
 const AUTOSAVE_DEBOUNCE_MS = 700
@@ -79,7 +80,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
       cards.value = preview.interviewCards
     } catch {
       if (previewGuard.isCurrent(version)) {
-        previewError.value = 'Блок :::interview не разобрался — проверьте разделитель ---'
+        previewError.value = translate('lessonEditor.interviewParse')
       }
     }
   }
@@ -138,7 +139,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
 
   async function setStatus(status: 'draft' | 'published'): Promise<void> {
     if (!title.value.trim()) {
-      saveError.value = new Error('Название урока не может быть пустым')
+      saveError.value = new Error(translate('lessonEditor.emptyTitle'))
       return
     }
     if (!(await flushAutosave())) return
@@ -175,7 +176,7 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
 
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
-  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения урока. Уйти со страницы?')
+  useUnsavedChangesGuard(dirty, () => translate('unsaved.lesson'))
 
   watch(
     () => toValue(lessonId),

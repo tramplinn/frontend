@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import { Label } from 'reka-ui'
 
 import type { QuestionType } from '@/api/schemas/common'
@@ -9,6 +11,9 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import InteractionBlockEditor from '@/components/quiz-editor/InteractionBlockEditor.vue'
 import type { EditableQuestion } from '@/features/quiz-editor/model/questionDraft'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 defineProps<{
   question: QuizQuestionAuthor
@@ -30,14 +35,17 @@ const emit = defineEmits<{
   remove: []
 }>()
 
-const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
-  { value: 'single', label: 'один ответ' },
-  { value: 'multiple', label: 'несколько' },
-  { value: 'text', label: 'текст' },
-  { value: 'matching', label: 'связывание' },
-  { value: 'grouping', label: 'по блокам' },
-  { value: 'file', label: 'файл + самопроверка' },
+const QUESTION_TYPE_VALUES: QuestionType[] = [
+  'single',
+  'multiple',
+  'text',
+  'matching',
+  'grouping',
+  'file',
 ]
+const QUESTION_TYPES = computed(() =>
+  QUESTION_TYPE_VALUES.map((value) => ({ value, label: t(`quizEditor.types.${value}`) })),
+)
 
 function inputValue(event: Event): string {
   return (event.target as HTMLInputElement).value
@@ -62,13 +70,13 @@ function pickAttachment(event: Event): void {
       <input
         class="prompt"
         :value="draft.promptMd"
-        aria-label="Текст вопроса"
+        :aria-label="t('quizEditor.prompt')"
         @input="emit('patch', { promptMd: inputValue($event) })"
       />
       <AppSelect
         :model-value="draft.type"
         :options="QUESTION_TYPES"
-        label="Тип вопроса"
+        :label="t('quizEditor.type')"
         @update:model-value="(type) => emit('patch', { type })"
       />
     </div>
@@ -80,7 +88,7 @@ function pickAttachment(event: Event): void {
           class="pick"
           :class="{ 'pick--on': draft.correct.includes(index) }"
           :aria-pressed="draft.correct.includes(index)"
-          :aria-label="`Верный вариант ${String(index + 1)}`"
+          :aria-label="t('quizEditor.correctOption', { number: index + 1 })"
           @click="emit('toggleCorrect', index)"
         >
           ✓
@@ -88,19 +96,21 @@ function pickAttachment(event: Event): void {
         <input
           class="option-input"
           :value="option"
-          :aria-label="`Вариант ${String(index + 1)}`"
+          :aria-label="t('quizEditor.option', { number: index + 1 })"
           @input="emit('setOption', index, inputValue($event))"
         />
         <AppButton size="sm" variant="quiet" @click="emit('removeOption', index)">
-          убрать
+          {{ t('manage.remove') }}
         </AppButton>
       </div>
-      <AppButton size="sm" variant="quiet" @click="emit('addOption')">+ вариант</AppButton>
+      <AppButton size="sm" variant="quiet" @click="emit('addOption')">{{
+        t('quizEditor.addOption')
+      }}</AppButton>
     </div>
 
     <div v-else-if="draft.type === 'text'" class="accepted">
       <label class="label" :for="`accepted-${question.id}`">
-        принимаемые ответы, по одному в строке
+        {{ t('quizEditor.acceptedAnswers') }}
       </label>
       <textarea
         :id="`accepted-${question.id}`"
@@ -115,7 +125,9 @@ function pickAttachment(event: Event): void {
           :model-value="draft.caseSensitive"
           @update:model-value="(caseSensitive) => emit('patch', { caseSensitive })"
         />
-        <Label :for="`case-${question.id}`" class="case-label">учитывать регистр</Label>
+        <Label :for="`case-${question.id}`" class="case-label">{{
+          t('quizEditor.caseSensitive')
+        }}</Label>
       </div>
     </div>
 
@@ -127,17 +139,17 @@ function pickAttachment(event: Event): void {
     />
 
     <p v-else class="file-note">
-      Студент прикрепит изображение или PDF и сам отметит задание выполненным.
+      {{ t('quizEditor.fileHint') }}
     </p>
 
     <div class="attachments">
-      <span class="label">материалы к заданию</span>
+      <span class="label">{{ t('quizEditor.materials') }}</span>
       <span v-for="asset in draft.attachments" :key="asset.id" class="attachment">
         <a :href="asset.url" target="_blank" rel="noopener">{{ asset.filename }}</a>
         <button type="button" class="attachment-remove" @click="emit('detach', asset.id)">×</button>
       </span>
       <label class="attachment-add">
-        + прикрепить файл
+        {{ t('quizEditor.attachFile') }}
         <input
           class="visually-hidden"
           type="file"
@@ -151,15 +163,15 @@ function pickAttachment(event: Event): void {
     <input
       class="explain"
       :value="draft.explainMd"
-      placeholder="разбор, показывается после ответа"
-      aria-label="Разбор"
+      :placeholder="t('quizEditor.explanation')"
+      :aria-label="t('quizEditor.explanationLabel')"
       @input="emit('patch', { explainMd: inputValue($event) })"
     />
 
     <div class="question-actions">
-      <span v-if="autosaving" class="save-state">сохраняю…</span>
-      <span v-else-if="dirty" class="save-state">сохранится автоматически</span>
-      <span v-else class="save-state saved">сохранено</span>
+      <span v-if="autosaving" class="save-state">{{ t('manage.saving') }}</span>
+      <span v-else-if="dirty" class="save-state">{{ t('manage.autosave') }}</span>
+      <span v-else class="save-state saved">{{ t('manage.saved') }}</span>
       <ConfirmButton :loading="busy === question.id" @confirm="emit('remove')" />
     </div>
   </li>

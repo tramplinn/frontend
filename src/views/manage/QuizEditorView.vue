@@ -6,6 +6,9 @@ import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useQuizEditor } from '@/features/quiz-editor/composables/useQuizEditor'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ quiz: string }>()
 
@@ -43,19 +46,19 @@ const {
         <AppSelect
           :model-value="boundLesson"
           :options="lessonOptions"
-          label="Тема теста"
+          :label="t('quizEditor.topic')"
           :disabled="busy === 'quiz'"
           @update:model-value="bindTo"
         />
         <div class="head-actions">
           <AppButton size="sm" :loading="busy === 'quiz'" @click="togglePublished">
-            {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
+            {{ loaded.status === 'published' ? t('manage.unpublish') : t('manage.publish') }}
           </AppButton>
-          <BackLink :to="{ name: 'manage-content' }">к списку</BackLink>
+          <BackLink :to="{ name: 'manage-content' }">{{ t('manage.toList') }}</BackLink>
         </div>
       </header>
 
-      <p v-if="loaded.questions.length === 0" class="empty">в тесте пока нет вопросов</p>
+      <p v-if="loaded.questions.length === 0" class="empty">{{ t('quizEditor.empty') }}</p>
 
       <ol class="questions">
         <template v-for="(question, index) in loaded.questions" :key="question.id">
@@ -79,7 +82,9 @@ const {
         </template>
       </ol>
 
-      <AppButton variant="secondary" :loading="busy === 'new'" @click="add">+ вопрос</AppButton>
+      <AppButton variant="secondary" :loading="busy === 'new'" @click="add">{{
+        t('quizEditor.addQuestion')
+      }}</AppButton>
     </section>
   </LoadState>
 </template>

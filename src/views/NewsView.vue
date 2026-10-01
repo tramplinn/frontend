@@ -8,6 +8,9 @@ import RecommendationsAside from '@/components/recommendations/RecommendationsAs
 import LoadState from '@/components/ui/LoadState.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const auth = useAuthStore()
 
@@ -56,10 +59,10 @@ onMounted(() => void load())
 <template>
   <div class="page">
     <section class="news-page">
-      <h1 class="heading">новости</h1>
+      <h1 class="heading">{{ t('news.heading') }}</h1>
 
       <LoadState :pending="pending" :error="error" @retry="load">
-        <p v-if="items.length === 0" class="blank">Новостей пока нет.</p>
+        <p v-if="items.length === 0" class="blank">{{ t('news.empty') }}</p>
 
         <template v-else>
           <div class="feed">
@@ -74,7 +77,7 @@ onMounted(() => void load())
             :loading="loadingMore"
             @click="loadMore"
           >
-            показать ещё
+            {{ t('news.more') }}
           </AppButton>
         </template>
       </LoadState>

@@ -8,6 +8,9 @@ import ProgressBar from '@/components/ui/ProgressBar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
 import { useProgressStore } from '@/stores/progress'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ course: string }>()
 
@@ -80,19 +83,24 @@ watch(
           <ProgressBar
             :value="courseProgress.completedLessons"
             :max="courseProgress.totalLessons"
-            label="Прогресс по курсу"
+            :label="t('course.progress')"
           />
           <span class="progress-text">
-            {{ courseProgress.completedLessons }} из {{ courseProgress.totalLessons }} уроков
+            {{
+              t('course.lessonsDone', {
+                done: courseProgress.completedLessons,
+                total: courseProgress.totalLessons,
+              })
+            }}
           </span>
         </div>
       </header>
 
       <section v-if="tree.modules.length > 0" class="map">
         <div class="map-head">
-          <h2 class="section-title">карта курса</h2>
+          <h2 class="section-title">{{ t('course.map') }}</h2>
           <p class="hint">
-            Связи — рекомендованный порядок, а не замок: открыть можно любой модуль.
+            {{ t('course.mapHint') }}
           </p>
         </div>
 
@@ -105,7 +113,7 @@ watch(
         />
       </section>
 
-      <p v-else class="empty">в курсе пока нет модулей</p>
+      <p v-else class="empty">{{ t('course.noModules') }}</p>
 
       <section v-if="selected" ref="detail" class="detail" :aria-label="selected.title">
         <header class="detail-head">
@@ -113,7 +121,7 @@ watch(
           <p v-if="selected.summary" class="detail-summary">{{ selected.summary }}</p>
         </header>
 
-        <p v-if="selected.items.length === 0" class="empty">в модуле пока нет материалов</p>
+        <p v-if="selected.items.length === 0" class="empty">{{ t('course.emptyModule') }}</p>
 
         <ul v-else class="list">
           <li v-for="item in selected.items" :key="item.id">
@@ -128,7 +136,7 @@ watch(
               <span class="dot" :class="{ 'dot--done': progress.isCompleted(item.lesson.id) }" />
               <span class="row-title">{{ item.lesson.title }}</span>
               <span v-if="item.lesson.estMinutes !== null" class="row-meta">
-                {{ item.lesson.estMinutes }} мин
+                {{ t('units.minutes', { minutes: item.lesson.estMinutes }) }}
               </span>
             </RouterLink>
             <RouterLink
@@ -141,7 +149,7 @@ watch(
             >
               <span class="dot dot--quiz" />
               <span class="row-title">{{ item.quiz.title }}</span>
-              <span class="row-meta">тест</span>
+              <span class="row-meta">{{ t('course.quiz') }}</span>
             </RouterLink>
             <RouterLink
               v-else
@@ -154,7 +162,11 @@ watch(
               <span class="dot dot--practice" />
               <span class="row-title">{{ item.practiceSet.title }}</span>
               <span class="row-meta">
-                {{ item.practiceSet.mode === 'mock_interview' ? 'интервью' : 'практика' }}
+                {{
+                  item.practiceSet.mode === 'mock_interview'
+                    ? t('course.interview')
+                    : t('course.practice')
+                }}
               </span>
             </RouterLink>
           </li>

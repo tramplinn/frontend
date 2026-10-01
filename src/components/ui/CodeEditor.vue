@@ -33,6 +33,7 @@ import {
 } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { onBeforeUnmount, onMounted, shallowRef, watch } from 'vue'
+import { translate } from '@/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -40,14 +41,14 @@ const props = withDefaults(
     language?: string
     readonly?: boolean
     minHeight?: string
-    ariaLabel?: string
+    ariaLabel?: string | undefined
     highlightActiveLine?: boolean
   }>(),
   {
     language: 'python',
     readonly: false,
     minHeight: '420px',
-    ariaLabel: 'Редактор кода',
+    ariaLabel: undefined,
     highlightActiveLine: true,
   },
 )
@@ -221,7 +222,9 @@ onMounted(() => {
         ]),
         theme,
         EditorView.lineWrapping,
-        EditorView.contentAttributes.of({ 'aria-label': props.ariaLabel }),
+        EditorView.contentAttributes.of({
+          'aria-label': props.ariaLabel ?? translate('ui.codeEditor'),
+        }),
         languageSlot.of(languageExtension(props.language)),
         readonlySlot.of(EditorState.readOnly.of(props.readonly)),
         EditorView.updateListener.of((update) => {

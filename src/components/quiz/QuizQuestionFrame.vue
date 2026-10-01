@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { QuizQuestion } from '@/api/schemas/content'
 import type { QuestionResult } from '@/api/schemas/learning'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 defineProps<{
   question: QuizQuestion
@@ -17,7 +20,7 @@ defineProps<{
     </div>
 
     <div v-if="question.attachments.length" class="materials">
-      <span class="materials-label">материалы:</span>
+      <span class="materials-label">{{ t('quiz.materials') }}</span>
       <a
         v-for="asset in question.attachments"
         :key="asset.id"
@@ -32,7 +35,7 @@ defineProps<{
     <slot />
 
     <p v-if="result" class="verdict" :class="result.correct ? 'verdict--ok' : 'verdict--bad'">
-      {{ result.correct ? 'верно' : 'неверно' }}
+      {{ result.correct ? t('quiz.correct') : t('quiz.incorrect') }}
       <span v-if="result.explanation" class="explain"> — {{ result.explanation }} </span>
     </p>
   </li>

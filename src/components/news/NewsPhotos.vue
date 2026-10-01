@@ -2,6 +2,9 @@
 import { computed, ref } from 'vue'
 
 import type { Asset } from '@/api/schemas/assets'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{ photos: Asset[]; compact?: boolean }>(), {
   compact: false,
@@ -30,7 +33,7 @@ const shown = computed(() => props.photos[Math.min(current.value, props.photos.l
         type="button"
         class="thumb"
         :class="{ 'thumb--active': index === current }"
-        :aria-label="`Фото ${String(index + 1)} из ${String(props.photos.length)}`"
+        :aria-label="t('news.photoOf', { index: index + 1, total: props.photos.length })"
         :aria-current="index === current"
         @click="current = index"
       >

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
 
+import { useI18n } from '@/i18n'
+
+const { locale, t } = useI18n()
+
 const props = defineProps<{ html: string }>()
 
 const container = ref<HTMLElement | null>(null)
@@ -14,18 +18,20 @@ function upgradeSpoilers(): void {
     const details = document.createElement('details')
     details.className = 'spoiler'
     const summary = document.createElement('summary')
-    summary.textContent = 'показать'
     details.append(summary)
     while (block.firstChild) {
       details.append(block.firstChild)
     }
     block.replaceWith(details)
   }
+  for (const summary of root.querySelectorAll('details.spoiler > summary')) {
+    summary.textContent = t('lesson.showSpoiler')
+  }
 }
 
 onMounted(upgradeSpoilers)
 watch(
-  () => props.html,
+  () => [props.html, locale.value],
   () => void nextTick(upgradeSpoilers),
 )
 </script>

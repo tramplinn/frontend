@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { Asset } from '@/api/schemas/assets'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ photos: Asset[]; busy: boolean }>()
 
@@ -19,7 +22,7 @@ const emit = defineEmits<{
           type="button"
           class="control"
           :disabled="props.busy || index === 0"
-          aria-label="Левее"
+          :aria-label="t('photos.left')"
           @click="emit('move', index, -1)"
         >
           ←
@@ -28,7 +31,7 @@ const emit = defineEmits<{
           type="button"
           class="control"
           :disabled="props.busy || index === props.photos.length - 1"
-          aria-label="Правее"
+          :aria-label="t('photos.right')"
           @click="emit('move', index, 1)"
         >
           →
@@ -37,7 +40,7 @@ const emit = defineEmits<{
           type="button"
           class="control control--danger"
           :disabled="props.busy"
-          aria-label="Убрать фото"
+          :aria-label="t('photos.remove')"
           @click="emit('detach', photo.id)"
         >
           ✕

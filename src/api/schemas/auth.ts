@@ -49,6 +49,8 @@ export const userSchema = z.object({
 
 export const meSchema = userSchema.extend({
   identities: z.array(identitySchema).default([]),
+  // Поле появилось вместе с RU/EN; до миграции бэкенд его не отдаёт.
+  preferredLocale: z.enum(['ru', 'en']).nullable().default(null),
 })
 
 export const mcpAuthorizationRequestSchema = z.object({

@@ -7,21 +7,20 @@ import BrandMark from '@/components/layout/BrandMark.vue'
 import ProviderIcon from '@/components/layout/ProviderIcon.vue'
 import OtpInput from '@/components/ui/OtpInput.vue'
 import { runBusyAction } from '@/lib/asyncAction'
+import { useI18n } from '@/i18n'
 import { errorText } from '@/lib/errors'
 import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 
 const props = withDefaults(
-  defineProps<{ nextPath: string; label?: string; size?: 'sm' | 'md' }>(),
-  {
-    label: 'войти',
-    size: 'md',
-  },
+  defineProps<{ nextPath: string; label?: string | undefined; size?: 'sm' | 'md' }>(),
+  { label: undefined, size: 'md' },
 )
 
 type Step = 'providers' | 'email-code'
 
 const auth = useAuthStore()
+const { t } = useI18n()
 const open = ref(false)
 const step = ref<Step>('providers')
 const busy = ref(false)
@@ -109,20 +108,22 @@ async function submitCode(): Promise<void> {
 <template>
   <div class="signin">
     <AppButton :size="props.size" variant="primary" @click="start">
-      {{ props.label }}
+      {{ props.label ?? t('auth.signIn') }}
     </AppButton>
 
     <Teleport to="body">
       <div v-if="open" class="overlay" @click.self="reset">
-        <div class="panel" role="dialog" aria-modal="true" aria-label="Вход">
-          <button type="button" class="close" aria-label="Закрыть" @click="reset">×</button>
+        <div class="panel" role="dialog" aria-modal="true" :aria-label="t('auth.dialog')">
+          <button type="button" class="close" :aria-label="t('common.close')" @click="reset">
+            ×
+          </button>
 
           <div class="head">
             <div class="brand">
               <BrandMark />
-              <span>трамплин</span>
+              <span>{{ t('app.brand') }}</span>
             </div>
-            <p class="lead">Войдите, чтобы продолжить</p>
+            <p class="lead">{{ t('auth.lead') }}</p>
           </div>
 
           <template v-if="step === 'providers'">
@@ -141,33 +142,39 @@ async function submitCode(): Promise<void> {
             </div>
 
             <p v-if="auth.providers.length === 0 && auth.providersError" class="providers-error">
-              не получилось загрузить способы входа — можно продолжить по почте
+              {{ t('auth.providersFailed') }}
             </p>
 
-            <div v-if="auth.providers.length > 0" class="divider"><span>или по почте</span></div>
+            <div v-if="auth.providers.length > 0" class="divider">
+              <span>{{ t('auth.orEmail') }}</span>
+            </div>
 
             <form class="email-form" @submit.prevent="sendCode">
               <input
                 v-model="email"
                 type="email"
                 class="text-field"
-                placeholder="почта"
+                :placeholder="t('auth.emailPlaceholder')"
                 autocomplete="email"
                 required
               />
-              <AppButton type="submit" variant="primary" :loading="busy">получить код</AppButton>
+              <AppButton type="submit" variant="primary" :loading="busy">{{
+                t('auth.getCode')
+              }}</AppButton>
             </form>
           </template>
 
           <form v-else class="email-form" @submit.prevent="submitCode">
-            <p class="hint">код отправлен на {{ email }}</p>
+            <p class="hint">{{ t('auth.codeSent', { email }) }}</p>
             <OtpInput v-model="code" autofocus :disabled="busy" @complete="submitCode" />
-            <AppButton type="submit" variant="primary" :loading="busy">войти</AppButton>
+            <AppButton type="submit" variant="primary" :loading="busy">{{
+              t('auth.signIn')
+            }}</AppButton>
             <button type="button" class="link-btn" :disabled="busy" @click="sendCode">
-              отправить код ещё раз
+              {{ t('auth.resendCode') }}
             </button>
             <button type="button" class="link-btn" :disabled="busy" @click="step = 'providers'">
-              назад
+              {{ t('auth.back') }}
             </button>
           </form>
 

@@ -76,6 +76,7 @@ export interface ProfileChanges {
   university?: string | null
   interests?: string[]
   resumeAssetId?: string | null
+  preferredLocale?: 'ru' | 'en'
 }
 
 export function updateProfile(changes: ProfileChanges): Promise<Me> {

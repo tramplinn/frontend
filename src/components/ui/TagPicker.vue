@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
     modelValue: string[]
     suggestions?: string[]
-    placeholder?: string
+    placeholder?: string | undefined
   }>(),
-  { suggestions: () => [], placeholder: 'добавить тег' },
+  { suggestions: () => [], placeholder: undefined },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
@@ -105,7 +108,7 @@ function onKeydown(event: KeyboardEvent): void {
         <button
           type="button"
           class="remove"
-          :aria-label="`убрать тег ${name}`"
+          :aria-label="t('ui.removeTag', { name })"
           @click="remove(name)"
         >
           ×
@@ -120,7 +123,7 @@ function onKeydown(event: KeyboardEvent): void {
           :aria-expanded="open && options.length > 0"
           :aria-controls="listboxId"
           :aria-activedescendant="activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined"
-          :placeholder="modelValue.length === 0 ? placeholder : ''"
+          :placeholder="modelValue.length === 0 ? (props.placeholder ?? t('ui.addTag')) : ''"
           @keydown="onKeydown"
           @focus="open = true"
           @blur="

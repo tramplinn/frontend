@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
+import { applyLocale, currentLocale, localeSwitcherEnabled, parseLocale } from '@/i18n'
 import { reloadOnStaleChunk } from '@/lib/staleChunk'
 import { useAuthStore } from '@/stores/auth'
 
@@ -173,6 +174,26 @@ export const router = createRouter({
   scrollBehavior(_to, _from, saved) {
     return saved ?? { top: 0 }
   },
+})
+
+/** Язык, явно заданный ссылкой, едет с пользователем по внутренним переходам
+    и применяется к сессии, не трогая сохранённое предпочтение. */
+router.beforeEach((to, from) => {
+  if (!localeSwitcherEnabled) {
+    return true
+  }
+  const requested = parseLocale(to.query.locale)
+  if (requested !== null) {
+    if (requested !== currentLocale()) {
+      applyLocale(requested, 'url')
+    }
+    return true
+  }
+  const carried = parseLocale(from.query.locale)
+  if (carried !== null && to.query.locale === undefined) {
+    return { path: to.path, query: { ...to.query, locale: carried }, hash: to.hash }
+  }
+  return true
 })
 
 router.beforeEach(async (to) => {

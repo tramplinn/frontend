@@ -4,6 +4,7 @@ import { linkUrl, requestEmailLinkCode, unlinkIdentity, verifyEmailLinkCode } fr
 import type { IdentityProvider } from '@/api/schemas/common'
 import { errorText } from '@/lib/errors'
 import { useAuthStore } from '@/stores/auth'
+import { translate } from '@/i18n'
 
 export function useIdentityLinking() {
   const auth = useAuthStore()
@@ -29,7 +30,7 @@ export function useIdentityLinking() {
       const { authorizeUrl } = await linkUrl(provider, '/me')
       window.location.assign(authorizeUrl)
     } catch {
-      error.value = 'Не удалось начать привязку.'
+      error.value = translate('identity.linkFailed')
       busyAction.value = null
     }
   }
@@ -41,7 +42,7 @@ export function useIdentityLinking() {
       await unlinkIdentity(provider)
       await auth.reload()
     } catch {
-      error.value = 'Не удалось отвязать способ входа.'
+      error.value = translate('identity.unlinkFailed')
     } finally {
       busyAction.value = null
     }

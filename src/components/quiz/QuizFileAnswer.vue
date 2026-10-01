@@ -4,6 +4,9 @@ import { ref } from 'vue'
 import { uploadAsset } from '@/api/assets'
 import { assetMimeSchema, type Asset } from '@/api/schemas/assets'
 import AppCheckbox from '@/components/ui/AppCheckbox.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 defineProps<{ questionId: string; reviewing: boolean }>()
 const emit = defineEmits<{ answer: [value: unknown] }>()
@@ -26,7 +29,7 @@ async function pickFile(event: Event): Promise<void> {
 
   const mime = assetMimeSchema.safeParse(file.type)
   if (!mime.success) {
-    error.value = 'Можно загрузить изображение или PDF'
+    error.value = t('quiz.fileType')
     return
   }
 
@@ -36,7 +39,7 @@ async function pickFile(event: Event): Promise<void> {
     asset.value = await uploadAsset(file, mime.data)
     publish()
   } catch {
-    error.value = 'Не удалось загрузить файл'
+    error.value = t('quiz.uploadFailed')
   } finally {
     uploading.value = false
   }
@@ -51,7 +54,7 @@ function setConfirmed(value: boolean): void {
 <template>
   <div class="file-answer">
     <label class="file-picker">
-      {{ asset?.filename ?? 'прикрепить изображение или PDF' }}
+      {{ asset?.filename ?? t('quiz.attach') }}
       <input
         class="visually-hidden"
         type="file"
@@ -67,7 +70,7 @@ function setConfirmed(value: boolean): void {
         :disabled="reviewing"
         @update:model-value="setConfirmed"
       />
-      считаю задание выполненным
+      {{ t('quiz.selfCheck') }}
     </label>
     <span v-if="error" class="upload-error">{{ error }}</span>
   </div>

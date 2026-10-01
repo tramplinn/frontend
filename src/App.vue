@@ -2,10 +2,15 @@
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import FeedbackWidget from '@/components/layout/FeedbackWidget.vue'
+import { useI18n } from '@/i18n'
+import { installLocaleSync } from '@/i18n/useLocaleSync'
+
+const { t } = useI18n()
+installLocaleSync()
 </script>
 
 <template>
-  <a class="skip-link" href="#main-content">к содержанию</a>
+  <a class="skip-link" href="#main-content">{{ t('app.skipLink') }}</a>
   <div class="shell">
     <AppSidebar />
     <div class="content">

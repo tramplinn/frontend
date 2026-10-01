@@ -13,6 +13,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { MissingContentError, errorText } from '@/lib/errors'
 import { useContentStore } from '@/stores/content'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ course: string; module: string; quiz: string }>()
 
@@ -54,7 +57,7 @@ async function load(): Promise<void> {
     if (version !== loadVersion) return
     const found = content.findQuiz(target.course, target.module, target.quiz)
     if (!found) {
-      error.value = new MissingContentError('Тест')
+      error.value = new MissingContentError('quiz')
       return
     }
     // В дереве курса вопросы уже есть, но берём тест отдельно:
@@ -109,14 +112,14 @@ watch(
       <template #header>
         <h1 class="title">{{ loaded.title }}</h1>
         <p v-if="best && !attempt" class="meta">
-          лучший результат: {{ best.score }} из {{ best.maxScore }}
+          {{ t('quiz.best', { score: best.score, max: best.maxScore }) }}
         </p>
       </template>
 
       <template #before-sheet>
         <div v-if="attempt" class="score">
           <span class="score-value">{{ attempt.score }} / {{ attempt.maxScore }}</span>
-          <AppButton size="sm" @click="retry">пройти заново</AppButton>
+          <AppButton size="sm" @click="retry">{{ t('quiz.retry') }}</AppButton>
         </div>
 
         <p v-if="submitError" class="submit-error" role="alert">{{ errorText(submitError) }}</p>

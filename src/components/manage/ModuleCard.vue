@@ -13,6 +13,9 @@ import {
   isPublishedModuleEmpty,
   publishedItemCount,
 } from '@/features/content/model/contentTree'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   module: ModuleTree
@@ -54,23 +57,36 @@ const emit = defineEmits<{
       <span
         v-if="isPublishedModuleEmpty(props.module)"
         class="chip warn-chip"
-        title="Все уроки и тесты модуля — черновики"
+        :title="t('content.allDrafts')"
       >
-        не видно студентам
+        {{ t('content.hidden') }}
       </span>
       <span class="module-meta">
-        {{ publishedItemCount(props.module) }} из {{ props.module.items.length }} опубликовано
+        {{
+          t('content.publishedOf', {
+            published: publishedItemCount(props.module),
+            total: props.module.items.length,
+          })
+        }}
       </span>
-      <RowMenu class="actions" :disabled="props.busy" :label="`Действия: ${props.module.title}`">
-        <RowMenuItem @select="emit('edit')">изменить модуль</RowMenuItem>
-        <RowMenuItem @select="emit('toggleDeps')">связи модуля</RowMenuItem>
+      <RowMenu
+        class="actions"
+        :disabled="props.busy"
+        :label="t('manage.actionsFor', { title: props.module.title })"
+      >
+        <RowMenuItem @select="emit('edit')">{{ t('content.editModule') }}</RowMenuItem>
+        <RowMenuItem @select="emit('toggleDeps')">{{ t('content.moduleLinks') }}</RowMenuItem>
         <RowMenuItem @select="emit('publish')">
           {{ contentStatusAction(props.module.status) }}
         </RowMenuItem>
-        <RowMenuItem @select="emit('publishCascade')">опубликовать всё содержимое</RowMenuItem>
-        <RowMenuItem :disabled="props.first" @select="emit('move', -1)">выше</RowMenuItem>
-        <RowMenuItem :disabled="props.last" @select="emit('move', 1)">ниже</RowMenuItem>
-        <RowMenuItem danger @select="emit('remove')">удалить модуль</RowMenuItem>
+        <RowMenuItem @select="emit('publishCascade')">{{ t('manage.publishAll') }}</RowMenuItem>
+        <RowMenuItem :disabled="props.first" @select="emit('move', -1)">{{
+          t('manage.up')
+        }}</RowMenuItem>
+        <RowMenuItem :disabled="props.last" @select="emit('move', 1)">{{
+          t('manage.down')
+        }}</RowMenuItem>
+        <RowMenuItem danger @select="emit('remove')">{{ t('content.deleteModule') }}</RowMenuItem>
       </RowMenu>
     </div>
 
@@ -107,20 +123,20 @@ const emit = defineEmits<{
 
       <div class="module-add">
         <InlineCreate
-          label="урок"
-          placeholder="название урока"
+          :label="t('content.lesson')"
+          :placeholder="t('content.lessonTitle')"
           :saving="props.busy"
           @create="(draft) => emit('addLesson', draft)"
         />
         <InlineCreate
-          label="тест"
-          placeholder="название теста"
+          :label="t('content.quiz')"
+          :placeholder="t('content.quizTitle')"
           :saving="props.busy"
           @create="(draft) => emit('addQuiz', draft)"
         />
         <InlineCreate
-          label="практику"
-          placeholder="название набора задач"
+          :label="t('content.practice')"
+          :placeholder="t('content.practiceTitle')"
           :saving="props.busy"
           @create="(draft) => emit('addPractice', { title: draft.title })"
         />

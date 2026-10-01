@@ -12,6 +12,9 @@ import AppButton from '@/components/ui/AppButton.vue'
 import { useFloatingPanel } from '@/composables/useFloatingPanel'
 import { errorText } from '@/lib/errors'
 import { changesFor as diffChangesFor, type PatchField, patchFor } from '@/lib/teacherAssistantDiff'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   surface: TeacherAssistantSurface
@@ -28,8 +31,16 @@ const log = ref<HTMLElement | null>(null)
 
 const prompts = computed(() =>
   props.surface === 'lesson'
-    ? ['сделай понятнее', 'исправь ошибки', 'добавь примеры']
-    : ['оформи условие', 'проверь однозначность', 'добавь ограничения'],
+    ? [
+        t('assistant.prompts.clearer'),
+        t('assistant.prompts.fixErrors'),
+        t('assistant.prompts.addExamples'),
+      ]
+    : [
+        t('assistant.prompts.formatStatement'),
+        t('assistant.prompts.checkAmbiguity'),
+        t('assistant.prompts.addConstraints'),
+      ],
 )
 
 interface UserTurn {
@@ -104,8 +115,8 @@ function applyAllFor(turn: AssistantTurn): void {
       v-if="!open"
       type="button"
       class="assistant-tab"
-      aria-label="Открыть помощника"
-      title="Помощник"
+      :aria-label="t('assistant.open')"
+      :title="t('assistant.name')"
       @click="openPanel"
     >
       <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
@@ -114,13 +125,18 @@ function applyAllFor(turn: AssistantTurn): void {
     </button>
 
     <Transition name="assistant-drawer">
-      <section v-if="open" class="chat" aria-label="Помощник преподавателя">
+      <section v-if="open" class="chat" :aria-label="t('assistant.panel')">
         <header class="head">
           <div class="bar">
-            <span class="title">помощник</span>
-            <span class="hint">предложит правки, а примените их вы</span>
+            <span class="title">{{ t('assistant.title') }}</span>
+            <span class="hint">{{ t('assistant.hint') }}</span>
           </div>
-          <button type="button" class="control close" aria-label="Закрыть" @click="closePanel">
+          <button
+            type="button"
+            class="control close"
+            :aria-label="t('manage.close')"
+            @click="closePanel"
+          >
             ×
           </button>
         </header>
@@ -131,20 +147,26 @@ function applyAllFor(turn: AssistantTurn): void {
 
             <div v-else class="turn turn--assistant">
               <p class="explanation">{{ turn.suggestion.explanation }}</p>
-              <p v-if="changesFor(turn).length === 0" class="muted">Изменений не требуется.</p>
+              <p v-if="changesFor(turn).length === 0" class="muted">
+                {{ t('assistant.noChanges') }}
+              </p>
               <article v-for="change in changesFor(turn)" :key="change.field" class="change">
                 <header class="change-head">
                   <strong>{{ change.label }}</strong>
                   <span class="change-actions">
                     <button type="button" class="reject" @click="discardFor(turn, change.field)">
-                      отклонить
+                      {{ t('assistant.reject') }}
                     </button>
                     <button type="button" class="accept" @click="applyOneFor(turn, change.field)">
-                      принять
+                      {{ t('assistant.accept') }}
                     </button>
                   </span>
                 </header>
-                <div class="diff" role="region" :aria-label="`Изменения поля ${change.label}`">
+                <div
+                  class="diff"
+                  role="region"
+                  :aria-label="t('assistant.changesOf', { field: change.label })"
+                >
                   <div
                     v-for="(line, lineIndex) in change.lines"
                     :key="lineIndex"
@@ -164,12 +186,12 @@ function applyAllFor(turn: AssistantTurn): void {
                 variant="primary"
                 @click="applyAllFor(turn)"
               >
-                применить всё
+                {{ t('assistant.applyAll') }}
               </AppButton>
             </div>
           </template>
 
-          <p v-if="pending" class="waiting">думает…</p>
+          <p v-if="pending" class="waiting">{{ t('manage.thinking') }}</p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
         </div>
 
@@ -185,8 +207,8 @@ function applyAllFor(turn: AssistantTurn): void {
               v-model="instruction"
               rows="3"
               maxlength="4000"
-              placeholder="Например: перепиши вступление проще и добавь пример"
-              aria-label="Что изменить"
+              :placeholder="t('assistant.placeholder')"
+              :aria-label="t('assistant.what')"
               :disabled="pending"
               @keydown.enter.exact.prevent="ask()"
             ></textarea>
@@ -199,7 +221,7 @@ function applyAllFor(turn: AssistantTurn): void {
               :loading="pending"
               :disabled="!instruction.trim()"
             >
-              отправить
+              {{ t('manage.send') }}
             </AppButton>
           </div>
         </form>

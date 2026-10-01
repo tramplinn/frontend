@@ -1,5 +1,7 @@
 import type { z } from 'zod'
 
+import { translate } from '@/i18n'
+
 import { camelizeKeys } from './case'
 import { ApiError, ContractError, NetworkError, toApiError } from './errors'
 import { accessTokenSchema } from './schemas/auth'
@@ -233,7 +235,7 @@ export async function requestStream(
     throw await toApiError(response)
   }
   if (!response.body) {
-    throw new NetworkError(new Error('Сервер не открыл поток'))
+    throw new NetworkError(new Error(translate('errors.streamNotOpened')))
   }
   return response.body
 }

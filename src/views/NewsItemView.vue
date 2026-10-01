@@ -8,6 +8,9 @@ import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatNewsDate } from '@/lib/newsDate'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ slug: string }>()
 
@@ -43,7 +46,7 @@ watch(
 <template>
   <LoadState :pending="pending" :error="error" @retry="load">
     <article v-if="news" class="post">
-      <BackLink :to="{ name: 'home' }" class="back">все новости</BackLink>
+      <BackLink :to="{ name: 'home' }" class="back">{{ t('news.all') }}</BackLink>
 
       <h1 class="title">{{ news.title }}</h1>
       <p v-if="date" class="date">{{ date }}</p>

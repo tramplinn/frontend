@@ -1,0 +1,787 @@
+{
+  "app": {
+    "title": "Трамплин",
+    "brand": "трамплин",
+    "skipLink": "к содержанию"
+  },
+  "locale": {
+    "switcher": "Язык интерфейса",
+    "ru": "Русский",
+    "en": "English",
+    "saveFailed": "Язык переключён, но не сохранён в профиле"
+  },
+  "theme": {
+    "system": "тема: как в системе",
+    "light": "тема: светлая",
+    "dark": "тема: тёмная"
+  },
+  "nav": {
+    "breadcrumbs": "Хлебные крошки",
+    "home": "главная",
+    "allSections": "все разделы",
+    "menu": "Меню",
+    "closeMenu": "Закрыть меню",
+    "continue": "продолжить",
+    "continueLearning": "Продолжить обучение",
+    "crumbs": {
+      "sections": "все разделы",
+      "learning": "моё обучение",
+      "algorithms": "алгосы",
+      "algorithmProblems": "алгозадачи",
+      "practice": "практика",
+      "newsItem": "новость",
+      "catalog": "курсы",
+      "profile": "профиль",
+      "people": "люди",
+      "content": "контент",
+      "contentLesson": "контент / урок",
+      "contentQuiz": "контент / тест",
+      "news": "новости",
+      "newsArticle": "новости / статья",
+      "users": "пользователи"
+    }
+  },
+  "sections": {
+    "groups": {
+      "learning": "обучение",
+      "teaching": "преподавание",
+      "system": "система"
+    },
+    "news": {
+      "title": "новости",
+      "summary": "Что происходит"
+    },
+    "learning": {
+      "title": "моё обучение",
+      "summary": "Что начато и что продолжить"
+    },
+    "catalog": {
+      "title": "курсы",
+      "summary": "Каталог по трекам"
+    },
+    "algorithms": {
+      "title": "алгосы",
+      "summary": "Тренажёр задач вне курсов"
+    },
+    "people": {
+      "title": "люди",
+      "summary": "Профили и прогресс участников"
+    },
+    "content": {
+      "title": "контент",
+      "summary": "Треки, курсы, модули и уроки"
+    },
+    "newsDesk": {
+      "title": "новости",
+      "summary": "Лента главной страницы"
+    },
+    "algorithmLibrary": {
+      "title": "алгозадачи",
+      "summary": "Условия, тесты и эталонные решения"
+    },
+    "users": {
+      "title": "пользователи",
+      "summary": "Роли и доступ"
+    }
+  },
+  "auth": {
+    "signIn": "войти",
+    "dialog": "Вход",
+    "lead": "Войдите, чтобы продолжить",
+    "providersFailed": "не получилось загрузить способы входа — можно продолжить по почте",
+    "orEmail": "или по почте",
+    "emailPlaceholder": "почта",
+    "getCode": "получить код",
+    "codeSent": "код отправлен на {email}",
+    "resendCode": "отправить код ещё раз",
+    "back": "назад"
+  },
+  "providers": {
+    "yandex": "Яндекс ID",
+    "email": "Почта"
+  },
+  "feedback": {
+    "title": "Обратная связь",
+    "heading": "обратная связь",
+    "lead": "Идея, ошибка или вопрос — всё сюда.",
+    "thanks": "Спасибо!",
+    "sent": "Сообщение отправлено.",
+    "whatHappened": "что случилось?",
+    "placeholder": "Опишите коротко — страницу мы приложим сами",
+    "removeAttachment": "Убрать {name}",
+    "uploading": "загружаю…",
+    "attach": "прикрепить файл",
+    "send": "отправить",
+    "tooManyFiles": "Можно прикрепить не больше {max} файлов",
+    "wrongFileType": "{name}: можно загрузить изображение или PDF"
+  },
+  "common": {
+    "close": "Закрыть",
+    "closeLower": "закрыть"
+  },
+  "notFound": {
+    "title": "страница не найдена",
+    "toCourses": "к курсам"
+  },
+  "errors": {
+    "missing": {
+      "lesson": "Урок не найден. Возможно, ссылка устарела.",
+      "quiz": "Тест не найден. Возможно, ссылка устарела."
+    },
+    "unavailable": "Сервис временно недоступен. Попробуйте позже.",
+    "network": "Сервер не отвечает. Проверьте соединение.",
+    "contract": "Сервер вернул неожиданный ответ.",
+    "unknown": "Что-то пошло не так.",
+    "streamNotOpened": "Сервер не открыл поток",
+    "http": "Ошибка {status}"
+  },
+  "units": {
+    "hours": {
+      "one": "{count} час",
+      "few": "{count} часа",
+      "many": "{count} часов",
+      "other": "{count} часа"
+    },
+    "lessons": {
+      "one": "{count} урок",
+      "few": "{count} урока",
+      "many": "{count} уроков",
+      "other": "{count} урока"
+    },
+    "quizzes": {
+      "one": "{count} тест",
+      "few": "{count} теста",
+      "many": "{count} тестов",
+      "other": "{count} теста"
+    },
+    "questions": {
+      "one": "{count} вопрос",
+      "few": "{count} вопроса",
+      "many": "{count} вопросов",
+      "other": "{count} вопроса"
+    },
+    "cards": {
+      "one": "{count} карточка",
+      "few": "{count} карточки",
+      "many": "{count} карточек",
+      "other": "{count} карточки"
+    },
+    "people": {
+      "one": "{count} человек",
+      "few": "{count} человека",
+      "many": "{count} человек",
+      "other": "{count} человека"
+    },
+    "profiles": {
+      "one": "{count} профиль",
+      "few": "{count} профиля",
+      "many": "{count} профилей",
+      "other": "{count} профиля"
+    },
+    "minutes": "{minutes} мин",
+    "mebibytes": "{value} МиБ",
+    "ms": "{value} мс"
+  },
+  "ui": {
+    "codeEditor": "Редактор кода",
+    "delete": "удалить",
+    "confirmDelete": "точно удалить?",
+    "loading": "загрузка",
+    "retry": "повторить",
+    "otpCode": "код из письма",
+    "progress": "Прогресс",
+    "actions": "действия",
+    "published": "опубликован",
+    "draft": "черновик",
+    "addTag": "добавить тег",
+    "removeTag": "убрать тег {name}"
+  },
+  "assets": {
+    "typeNotAllowed": "Тип {type} не разрешён. Можно: {accepted}",
+    "unknownType": "неизвестен",
+    "pastedName": "вставка",
+    "uploading": "загружаю {name}…",
+    "uploadFailed": "Не удалось загрузить {name}"
+  },
+  "identity": {
+    "linkFailed": "Не удалось начать привязку.",
+    "unlinkFailed": "Не удалось отвязать способ входа."
+  },
+  "unsaved": {
+    "default": "Есть несохранённые изменения. Уйти со страницы?",
+    "profile": "Есть несохранённые изменения профиля. Уйти со страницы?",
+    "practiceSet": "Есть несохранённые изменения набора. Уйти со страницы?",
+    "lesson": "Есть несохранённые изменения урока. Уйти со страницы?",
+    "problem": "Есть несохранённые изменения задачи. Уйти со страницы?",
+    "quiz": "Есть несохранённые изменения теста. Уйти со страницы?",
+    "course": "Есть несохранённые изменения курса. Уйти со страницы?",
+    "track": "Есть несохранённые изменения трека. Уйти со страницы?",
+    "news": "Есть несохранённые изменения новости. Уйти со страницы?",
+    "reflection": "Есть несохранённый разбор решения. Уйти со страницы?",
+    "module": "Есть несохранённые изменения модуля. Уйти со страницы?"
+  },
+  "profile": {
+    "grades": {
+      "learning": "Учусь"
+    },
+    "mine": "мой профиль",
+    "defaultHeadline": "строит свой путь в разработке",
+    "experience": "опыт {years} г.",
+    "resumePdf": "резюме (PDF)",
+    "statLessons": "уроков",
+    "statQuizzes": "тестов",
+    "statProblems": "алгозадач",
+    "learningNow": "сейчас изучает",
+    "resumeOnlyPdf": "Резюме принимается только в формате PDF",
+    "resumeUploadFailed": "Не удалось загрузить {name}",
+    "resume": "резюме",
+    "openPdf": "открыть PDF",
+    "notUploaded": "не загружено",
+    "uploading": "загружаю…",
+    "chooseFile": "выбрать файл",
+    "remove": "убрать",
+    "notSelected": "не выбрано",
+    "endSessionsFailed": "Не удалось завершить сеансы.",
+    "signOutFailed": "Не удалось выйти. Попробуйте ещё раз.",
+    "public": "публично",
+    "about": "о себе",
+    "name": "имя",
+    "headline": "коротко о себе",
+    "headlinePlaceholder": "Что делаете и куда растёте",
+    "specialty": "направление",
+    "specialtyLabel": "Направление",
+    "grade": "грейд",
+    "gradeLabel": "Грейд",
+    "experienceYears": "опыт, лет",
+    "company": "компания",
+    "companyPlaceholder": "где работаете",
+    "university": "вуз",
+    "universityPlaceholder": "где учитесь",
+    "interests": "интересы",
+    "addInterest": "добавить интерес",
+    "interestsHint": "Enter или запятая — добавить",
+    "details": "подробнее",
+    "detailsPlaceholder": "Стек, цели",
+    "save": "сохранить профиль",
+    "private": "приватно",
+    "account": "аккаунт",
+    "login": "логин",
+    "email": "почта",
+    "studentId": "номер студента",
+    "signInMethods": "способы входа",
+    "unlink": "отвязать",
+    "confirmUnlink": "точно отвязать?",
+    "onlyMethod": "единственный вход",
+    "linkProvider": "привязать {provider}",
+    "linkEmail": "привязать почту",
+    "getCode": "получить код",
+    "cancel": "отмена",
+    "link": "привязать",
+    "signOut": "выйти",
+    "signOutEverywhere": "выйти везде",
+    "confirmSignOutEverywhere": "завершить все сеансы?"
+  },
+  "home": {
+    "heading": "моё обучение",
+    "empty": "Вы ещё не начали ни одного курса.",
+    "openCatalog": "открыть каталог →",
+    "completedLessons": "{lessons} пройдено",
+    "continue": "продолжить",
+    "courseProgress": "Прогресс: {title}",
+    "finished": "пройдено"
+  },
+  "catalog": {
+    "heading": "курсы",
+    "empty": "пока ничего не опубликовано",
+    "tracks": "Треки",
+    "emptyTrack": "в треке пока нет курсов"
+  },
+  "course": {
+    "progress": "Прогресс по курсу",
+    "lessonsDone": "{done} из {total} уроков",
+    "map": "карта курса",
+    "mapHint": "Связи — рекомендованный порядок, а не замок: открыть можно любой модуль.",
+    "noModules": "в курсе пока нет модулей",
+    "emptyModule": "в модуле пока нет материалов",
+    "quiz": "тест",
+    "interview": "интервью",
+    "practice": "практика",
+    "open": "открыть"
+  },
+  "map": {
+    "label": "Карта курса",
+    "dragHint": "потяните за пустое место",
+    "zoomOut": "Отдалить",
+    "zoomIn": "Приблизить",
+    "current": "к текущему",
+    "fit": "вся карта",
+    "close": "закрыть"
+  },
+  "lesson": {
+    "progressUnavailable": "Прогресс временно недоступен.",
+    "markFailed": "Не удалось сохранить отметку. Попробуйте ещё раз.",
+    "interviewUnavailable": "Вопросы к собеседованию временно недоступны.",
+    "completed": "пройдено",
+    "markCompleted": "отметить пройденным",
+    "signInToTrack": "войти, чтобы отмечать прогресс",
+    "interviewQuestions": "вопросы с собеседований",
+    "showSpoiler": "показать",
+    "extras": "Дополнительные материалы"
+  },
+  "pager": {
+    "toQuiz": "перейти к тесту",
+    "backToQuiz": "к тесту",
+    "toPractice": "к практике",
+    "nextLesson": "следующий урок",
+    "previousLesson": "предыдущий урок",
+    "label": "Материалы модуля",
+    "done": "Пройдено {done} из {total}",
+    "quizTitle": "Тест: {title}"
+  },
+  "quiz": {
+    "best": "лучший результат: {score} из {max}",
+    "retry": "пройти заново",
+    "fileType": "Можно загрузить изображение или PDF",
+    "uploadFailed": "Не удалось загрузить файл",
+    "attach": "прикрепить изображение или PDF",
+    "selfCheck": "считаю задание выполненным",
+    "chooseMatch": "выберите соответствие",
+    "placeInGroup": "Поместить выбранный элемент в группу {group}",
+    "materials": "материалы:",
+    "correct": "верно",
+    "incorrect": "неверно",
+    "answer": "ответ",
+    "check": "проверить"
+  },
+  "news": {
+    "heading": "новости",
+    "empty": "Новостей пока нет.",
+    "more": "показать ещё",
+    "all": "все новости",
+    "photoOf": "Фото {index} из {total}"
+  },
+  "people": {
+    "heading": "люди",
+    "defaultSubtitle": "учится и развивается",
+    "search": "имя, логин или направление",
+    "empty": "никого не нашлось",
+    "back": "к людям"
+  },
+  "recommend": {
+    "algorithms": "рекомендуем алгосы",
+    "courses": "рекомендуем курсы"
+  },
+  "algorithms": {
+    "difficulty": {
+      "easy": "лёгкая",
+      "medium": "средняя",
+      "hard": "сложная"
+    },
+    "verdicts": {
+      "accepted": "зачтено",
+      "wrong_answer": "неверный ответ",
+      "compile_error": "ошибка компиляции",
+      "runtime_error": "ошибка выполнения",
+      "time_limit": "превышено время",
+      "memory_limit": "превышена память",
+      "output_limit": "слишком большой вывод",
+      "internal_error": "внутренняя ошибка"
+    },
+    "noVerdict": "нет вердикта",
+    "heading": "алгосы",
+    "solvedStats": "решено {solved} из {shown} на странице · всего {total}",
+    "searchLabel": "Поиск по названию",
+    "searchPlaceholder": "поиск по названию",
+    "difficultyLabel": "Сложность",
+    "topics": "Темы",
+    "nothingFound": "Ничего не нашлось. Попробуй снять фильтры.",
+    "attempts": "попыток: {count}",
+    "notStarted": "не начата",
+    "back": "назад",
+    "page": "страница {page}",
+    "next": "дальше",
+    "toAll": "ко всем задачам",
+    "solved": "решена"
+  },
+  "practice": {
+    "status": {
+      "active": "идёт",
+      "completed": "завершена",
+      "expired": "время вышло"
+    },
+    "toCourse": "к курсу",
+    "finish": "завершить",
+    "takeaway": "что вынес из этой сессии",
+    "optional": "Необязательно",
+    "finishSession": "завершить сессию",
+    "tasks": "Задачи набора",
+    "empty": "в наборе пока нет задач"
+  },
+  "runner": {
+    "language": "Язык решения",
+    "noLanguage": "для задачи не настроен ни один доступный язык",
+    "pastSolutions": "прошлые решения ({count})",
+    "pastSolutionsLabel": "Прошлые решения",
+    "reset": "решить заново",
+    "confirmReset": "точно стереть решение?",
+    "unavailable": "недоступны в раннере:",
+    "source": "Исходный код решения",
+    "customInput": "свой ввод для запуска",
+    "customStdin": "Пользовательский stdin",
+    "run": "запустить",
+    "submit": "отправить",
+    "failedTest": "упал тест {number}",
+    "test": "тест",
+    "testNumber": "тест {number}",
+    "input": "ввод",
+    "expected": "ожидалось",
+    "actual": "получено",
+    "customRun": "свой ввод",
+    "sample": "пример {number}",
+    "output": "вывод",
+    "providerStatement": "условие у провайдера ↗"
+  },
+  "reflection": {
+    "title": "разбор решения",
+    "complexity": "сложность",
+    "complexityPlaceholder": "O(n log n) по времени, O(n) памяти",
+    "confidence": "уверенность",
+    "confidenceValue": "уверенность {value} из 5",
+    "notes": "заметки",
+    "notesPlaceholder": "Идея, на чём споткнулся, что повторить",
+    "save": "сохранить разбор"
+  },
+  "template": {
+    "autosave": "сохранится автоматически",
+    "unverified": "эталонное решение не проверено",
+    "verifiedAt": "проверено {date}",
+    "heading": "решения по языкам",
+    "language": "Язык шаблона",
+    "starter": "заготовка для студента",
+    "starterLabel": "Заготовка кода",
+    "solution": "эталонное решение",
+    "solutionLabel": "Эталонное решение",
+    "validate": "прогнать по тестам",
+    "removeLanguage": "убрать язык",
+    "confirmRemove": "точно убрать?",
+    "needTests": "Добавьте хотя бы один тест и эталонное решение."
+  },
+  "testCase": {
+    "title": "тест {number}",
+    "sample": "показывать в условии",
+    "weight": "вес",
+    "stdin": "ввод (stdin)",
+    "expected": "ожидаемый вывод"
+  },
+  "tutor": {
+    "lesson": {
+      "tabLabel": "Спросить по уроку",
+      "panelLabel": "Ассистент урока",
+      "hint": "про термин или непонятное место",
+      "blank": "Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст этого урока.",
+      "placeholder": "вопрос по уроку"
+    },
+    "problem": {
+      "tabLabel": "Спросить по задаче",
+      "panelLabel": "Ассистент задачи",
+      "hint": "подскажет подход, но не решение целиком",
+      "blank": "Спросите про подход к задаче или разбор ошибки в коде. Готовое решение ассистент не даёт — только подсказки.",
+      "placeholder": "вопрос по задаче"
+    },
+    "ask": "спросить",
+    "clear": "очистить",
+    "close": "Закрыть",
+    "guestLimit": "Без входа доступно несколько вопросов.",
+    "thinking": "думает…",
+    "question": "Вопрос ассистенту",
+    "stop": "остановить"
+  },
+  "mcp": {
+    "badRequest": "Некорректный запрос авторизации",
+    "eyebrow": "авторизация агента",
+    "title": "Разрешить доступ к Tramplin?",
+    "description": "{client} сможет читать и редактировать учебные материалы от вашего имени. Публикация и удаление контента недоступны.",
+    "permission": "Разрешение",
+    "scope": "{scope} · черновики курсов и заданий",
+    "allow": "разрешить",
+    "deny": "отменить",
+    "checking": "Проверяем запрос…"
+  },
+  "roles": {
+    "student": "студент",
+    "teacher": "преподаватель",
+    "admin": "админ"
+  },
+  "admin": {
+    "heading": "пользователи",
+    "search": "имя, логин или почта",
+    "role": "Роль",
+    "all": "все",
+    "person": "человек",
+    "roleColumn": "роль",
+    "access": "доступ",
+    "roleOf": "Роль: {login}",
+    "active": "активен",
+    "disabled": "отключён"
+  },
+  "fields": {
+    "title": "название",
+    "slug": "адрес",
+    "summary": "аннотация",
+    "description": "описание",
+    "color": "цвет",
+    "hours": "часов"
+  },
+  "manage": {
+    "actionsFor": "Действия: {title}",
+    "publish": "опубликовать",
+    "unpublishShort": "снять",
+    "unpublish": "снять с публикации",
+    "toDraft": "в черновик",
+    "publishAll": "опубликовать всё содержимое",
+    "save": "сохранить",
+    "cancel": "отмена",
+    "create": "создать",
+    "up": "выше",
+    "down": "ниже",
+    "remove": "убрать",
+    "confirmRemove": "точно убрать?",
+    "topics": "темы",
+    "titlePlaceholder": "название",
+    "saving": "сохраняю…",
+    "autosave": "сохранится автоматически",
+    "saved": "сохранено",
+    "savedAt": "сохранено в {time}",
+    "toList": "к списку",
+    "toContent": "к контенту",
+    "close": "Закрыть",
+    "send": "отправить",
+    "thinking": "думает…",
+    "loading": "загружаю…",
+    "chooseFile": "выбрать файл",
+    "none": "нет",
+    "uploadFailed": "Не удалось загрузить {name}",
+    "coverOnlyImage": "Обложкой может быть только изображение: {types}",
+    "cover": "обложка",
+    "courseCover": "Обложка курса {title}",
+    "startWriting": "Начните писать",
+    "uploadingImage": "загружаю изображение…",
+    "preview": "предпросмотр"
+  },
+  "content": {
+    "heading": "контент",
+    "publishedCount": "опубликовано: {count}",
+    "sections": "Раздел контента",
+    "tracksTab": "треки",
+    "coursesTab": "курсы",
+    "track": "трек",
+    "trackTitle": "название трека",
+    "noTracks": "треков пока нет",
+    "editTrack": "изменить трек",
+    "deleteTrack": "удалить трек",
+    "course": "курс",
+    "addCourse": "+ курс",
+    "courseTitle": "название курса",
+    "courseTitleLabel": "Название курса",
+    "noCourses": "курсов пока нет",
+    "createNew": "создать новый",
+    "addExisting": "или добавить существующий",
+    "noMatches": "по запросу ничего не нашлось",
+    "noTrack": "без трека",
+    "editCourse": "изменить курс",
+    "upInTrack": "выше в треке",
+    "downInTrack": "ниже в треке",
+    "detach": "убрать из трека",
+    "deleteCourse": "удалить курс",
+    "loading": "загружаем…",
+    "courseFailed": "курс не открылся",
+    "noModules": "в курсе нет модулей",
+    "emptyPublished": "Курс опубликован, но студенты увидят пустую страницу: ни один модуль не опубликован.",
+    "module": "модуль",
+    "moduleTitle": "название модуля",
+    "allDrafts": "Все уроки и тесты модуля — черновики",
+    "hidden": "не видно студентам",
+    "publishedOf": "{published} из {total} опубликовано",
+    "editModule": "изменить модуль",
+    "moduleLinks": "связи модуля",
+    "deleteModule": "удалить модуль",
+    "lesson": "урок",
+    "lessonTitle": "название урока",
+    "quiz": "тест",
+    "quizTitle": "название теста",
+    "practice": "практику",
+    "practiceTitle": "название набора задач",
+    "cycle": "Так получился бы цикл: этот модуль уже зависит от текущего.",
+    "linkFailed": "Не удалось изменить связь.",
+    "prerequisites": "нужно пройти до этого модуля",
+    "noOtherModules": "в курсе больше нет модулей",
+    "deleteLesson": "удалить урок",
+    "deleteQuiz": "удалить тест",
+    "deletePractice": "удалить практику"
+  },
+  "photos": {
+    "left": "Левее",
+    "right": "Правее",
+    "remove": "Убрать фото"
+  },
+  "assistant": {
+    "prompts": {
+      "clearer": "сделай понятнее",
+      "fixErrors": "исправь ошибки",
+      "addExamples": "добавь примеры",
+      "formatStatement": "оформи условие",
+      "checkAmbiguity": "проверь однозначность",
+      "addConstraints": "добавь ограничения"
+    },
+    "open": "Открыть помощника",
+    "name": "Помощник",
+    "panel": "Помощник преподавателя",
+    "title": "помощник",
+    "hint": "предложит правки, а примените их вы",
+    "noChanges": "Изменений не требуется.",
+    "reject": "отклонить",
+    "accept": "принять",
+    "changesOf": "Изменения поля {field}",
+    "applyAll": "применить всё",
+    "placeholder": "Например: перепиши вступление проще и добавь пример",
+    "what": "Что изменить",
+    "fields": {
+      "title": "название",
+      "bodyMd": "текст урока",
+      "statementMd": "условие",
+      "difficulty": "сложность",
+      "tags": "темы",
+      "timeLimitMs": "лимит времени",
+      "memoryLimitKb": "лимит памяти",
+      "testCases": "тесты",
+      "templates": "решения по языкам"
+    },
+    "diff": {
+      "sample": "пример",
+      "hidden": "скрытый",
+      "input": "вход",
+      "output": "вывод",
+      "starter": "заготовка",
+      "solution": "решение"
+    }
+  },
+  "quizEditor": {
+    "matchingPairs": "пары для связывания",
+    "groupsAndItems": "категории и элементы",
+    "shuffled": "студент увидит их перемешанными",
+    "term": "понятие",
+    "newTerm": "новое понятие",
+    "match": "соответствие",
+    "addPair": "+ пара",
+    "groupName": "название блока",
+    "newGroup": "новый блок",
+    "removeGroup": "убрать блок",
+    "itemUp": "Переместить элемент выше",
+    "itemDown": "Переместить элемент ниже",
+    "newItem": "новый элемент",
+    "itemOf": "Элемент блока {group}",
+    "removeItem": "Убрать элемент",
+    "addItem": "+ элемент",
+    "addGroup": "+ блок",
+    "types": {
+      "single": "один ответ",
+      "multiple": "несколько",
+      "text": "текст",
+      "matching": "связывание",
+      "grouping": "по блокам",
+      "file": "файл + самопроверка"
+    },
+    "prompt": "Текст вопроса",
+    "type": "Тип вопроса",
+    "correctOption": "Верный вариант {number}",
+    "option": "Вариант {number}",
+    "addOption": "+ вариант",
+    "acceptedAnswers": "принимаемые ответы, по одному в строке",
+    "caseSensitive": "учитывать регистр",
+    "fileHint": "Студент прикрепит изображение или PDF и сам отметит задание выполненным.",
+    "materials": "материалы к заданию",
+    "attachFile": "+ прикрепить файл",
+    "explanation": "разбор, показывается после ответа",
+    "explanationLabel": "Разбор",
+    "newQuestion": "Новый вопрос",
+    "onlyImagesPdf": "Можно прикреплять изображения и PDF",
+    "unsavedQuestions": "Не все вопросы сохранены — заполните их до конца",
+    "moduleWide": "по всему модулю",
+    "byLesson": "по уроку «{title}»",
+    "topic": "Тема теста",
+    "empty": "в тесте пока нет вопросов",
+    "addQuestion": "+ вопрос"
+  },
+  "problemEditor": {
+    "incomplete": "Не все поля заполнены — сохранение отложено",
+    "blockers": {
+      "emptyStatement": "пустое условие",
+      "noSample": "нет ни одного примера для условия",
+      "noHidden": "нет ни одного скрытого теста",
+      "unverified": "ни одно эталонное решение не проверено"
+    },
+    "queued": "в очереди",
+    "running": "выполняется",
+    "toLibrary": "к библиотеке",
+    "basics": "основное",
+    "difficulty": "сложность",
+    "difficultyLabel": "Сложность задачи",
+    "timeLimit": "лимит времени, мс",
+    "memoryLimit": "лимит памяти, КиБ",
+    "statementSource": "Условие задачи в Markdown",
+    "startStatement": "Начните писать условие",
+    "tests": "тесты",
+    "addTest": "+ тест",
+    "addTests": "Добавьте публичный и скрытый тест.",
+    "needTests": "Для публикации нужен публичный и скрытый тест."
+  },
+  "library": {
+    "heading": "алгозадачи",
+    "publishedOf": "опубликовано {published} из {total}",
+    "problem": "алгозадачу",
+    "newTitle": "название новой задачи",
+    "difficulty": "Сложность",
+    "empty": "Задач пока нет. Создай первую выше.",
+    "counts": "тестов: {tests} · примеров: {samples}"
+  },
+  "lessonEditor": {
+    "title": "Название урока",
+    "source": "Исходник урока",
+    "interviewParse": "Блок :::interview не разобрался — проверьте разделитель ---",
+    "emptyTitle": "Название урока не может быть пустым"
+  },
+  "newsEditor": {
+    "heading": "новости",
+    "item": "новость",
+    "titlePlaceholder": "заголовок новости",
+    "empty": "Пока ни одной новости.",
+    "delete": "удалить новость",
+    "title": "Заголовок новости",
+    "lead": "анонс",
+    "leadLabel": "Анонс новости",
+    "photos": "фото",
+    "addPhoto": "+ фото",
+    "source": "Исходник новости",
+    "emptyTitle": "Название новости не может быть пустым",
+    "imageRequired": "{name}: нужно изображение ({types})"
+  },
+  "practiceEditor": {
+    "modes": {
+      "practice": "практика",
+      "mock_interview": "интервью на время"
+    },
+    "noProblems": "в наборе нет задач",
+    "noDuration": "для интервью не задана длительность",
+    "settings": "настройки набора",
+    "mode": "режим",
+    "modeLabel": "Режим набора",
+    "duration": "длительность, минут",
+    "save": "сохранить набор",
+    "problems": "задачи",
+    "empty": "Набор пуст. Добавь задачи из библиотеки — там же они создаются.",
+    "fromLibrary": "Задача из библиотеки",
+    "add": "добавить в набор",
+    "noFree": "Свободных опубликованных задач нет.",
+    "createInLibrary": "Создать в библиотеке"
+  }
+}

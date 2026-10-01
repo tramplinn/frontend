@@ -1,4 +1,5 @@
 import type { DeveloperGrade, Specialty } from '@/api/schemas/users'
+import { translate } from '@/i18n'
 
 export const SPECIALTIES: { value: Specialty; label: string }[] = [
   { value: 'frontend', label: 'Frontend' },
@@ -11,7 +12,7 @@ export const SPECIALTIES: { value: Specialty; label: string }[] = [
 ]
 
 export const GRADES: { value: DeveloperGrade; label: string }[] = [
-  { value: 'learning', label: 'Учусь' },
+  { value: 'learning', label: 'Learning' },
   { value: 'junior', label: 'Junior' },
   { value: 'middle', label: 'Middle' },
   { value: 'senior', label: 'Senior' },
@@ -22,5 +23,8 @@ export function specialtyName(value: Specialty | null): string | null {
 }
 
 export function gradeName(value: DeveloperGrade | null): string | null {
+  if (value === 'learning') {
+    return translate('profile.grades.learning')
+  }
   return GRADES.find((item) => item.value === value)?.label ?? null
 }

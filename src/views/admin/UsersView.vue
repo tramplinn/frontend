@@ -5,13 +5,14 @@ import FilterChip from '@/components/ui/FilterChip.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useUsers } from '@/features/admin/composables/useUsers'
 import { errorText } from '@/lib/errors'
-import { withCount } from '@/lib/plural'
+import { computed } from 'vue'
 
-const ROLES: { value: UserRole; label: string }[] = [
-  { value: 'student', label: 'студент' },
-  { value: 'teacher', label: 'преподаватель' },
-  { value: 'admin', label: 'админ' },
-]
+import { useI18n } from '@/i18n'
+
+const { t, tc } = useI18n()
+
+const ROLE_VALUES: UserRole[] = ['student', 'teacher', 'admin']
+const ROLES = computed(() => ROLE_VALUES.map((value) => ({ value, label: t(`roles.${value}`) })))
 
 const { users, total, query, roleFilter, pending, error, actionError, savingIds, patch, load } =
   useUsers()
@@ -20,8 +21,8 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
 <template>
   <section>
     <header class="head">
-      <h1 class="heading">пользователи</h1>
-      <p class="meta">{{ withCount(total, 'человек', 'человека', 'человек') }}</p>
+      <h1 class="heading">{{ t('admin.heading') }}</h1>
+      <p class="meta">{{ tc('units.people', total) }}</p>
     </header>
 
     <div class="filters">
@@ -29,10 +30,12 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
         v-model="query"
         class="text-field input"
         type="search"
-        placeholder="имя, логин или почта"
+        :placeholder="t('admin.search')"
       />
-      <div class="pills" role="group" aria-label="Роль">
-        <FilterChip :pressed="roleFilter === ''" @click="roleFilter = ''"> все </FilterChip>
+      <div class="pills" role="group" :aria-label="t('admin.role')">
+        <FilterChip :pressed="roleFilter === ''" @click="roleFilter = ''">
+          {{ t('admin.all') }}
+        </FilterChip>
         <FilterChip
           v-for="role in ROLES"
           :key="role.value"
@@ -47,15 +50,15 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
     <p v-if="actionError" class="action-error" role="alert">{{ errorText(actionError) }}</p>
 
     <LoadState :pending="pending" :error="error" @retry="load">
-      <p v-if="users.length === 0" class="empty">никого не нашлось</p>
+      <p v-if="users.length === 0" class="empty">{{ t('people.empty') }}</p>
 
       <div v-else class="table-wrap">
         <table class="table">
           <thead>
             <tr>
-              <th>человек</th>
-              <th>роль</th>
-              <th class="right">доступ</th>
+              <th>{{ t('admin.person') }}</th>
+              <th>{{ t('admin.roleColumn') }}</th>
+              <th class="right">{{ t('admin.access') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -68,7 +71,7 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
                 <AppSelect
                   :model-value="user.role"
                   :options="ROLES"
-                  :label="`Роль: ${user.login}`"
+                  :label="t('admin.roleOf', { login: user.login })"
                   :disabled="savingIds.has(user.id)"
                   @update:model-value="(role) => patch(user, { role })"
                 />
@@ -81,7 +84,7 @@ const { users, total, query, roleFilter, pending, error, actionError, savingIds,
                   :disabled="savingIds.has(user.id)"
                   @click="patch(user, { isActive: !user.isActive })"
                 >
-                  {{ user.isActive ? 'активен' : 'отключён' }}
+                  {{ user.isActive ? t('admin.active') : t('admin.disabled') }}
                 </button>
               </td>
             </tr>

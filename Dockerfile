@@ -11,6 +11,9 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+# Переключатель RU/EN включается только в сборках для проверки командой.
+ARG VITE_LOCALE_SWITCHER=false
+ENV VITE_LOCALE_SWITCHER=$VITE_LOCALE_SWITCHER
 RUN pnpm build
 
 FROM nginx:1.27-alpine AS serve

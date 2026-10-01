@@ -9,6 +9,9 @@ import type { EditorField } from '@/composables/useEntityForm'
 import { useEntityForm } from '@/composables/useEntityForm'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { blankToNull } from '@/lib/forms'
+import { translate, useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ module: Module; busy: boolean }>()
 
@@ -22,11 +25,11 @@ const slug = ref(props.module.slug)
 const summary = ref(props.module.summary ?? '')
 
 const fields: EditorField<ModuleDraft>[] = [
-  { key: 'title', label: 'название', model: title, toValue: (raw) => raw.trim() },
-  { key: 'slug', label: 'адрес', model: slug, mono: true, toValue: (raw) => raw.trim() },
+  { key: 'title', label: 'fields.title', model: title, toValue: (raw) => raw.trim() },
+  { key: 'slug', label: 'fields.slug', model: slug, mono: true, toValue: (raw) => raw.trim() },
   {
     key: 'summary',
-    label: 'аннотация',
+    label: 'fields.summary',
     model: summary,
     width: 'wide',
     multiline: true,
@@ -35,7 +38,7 @@ const fields: EditorField<ModuleDraft>[] = [
 ]
 
 const { valid, buildPatch, dirty } = useEntityForm(title, slug, fields)
-useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения модуля. Уйти со страницы?')
+useUnsavedChangesGuard(dirty, () => translate('unsaved.module'))
 
 function save(): void {
   if (!valid.value) {
@@ -51,9 +54,11 @@ function save(): void {
 
     <div class="actions">
       <AppButton type="submit" size="sm" variant="primary" :disabled="!valid" :loading="props.busy">
-        сохранить
+        {{ t('manage.save') }}
       </AppButton>
-      <AppButton size="sm" variant="quiet" @click="emit('cancel')">отмена</AppButton>
+      <AppButton size="sm" variant="quiet" @click="emit('cancel')">{{
+        t('manage.cancel')
+      }}</AppButton>
     </div>
   </form>
 </template>

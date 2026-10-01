@@ -1,5 +1,8 @@
 <script setup lang="ts" generic="TDraft">
 import type { EditorField } from '@/composables/useEntityForm'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 defineProps<{ fields: EditorField<TDraft>[] }>()
 </script>
@@ -12,7 +15,7 @@ defineProps<{ fields: EditorField<TDraft>[] }>()
       class="field"
       :class="field.width && `field--${field.width}`"
     >
-      <span class="label">{{ field.label }}</span>
+      <span class="label">{{ t(field.label) }}</span>
       <textarea
         v-if="field.multiline"
         v-model="field.model.value"

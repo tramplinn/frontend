@@ -9,6 +9,9 @@ import { useGraphViewport } from '@/features/course-map/composables/useGraphView
 import { useProgressStore } from '@/stores/progress'
 import ModuleGraphCanvas from './ModuleGraphCanvas.vue'
 import { layoutGraph } from './graph'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   course: string
@@ -72,26 +75,33 @@ function openModule(moduleId: string): void {
     v-if="layout.nodes.length > 0"
     class="map"
     :class="{ 'map--collapsed': !expanded, 'map--sheet': sheet }"
-    aria-label="Карта курса"
+    :aria-label="t('map.label')"
   >
     <header class="head">
       <button type="button" class="bar" :aria-expanded="expanded" @click="toggle">
         <span class="chevron" aria-hidden="true"></span>
-        <span class="title">карта курса</span>
-        <span v-if="expanded" class="hint">потяните за пустое место</span>
+        <span class="title">{{ t('course.map') }}</span>
+        <span v-if="expanded" class="hint">{{ t('map.dragHint') }}</span>
       </button>
 
       <div v-if="expanded" class="controls">
-        <button type="button" class="control" aria-label="Отдалить" @click="zoomBy(1 / 1.2)">
+        <button
+          type="button"
+          class="control"
+          :aria-label="t('map.zoomOut')"
+          @click="zoomBy(1 / 1.2)"
+        >
           −
         </button>
-        <button type="button" class="control" aria-label="Приблизить" @click="zoomBy(1.2)">
+        <button type="button" class="control" :aria-label="t('map.zoomIn')" @click="zoomBy(1.2)">
           +
         </button>
-        <button type="button" class="control control--wide" @click="showCurrent">к текущему</button>
-        <button type="button" class="control control--wide" @click="fit">вся карта</button>
+        <button type="button" class="control control--wide" @click="showCurrent">
+          {{ t('map.current') }}
+        </button>
+        <button type="button" class="control control--wide" @click="fit">{{ t('map.fit') }}</button>
         <button v-if="sheet" type="button" class="control control--wide" @click="toggle">
-          закрыть
+          {{ t('map.close') }}
         </button>
       </div>
     </header>

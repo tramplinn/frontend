@@ -4,6 +4,9 @@ import { computed } from 'vue'
 
 import type { PublicProfile } from '@/api/schemas/users'
 import { gradeName, specialtyName } from '@/lib/profile'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ profile: PublicProfile; own?: boolean }>()
 const displayName = computed(() => props.profile.name ?? props.profile.login)
@@ -23,16 +26,16 @@ const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
         <AvatarFallback class="avatar-fallback">{{ initials }}</AvatarFallback>
       </AvatarRoot>
       <div class="identity">
-        <div class="eyebrow">{{ own ? 'мой профиль' : `@${profile.login}` }}</div>
+        <div class="eyebrow">{{ own ? t('profile.mine') : `@${profile.login}` }}</div>
         <h1>{{ displayName }}</h1>
-        <p class="headline">{{ profile.headline ?? 'строит свой путь в разработке' }}</p>
+        <p class="headline">{{ profile.headline ?? t('profile.defaultHeadline') }}</p>
         <div class="chips">
           <span v-if="specialtyName(profile.specialty)">{{
             specialtyName(profile.specialty)
           }}</span>
           <span v-if="gradeName(profile.grade)">{{ gradeName(profile.grade) }}</span>
           <span v-if="profile.experienceYears !== null">
-            опыт {{ profile.experienceYears }} г.
+            {{ t('profile.experience', { years: profile.experienceYears }) }}
           </span>
           <span v-if="profile.company">{{ profile.company.name }}</span>
           <span v-if="profile.university">{{ profile.university.name }}</span>
@@ -52,26 +55,26 @@ const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
       target="_blank"
       rel="noopener"
       class="resume-link"
-      >резюме (PDF)</a
+      >{{ t('profile.resumePdf') }}</a
     >
 
     <dl class="stats">
       <div>
         <dt>{{ profile.completedLessons }}</dt>
-        <dd>уроков</dd>
+        <dd>{{ t('profile.statLessons') }}</dd>
       </div>
       <div>
         <dt>{{ profile.passedQuizzes }}</dt>
-        <dd>тестов</dd>
+        <dd>{{ t('profile.statQuizzes') }}</dd>
       </div>
       <div>
         <dt>{{ profile.solvedAlgorithms }}</dt>
-        <dd>алгозадач</dd>
+        <dd>{{ t('profile.statProblems') }}</dd>
       </div>
     </dl>
 
     <div v-if="profile.activeCourses.length" class="courses">
-      <h2>сейчас изучает</h2>
+      <h2>{{ t('profile.learningNow') }}</h2>
       <RouterLink
         v-for="course in profile.activeCourses"
         :key="course.slug"

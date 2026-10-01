@@ -6,6 +6,9 @@ import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useNewsDesk } from '@/features/news/composables/useNewsDesk'
 import { formatNewsDate } from '@/lib/newsDate'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const { items, pending, error, actionError, busy, load, add, remove, togglePublished } =
   useNewsDesk()
@@ -14,14 +17,19 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
 <template>
   <section>
     <header class="head">
-      <h1 class="heading">новости</h1>
-      <InlineCreate label="новость" placeholder="заголовок новости" :saving="busy" @create="add" />
+      <h1 class="heading">{{ t('newsEditor.heading') }}</h1>
+      <InlineCreate
+        :label="t('newsEditor.item')"
+        :placeholder="t('newsEditor.titlePlaceholder')"
+        :saving="busy"
+        @create="add"
+      />
     </header>
 
     <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
 
     <LoadState :pending="pending" :error="error" @retry="load">
-      <p v-if="items.length === 0" class="blank">Пока ни одной новости.</p>
+      <p v-if="items.length === 0" class="blank">{{ t('newsEditor.empty') }}</p>
 
       <ul v-else class="list">
         <li v-for="news in items" :key="news.id" class="item">
@@ -36,11 +44,11 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
             </span>
           </RouterLink>
 
-          <RowMenu :disabled="busy" :label="`Действия: ${news.title}`">
+          <RowMenu :disabled="busy" :label="t('manage.actionsFor', { title: news.title })">
             <RowMenuItem @select="togglePublished(news)">
-              {{ news.status === 'published' ? 'в черновик' : 'опубликовать' }}
+              {{ news.status === 'published' ? t('manage.toDraft') : t('manage.publish') }}
             </RowMenuItem>
-            <RowMenuItem danger @select="remove(news.id)">удалить новость</RowMenuItem>
+            <RowMenuItem danger @select="remove(news.id)">{{ t('newsEditor.delete') }}</RowMenuItem>
           </RowMenu>
         </li>
       </ul>

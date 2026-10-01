@@ -8,6 +8,9 @@ import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
 import { isAccepted, languageLabel, verdictLabel } from '@/lib/algorithms'
 import { errorText } from '@/lib/errors'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ runner: ReturnType<typeof useProblemRunner> }>()
 
@@ -79,25 +82,25 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
         v-if="languageOptions.length > 0"
         :model-value="language"
         :options="languageOptions"
-        label="Язык решения"
+        :label="t('runner.language')"
         :disabled="running"
         @update:model-value="selectLanguage"
       />
-      <p v-else class="muted">для задачи не настроен ни один доступный язык</p>
+      <p v-else class="muted">{{ t('runner.noLanguage') }}</p>
 
       <AppSelect
         v-if="solutions.length > 0"
         :model-value="historyPick"
         :options="historyOptions"
-        :placeholder="`прошлые решения (${solutions.length})`"
-        label="Прошлые решения"
+        :placeholder="t('runner.pastSolutions', { count: solutions.length })"
+        :label="t('runner.pastSolutionsLabel')"
         :disabled="running"
         @update:model-value="applyHistoryPick"
       />
 
       <ConfirmButton
-        label="решить заново"
-        confirm-label="точно стереть решение?"
+        :label="t('runner.reset')"
+        :confirm-label="t('runner.confirmReset')"
         :disabled="running"
         @confirm="resetToStarter"
       />
@@ -115,7 +118,7 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
     </div>
 
     <p v-if="unavailableLanguages.length > 0" class="hint">
-      недоступны в раннере:
+      {{ t('runner.unavailable') }}
       {{ unavailableLanguages.map(languageLabel).join(', ') }}
     </p>
 
@@ -123,17 +126,17 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
       v-model="sourceCode"
       :language="language"
       :readonly="running"
-      aria-label="Исходный код решения"
+      :aria-label="t('runner.source')"
     />
 
     <details class="stdin">
-      <summary>свой ввод для запуска</summary>
-      <textarea v-model="customInput" spellcheck="false" aria-label="Пользовательский stdin" />
+      <summary>{{ t('runner.customInput') }}</summary>
+      <textarea v-model="customInput" spellcheck="false" :aria-label="t('runner.customStdin')" />
     </details>
 
     <div class="actions">
       <AppButton :disabled="!canExecute" :loading="running" @click="execute('run')">
-        запустить
+        {{ t('runner.run') }}
       </AppButton>
       <AppButton
         variant="primary"
@@ -141,7 +144,7 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
         :loading="running"
         @click="execute('submit')"
       >
-        отправить
+        {{ t('runner.submit') }}
       </AppButton>
     </div>
 
@@ -153,30 +156,34 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
       {{ result?.safeError }}
     </p>
 
-    <p v-if="failedTest !== null && !failedCase" class="error">упал тест {{ failedTest + 1 }}</p>
+    <p v-if="failedTest !== null && !failedCase" class="error">
+      {{ t('runner.failedTest', { number: failedTest + 1 }) }}
+    </p>
 
     <div v-if="failedCase" class="case case--failed">
       <div class="case-head">
         <strong>{{
-          failedCase.position === null ? 'тест' : `тест ${failedCase.position + 1}`
+          failedCase.position === null
+            ? t('runner.test')
+            : t('runner.testNumber', { number: failedCase.position + 1 })
         }}</strong>
         <span class="bad">{{ verdictLabel(verdict) }}</span>
-        <span v-if="failedCase.runtimeMs !== null" class="muted"
-          >{{ failedCase.runtimeMs }} мс</span
-        >
+        <span v-if="failedCase.runtimeMs !== null" class="muted">{{
+          t('units.ms', { value: failedCase.runtimeMs })
+        }}</span>
       </div>
       <pre v-if="failedCase.compileOutput" class="stderr">{{ failedCase.compileOutput }}</pre>
       <template v-else>
         <div v-if="failedCase.input !== null" class="case-field">
-          <span class="muted">ввод</span>
+          <span class="muted">{{ t('runner.input') }}</span>
           <pre>{{ failedCase.input }}</pre>
         </div>
         <div v-if="failedCase.expectedOutput !== null" class="case-field">
-          <span class="muted">ожидалось</span>
+          <span class="muted">{{ t('runner.expected') }}</span>
           <pre>{{ failedCase.expectedOutput }}</pre>
         </div>
         <div v-if="failedCase.stdout" class="case-field">
-          <span class="muted">получено</span>
+          <span class="muted">{{ t('runner.actual') }}</span>
           <pre>{{ failedCase.stdout }}</pre>
         </div>
         <pre v-if="failedCase.stderr" class="stderr">{{ failedCase.stderr }}</pre>
@@ -186,11 +193,17 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
 
     <div v-for="item in cases" :key="item.position ?? 'custom'" class="case">
       <div class="case-head">
-        <strong>{{ item.position === null ? 'свой ввод' : `пример ${item.position + 1}` }}</strong>
+        <strong>{{
+          item.position === null
+            ? t('runner.customRun')
+            : t('runner.sample', { number: item.position + 1 })
+        }}</strong>
         <span :class="isAccepted(item.verdict) ? 'ok' : 'bad'">{{
           verdictLabel(item.verdict)
         }}</span>
-        <span v-if="item.runtimeMs !== null" class="muted">{{ item.runtimeMs }} мс</span>
+        <span v-if="item.runtimeMs !== null" class="muted">{{
+          t('units.ms', { value: item.runtimeMs })
+        }}</span>
       </div>
       <pre v-if="item.stdout">{{ item.stdout }}</pre>
       <pre v-if="item.stderr" class="stderr">{{ item.stderr }}</pre>

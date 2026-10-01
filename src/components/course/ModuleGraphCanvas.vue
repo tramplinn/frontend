@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 import type { ModuleTree } from '@/api/schemas/content'
 import type { ModuleProgress } from '@/api/schemas/learning'
-import { withCount } from '@/lib/plural'
+import { useI18n } from '@/i18n'
 import type { GraphLayout, GraphNode } from './graph'
 import { NODE_HEIGHT, NODE_WIDTH, neighbourhood } from './graph'
 
@@ -15,6 +15,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [moduleId: string]; focusNode: [node: GraphNode] }>()
+
+const { tc } = useI18n()
 
 const hovered = ref<string | null>(null)
 
@@ -47,9 +49,9 @@ function counts(id: string): string {
   }
   const lessons = module.items.filter((item) => item.kind === 'lesson').length
   const quizzes = module.items.filter((item) => item.kind === 'quiz').length
-  const parts = [withCount(lessons, 'урок', 'урока', 'уроков')]
+  const parts = [tc('units.lessons', lessons)]
   if (quizzes > 0) {
-    parts.push(withCount(quizzes, 'тест', 'теста', 'тестов'))
+    parts.push(tc('units.quizzes', quizzes))
   }
   return parts.join(' · ')
 }

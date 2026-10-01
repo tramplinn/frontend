@@ -6,6 +6,9 @@ import { getPublicProfile } from '@/api/users'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ login: string }>()
 const profile = ref<PublicProfile | null>(null)
@@ -32,7 +35,7 @@ watch(
 </script>
 
 <template>
-  <BackLink :to="{ name: 'people' }" class="back">к людям</BackLink>
+  <BackLink :to="{ name: 'people' }" class="back">{{ t('people.back') }}</BackLink>
   <LoadState :pending="pending" :error="error" @retry="load"
     ><ProfileSummary v-if="profile" :profile="profile"
   /></LoadState>

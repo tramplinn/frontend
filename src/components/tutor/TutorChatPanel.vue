@@ -6,34 +6,21 @@ import { useFloatingPanel } from '@/composables/useFloatingPanel'
 import { type AskTutor, useTutorChat } from '@/features/tutor/composables/useTutorChat'
 import { useAuthStore } from '@/stores/auth'
 import { useTutorStore } from '@/stores/tutor'
+import { useI18n } from '@/i18n'
 
 type Kind = 'lesson' | 'problem'
 
-const COPY: Record<
-  Kind,
-  { tabLabel: string; panelLabel: string; hint: string; blank: string; placeholder: string }
-> = {
-  lesson: {
-    tabLabel: 'Спросить по уроку',
-    panelLabel: 'Ассистент урока',
-    hint: 'про термин или непонятное место',
-    blank:
-      'Спросите про термин из урока или попросите объяснить кусок кода. Ассистент видит текст этого урока.',
-    placeholder: 'вопрос по уроку',
-  },
-  problem: {
-    tabLabel: 'Спросить по задаче',
-    panelLabel: 'Ассистент задачи',
-    hint: 'подскажет подход, но не решение целиком',
-    blank:
-      'Спросите про подход к задаче или разбор ошибки в коде. Готовое решение ассистент не даёт — только подсказки.',
-    placeholder: 'вопрос по задаче',
-  },
-}
+const { t } = useI18n()
 
 const props = defineProps<{ kind: Kind; contentId: string; ask: AskTutor }>()
 
-const copy = computed(() => COPY[props.kind])
+const copy = computed(() => ({
+  tabLabel: t(`tutor.${props.kind}.tabLabel`),
+  panelLabel: t(`tutor.${props.kind}.panelLabel`),
+  hint: t(`tutor.${props.kind}.hint`),
+  blank: t(`tutor.${props.kind}.blank`),
+  placeholder: t(`tutor.${props.kind}.placeholder`),
+}))
 
 const auth = useAuthStore()
 const tutor = useTutorStore()
@@ -82,7 +69,7 @@ if (expanded.value) loadRenderer()
         <header class="head">
           <div class="bar">
             <span aria-hidden="true">✦</span>
-            <span class="title">спросить</span>
+            <span class="title">{{ t('tutor.ask') }}</span>
             <span class="hint">{{ copy.hint }}</span>
           </div>
 
@@ -92,10 +79,15 @@ if (expanded.value) loadRenderer()
             class="control"
             @click="tutor.clear(props.contentId)"
           >
-            очистить
+            {{ t('tutor.clear') }}
           </button>
 
-          <button type="button" class="control close" aria-label="Закрыть" @click="closePanel">
+          <button
+            type="button"
+            class="control close"
+            :aria-label="t('tutor.close')"
+            @click="closePanel"
+          >
             ×
           </button>
         </header>
@@ -104,7 +96,7 @@ if (expanded.value) loadRenderer()
           <p v-if="turns.length === 0 && !streaming" class="blank">
             {{ copy.blank }}
             <template v-if="!auth.isAuthenticated">
-              Без входа доступно несколько вопросов.
+              {{ t('tutor.guestLimit') }}
             </template>
           </p>
 
@@ -122,7 +114,7 @@ if (expanded.value) loadRenderer()
             <div v-if="streamedHtml" class="answer prose" v-html="streamedHtml" />
             <div v-else class="turn">{{ streamed }}</div>
           </template>
-          <p v-else-if="streaming" class="waiting">думает…</p>
+          <p v-else-if="streaming" class="waiting">{{ t('tutor.thinking') }}</p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
         </div>
 
@@ -132,14 +124,14 @@ if (expanded.value) loadRenderer()
             class="input"
             rows="2"
             :placeholder="copy.placeholder"
-            aria-label="Вопрос ассистенту"
+            :aria-label="t('tutor.question')"
             @keydown.enter.exact.prevent="send"
           ></textarea>
           <AppButton v-if="streaming" size="sm" variant="quiet" @click="stop">
-            остановить
+            {{ t('tutor.stop') }}
           </AppButton>
           <AppButton v-else type="submit" size="sm" variant="primary" :disabled="!canSend">
-            спросить
+            {{ t('tutor.ask') }}
           </AppButton>
         </form>
       </section>

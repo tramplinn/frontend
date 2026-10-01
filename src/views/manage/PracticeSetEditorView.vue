@@ -19,6 +19,9 @@ import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import { errorText } from '@/lib/errors'
+import { translate, useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ set: string }>()
 
@@ -35,10 +38,12 @@ const mode = ref<'practice' | 'mock_interview'>('practice')
 const duration = ref<number | null>(null)
 const picked = ref('')
 
-const modeOptions = [
-  { value: 'practice' as const, label: 'практика' },
-  { value: 'mock_interview' as const, label: 'интервью на время' },
-]
+const modeOptions = computed(() =>
+  (['practice', 'mock_interview'] as const).map((value) => ({
+    value,
+    label: t(`practiceEditor.modes.${value}`),
+  })),
+)
 
 const inSet = computed(() => new Set(loaded.value?.problems.map((item) => item.problemId)))
 
@@ -55,9 +60,9 @@ const publishBlockers = computed(() => {
   const value = loaded.value
   if (!value) return []
   const blockers: string[] = []
-  if (value.problems.length === 0) blockers.push('в наборе нет задач')
+  if (value.problems.length === 0) blockers.push(t('practiceEditor.noProblems'))
   if (value.mode === 'mock_interview' && !value.durationMinutes) {
-    blockers.push('для интервью не задана длительность')
+    blockers.push(t('practiceEditor.noDuration'))
   }
   return blockers
 })
@@ -72,7 +77,7 @@ const dirty = computed(() => {
     duration.value !== value.durationMinutes
   )
 })
-useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения набора. Уйти со страницы?')
+useUnsavedChangesGuard(dirty, () => translate('unsaved.practiceSet'))
 
 function sync(value: PracticeSetAuthor): void {
   loaded.value = value
@@ -185,9 +190,9 @@ onMounted(() => void load())
             :disabled="loaded.status === 'draft' && publishBlockers.length > 0"
             @click="togglePublished"
           >
-            {{ loaded.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
+            {{ loaded.status === 'published' ? t('manage.unpublish') : t('manage.publish') }}
           </AppButton>
-          <BackLink :to="{ name: 'manage-content' }">к контенту</BackLink>
+          <BackLink :to="{ name: 'manage-content' }">{{ t('manage.toContent') }}</BackLink>
         </div>
       </header>
 
@@ -198,41 +203,45 @@ onMounted(() => void load())
       </ul>
 
       <section class="card">
-        <h2>настройки набора</h2>
+        <h2>{{ t('practiceEditor.settings') }}</h2>
         <div class="grid">
           <label class="field">
-            <span>название</span>
+            <span>{{ t('fields.title') }}</span>
             <input v-model="title" type="text" class="form-field" />
           </label>
 
           <div class="field">
-            <span>режим</span>
-            <AppSelect v-model="mode" :options="modeOptions" label="Режим набора" />
+            <span>{{ t('practiceEditor.mode') }}</span>
+            <AppSelect
+              v-model="mode"
+              :options="modeOptions"
+              :label="t('practiceEditor.modeLabel')"
+            />
           </div>
 
           <label v-if="mode === 'mock_interview'" class="field">
-            <span>длительность, минут</span>
+            <span>{{ t('practiceEditor.duration') }}</span>
             <input v-model.number="duration" type="number" min="1" max="480" class="form-field" />
           </label>
         </div>
 
         <label class="field">
-          <span>описание</span>
+          <span>{{ t('fields.description') }}</span>
           <textarea v-model="description" rows="3" class="form-field" />
         </label>
 
         <div class="row">
           <AppButton variant="primary" :loading="busy === 'set'" @click="save">
-            сохранить набор
+            {{ t('practiceEditor.save') }}
           </AppButton>
         </div>
       </section>
 
       <section class="card">
-        <h2>задачи</h2>
+        <h2>{{ t('practiceEditor.problems') }}</h2>
 
         <p v-if="loaded.problems.length === 0" class="muted">
-          Набор пуст. Добавь задачи из библиотеки — там же они создаются.
+          {{ t('practiceEditor.empty') }}
         </p>
 
         <ol v-else class="problems">
@@ -251,18 +260,18 @@ onMounted(() => void load())
                 :disabled="index === 0 || busy === 'order'"
                 @click="move(index, -1)"
               >
-                выше
+                {{ t('manage.up') }}
               </AppButton>
               <AppButton
                 size="sm"
                 :disabled="index === loaded.problems.length - 1 || busy === 'order'"
                 @click="move(index, 1)"
               >
-                ниже
+                {{ t('manage.down') }}
               </AppButton>
               <ConfirmButton
-                label="убрать"
-                confirm-label="точно убрать?"
+                :label="t('manage.remove')"
+                :confirm-label="t('manage.confirmRemove')"
                 :loading="busy === `problem:${item.problemId}`"
                 @confirm="remove(item.problemId)"
               />
@@ -271,14 +280,20 @@ onMounted(() => void load())
         </ol>
 
         <div v-if="pickOptions.length > 0" class="row">
-          <AppSelect v-model="picked" :options="pickOptions" label="Задача из библиотеки" />
+          <AppSelect
+            v-model="picked"
+            :options="pickOptions"
+            :label="t('practiceEditor.fromLibrary')"
+          />
           <AppButton :loading="busy === 'add'" :disabled="!picked" @click="add">
-            добавить в набор
+            {{ t('practiceEditor.add') }}
           </AppButton>
         </div>
         <p v-else class="muted">
-          Свободных опубликованных задач нет.
-          <RouterLink :to="{ name: 'manage-algorithms' }">Создать в библиотеке</RouterLink>
+          {{ t('practiceEditor.noFree') }}
+          <RouterLink :to="{ name: 'manage-algorithms' }">{{
+            t('practiceEditor.createInLibrary')
+          }}</RouterLink>
         </p>
       </section>
     </section>

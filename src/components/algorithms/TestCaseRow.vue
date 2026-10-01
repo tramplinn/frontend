@@ -3,6 +3,9 @@ import type { TestCase } from '@/api/schemas/algorithmAuthoring'
 import type { TestCaseFields } from '@/features/algorithms/composables/useProblemEditor'
 import AppCheckbox from '@/components/ui/AppCheckbox.vue'
 import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   testCase: TestCase
@@ -20,17 +23,17 @@ const emit = defineEmits<{
 <template>
   <li class="case">
     <header class="head">
-      <strong>тест {{ props.number }}</strong>
+      <strong>{{ t('testCase.title', { number: props.number }) }}</strong>
       <span class="sample">
         <AppCheckbox
           :id="`sample-${props.testCase.id}`"
           :model-value="props.draft.isSample"
           @update:model-value="(value) => emit('patch', { isSample: value })"
         />
-        <label :for="`sample-${props.testCase.id}`">показывать в условии</label>
+        <label :for="`sample-${props.testCase.id}`">{{ t('testCase.sample') }}</label>
       </span>
       <label class="weight">
-        <span>вес</span>
+        <span>{{ t('testCase.weight') }}</span>
         <input
           :value="props.draft.weight"
           type="number"
@@ -46,7 +49,7 @@ const emit = defineEmits<{
 
     <div class="io">
       <label class="field">
-        <span>ввод (stdin)</span>
+        <span>{{ t('testCase.stdin') }}</span>
         <textarea
           :value="props.draft.input"
           rows="4"
@@ -55,7 +58,7 @@ const emit = defineEmits<{
         />
       </label>
       <label class="field">
-        <span>ожидаемый вывод</span>
+        <span>{{ t('testCase.expected') }}</span>
         <textarea
           :value="props.draft.expectedOutput"
           rows="4"

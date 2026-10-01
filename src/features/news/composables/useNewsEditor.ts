@@ -14,6 +14,7 @@ import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { runBusyAction } from '@/lib/asyncAction'
 import { errorText } from '@/lib/errors'
 import { renderMarkdown } from '@/lib/markdown'
+import { translate } from '@/i18n'
 
 const AUTOSAVE_DEBOUNCE_MS = 700
 const IMAGE_MIMES = assetMimeSchema.options.filter((mime) => mime.startsWith('image/'))
@@ -127,7 +128,7 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
 
   async function setStatus(status: 'draft' | 'published'): Promise<void> {
     if (!title.value.trim()) {
-      saveError.value = new Error('Название новости не может быть пустым')
+      saveError.value = new Error(translate('newsEditor.emptyTitle'))
       return
     }
     if (!(await flushAutosave())) return
@@ -176,7 +177,12 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
       for (const file of files) {
         const mime = assetMimeSchema.safeParse(file.type)
         if (!mime.success || !IMAGE_MIMES.includes(mime.data)) {
-          throw new Error(`${file.name}: нужно изображение (${IMAGE_MIMES.join(', ')})`)
+          throw new Error(
+            translate('newsEditor.imageRequired', {
+              name: file.name,
+              types: IMAGE_MIMES.join(', '),
+            }),
+          )
         }
         accepted.push(await uploadAsset(file, mime.data))
       }
@@ -218,7 +224,7 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
 
   const assetInsert = useAssetInsert(insertAtCursor, replacePlaceholder)
 
-  useUnsavedChangesGuard(dirty, 'Есть несохранённые изменения новости. Уйти со страницы?')
+  useUnsavedChangesGuard(dirty, () => translate('unsaved.news'))
 
   watch(
     () => toValue(newsId),

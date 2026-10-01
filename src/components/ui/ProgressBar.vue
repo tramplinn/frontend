@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ProgressIndicator, ProgressRoot } from 'reka-ui'
 import { computed } from 'vue'
+import { useI18n } from '@/i18n'
 
-const props = withDefaults(defineProps<{ value: number; max: number; label?: string }>(), {
-  label: 'Прогресс',
-})
+const { t } = useI18n()
+
+const props = defineProps<{ value: number; max: number; label?: string }>()
 
 const percent = computed(() => (props.max > 0 ? Math.round((props.value / props.max) * 100) : 0))
 </script>
@@ -14,7 +15,7 @@ const percent = computed(() => (props.max > 0 ? Math.round((props.value / props.
     class="track"
     :model-value="props.value"
     :max="Math.max(props.max, 1)"
-    :aria-label="props.label"
+    :aria-label="props.label ?? t('ui.progress')"
   >
     <ProgressIndicator class="fill" :style="{ width: `${String(percent)}%` }" />
   </ProgressRoot>

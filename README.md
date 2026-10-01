@@ -38,6 +38,9 @@ pnpm preview       # просмотр собранного bundle
 
 - `BACKEND_ORIGIN` — адрес backend для Vite proxy;
 - `VITE_API_BASE_URL` — браузерный API prefix.
+- `VITE_LOCALE_SWITCHER` — `true` показывает переключатель RU/EN. Пока локализация
+  не готова публично, включается только в сборках для команды (в Docker — build arg);
+  без флага интерфейс остаётся на русском.
 
 Для контейнера используется [`.env.example`](.env.example):
 
