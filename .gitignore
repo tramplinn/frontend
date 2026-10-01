@@ -8,3 +8,5 @@ dist
 report.xml
 coverage
 *.tsbuildinfo
+.idea/
+.vscode/
