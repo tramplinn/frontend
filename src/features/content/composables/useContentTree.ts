@@ -7,6 +7,7 @@ import {
   listDraftTracks,
 } from '@/api/authoring'
 import type { Course, CourseTree, ModuleDependency, Track } from '@/api/schemas/content'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 
 /** Курс виден в дереве трека, только если к какому-то треку привязан —
     а свежесозданный (или отвязанный после удаления трека) курс может не
@@ -23,6 +24,9 @@ export function useContentTree() {
   const error = ref<unknown>(null)
   const courseError = ref<unknown>(null)
   const loadingCourse = ref(false)
+  /* Раскрыли курс A и сразу B: ответ по A мог прийти последним и показать
+     дерево A под заголовком B — и действия ушли бы не в тот курс. */
+  const treeGuard = useVersionedLoad()
 
   async function loadLists(): Promise<void> {
     const [loadedTracks, loadedCourses] = await Promise.all([listDraftTracks(), listDraftCourses()])
@@ -42,30 +46,34 @@ export function useContentTree() {
     }
   }
 
-  async function fetchTree(slug: string): Promise<void> {
+  async function fetchTree(slug: string, version: number): Promise<void> {
     const [tree, moduleDependencies] = await Promise.all([
       getDraftCourse(slug),
       listDraftModuleDependencies(slug),
     ])
+    if (!treeGuard.isCurrent(version)) return
     openCourse.value = tree
     dependencies.value = moduleDependencies
   }
 
   async function openTree(slug: string): Promise<void> {
+    const version = treeGuard.start()
     loadingCourse.value = true
     courseError.value = null
     try {
-      await fetchTree(slug)
+      await fetchTree(slug, version)
     } catch (cause) {
+      if (!treeGuard.isCurrent(version)) return
       courseError.value = cause
       openCourse.value = null
     } finally {
-      loadingCourse.value = false
+      if (treeGuard.isCurrent(version)) loadingCourse.value = false
     }
   }
 
   async function toggleCourse(slug: string): Promise<void> {
     if (openSlug.value === slug) {
+      treeGuard.cancel()
       openSlug.value = null
       openCourse.value = null
       openModuleId.value = null
@@ -78,7 +86,7 @@ export function useContentTree() {
 
   async function refreshTree(): Promise<void> {
     if (openSlug.value !== null) {
-      await fetchTree(openSlug.value)
+      await fetchTree(openSlug.value, treeGuard.start())
     }
   }
 

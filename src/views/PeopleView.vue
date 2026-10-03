@@ -6,6 +6,7 @@ import { searchPeople } from '@/api/users'
 import type { PublicUser } from '@/api/schemas/users'
 import SignInGate from '@/components/layout/SignInGate.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { gradeName, specialtyName } from '@/lib/profile'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from '@/i18n'
@@ -21,18 +22,23 @@ const total = ref(0)
 const pending = ref(true)
 const error = ref<unknown>(null)
 
+// Ответ на «a.m» может прийти позже ответа на «a.mo» — показываем только последний.
+const searchGuard = useVersionedLoad()
+
 async function search(): Promise<void> {
   if (!auth.isAuthenticated) return
+  const version = searchGuard.start()
   pending.value = true
   error.value = null
   try {
     const page = await searchPeople(query.value.trim())
+    if (!searchGuard.isCurrent(version)) return
     people.value = page.items
     total.value = page.total
   } catch (cause) {
-    error.value = cause
+    if (searchGuard.isCurrent(version)) error.value = cause
   } finally {
-    pending.value = false
+    if (searchGuard.isCurrent(version)) pending.value = false
   }
 }
 

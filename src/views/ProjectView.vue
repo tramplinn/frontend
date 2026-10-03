@@ -11,6 +11,7 @@ import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { useI18n } from '@/i18n'
 import { errorText } from '@/lib/errors'
 import { renderReadme } from '@/lib/markdown'
@@ -39,28 +40,40 @@ const statusOptions = computed(() =>
   PROJECT_STATUSES.map((value) => ({ value, label: statusLabel(value) })),
 )
 
+/* При переходе с проекта на проект ответ по старому slug может прийти позже
+   нового и показать чужой проект — все ответы сверяем с текущей загрузкой. */
+const loadGuard = useVersionedLoad()
+
 async function load(): Promise<void> {
+  const version = loadGuard.start()
   pending.value = true
   error.value = null
   events.value = null
   try {
-    project.value = await getProject(props.slug)
+    const loaded = await getProject(props.slug)
+    if (loadGuard.isCurrent(version)) project.value = loaded
   } catch (cause) {
-    error.value = cause
+    if (loadGuard.isCurrent(version)) error.value = cause
   } finally {
-    pending.value = false
+    if (loadGuard.isCurrent(version)) pending.value = false
   }
 }
 
 async function setStatus(status: ProjectStatus): Promise<void> {
   if (!project.value || project.value.status === status) return
+  const version = loadGuard.peek()
   changingStatus.value = true
   statusError.value = null
   try {
-    project.value = await changeProjectStatus(props.slug, status)
-    if (events.value) events.value = await listStatusEvents(props.slug)
+    const updated = await changeProjectStatus(props.slug, status)
+    if (!loadGuard.isCurrent(version)) return
+    project.value = updated
+    if (events.value) {
+      const history = await listStatusEvents(props.slug)
+      if (loadGuard.isCurrent(version)) events.value = history
+    }
   } catch (cause) {
-    statusError.value = errorText(cause)
+    if (loadGuard.isCurrent(version)) statusError.value = errorText(cause)
   } finally {
     changingStatus.value = false
   }
@@ -69,7 +82,9 @@ async function setStatus(status: ProjectStatus): Promise<void> {
 /** История свёрнута по умолчанию — грузим её только при раскрытии. */
 async function toggleHistory(event: Event): Promise<void> {
   if ((event.target as HTMLDetailsElement).open && events.value === null) {
-    events.value = await listStatusEvents(props.slug).catch(() => [])
+    const version = loadGuard.peek()
+    const history = await listStatusEvents(props.slug).catch(() => [])
+    if (loadGuard.isCurrent(version)) events.value = history
   }
 }
 

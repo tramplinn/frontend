@@ -5,6 +5,7 @@ import type { CourseTree, ModuleTree } from '@/api/schemas/content'
 import ModuleGraph from '@/components/course/ModuleGraph.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
 import { useProgressStore } from '@/stores/progress'
@@ -42,19 +43,24 @@ function firstUnfinished(loaded: CourseTree): string | null {
   return (pendingModule ?? loaded.modules[0])?.id ?? null
 }
 
+const loadGuard = useVersionedLoad()
+
 async function load(slug: string): Promise<void> {
+  const version = loadGuard.start()
   pending.value = true
   error.value = null
   try {
     const loaded = await content.loadCourse(slug)
+    if (!loadGuard.isCurrent(version)) return
     tree.value = loaded
-    await progress.load()
-    await progress.loadCourseProgress(slug)
+    // Прогресс — дополнение к курсу: его сбой не должен прятать сам курс за ошибкой.
+    await Promise.all([progress.load(), progress.loadCourseProgress(slug)]).catch(() => {})
+    if (!loadGuard.isCurrent(version)) return
     selectedId.value = firstUnfinished(loaded)
   } catch (cause) {
-    error.value = cause
+    if (loadGuard.isCurrent(version)) error.value = cause
   } finally {
-    pending.value = false
+    if (loadGuard.isCurrent(version)) pending.value = false
   }
 }
 

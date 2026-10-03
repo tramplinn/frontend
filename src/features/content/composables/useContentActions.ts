@@ -171,7 +171,10 @@ export function useContentActions(tree: TreeAccess) {
     } finally {
       busy.value = false
     }
-    await tree.refresh()
+    // Вызывается через void: упавшее обновление иначе стало бы unhandled rejection.
+    await tree.refresh().catch((cause: unknown) => {
+      actionError.value ??= cause
+    })
   }
 
   function publishModuleCascade(module: ModuleTree): void {

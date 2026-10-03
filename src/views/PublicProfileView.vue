@@ -7,6 +7,7 @@ import SignInGate from '@/components/layout/SignInGate.vue'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useVersionedLoad } from '@/composables/useVersionedLoad'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from '@/i18n'
 
@@ -18,16 +19,21 @@ const profile = ref<PublicProfile | null>(null)
 const pending = ref(true)
 const error = ref<unknown>(null)
 
+/* Переход с профиля на профиль: ответ по прежнему логину не должен перезаписать новый. */
+const loadGuard = useVersionedLoad()
+
 async function load(): Promise<void> {
   if (!auth.isAuthenticated) return
+  const version = loadGuard.start()
   pending.value = true
   error.value = null
   try {
-    profile.value = await getPublicProfile(props.login)
+    const loaded = await getPublicProfile(props.login)
+    if (loadGuard.isCurrent(version)) profile.value = loaded
   } catch (cause) {
-    error.value = cause
+    if (loadGuard.isCurrent(version)) error.value = cause
   } finally {
-    pending.value = false
+    if (loadGuard.isCurrent(version)) pending.value = false
   }
 }
 
