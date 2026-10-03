@@ -17,7 +17,8 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
@@ -46,15 +47,18 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/markdown-it": "^14.2.0",
     "@types/node": "^22.20.1",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/test-utils": "^2.5.1",
     "@vue/tsconfig": "^0.9.1",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.10.0",
     "globals": "^17.12.0",
+    "happy-dom": "^20.14.5",
     "jiti": "^2.7.0",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3",

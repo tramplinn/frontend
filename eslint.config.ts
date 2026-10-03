@@ -7,7 +7,7 @@ import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescri
 
 export default defineConfigWithVueTs(
   defineConfig([
-    { ignores: ['dist/**', 'node_modules/**'] },
+    { ignores: ['dist/**', 'node_modules/**', 'test-results/**', 'playwright-report/**'] },
     js.configs.recommended,
     vue.configs['flat/recommended'],
     {
@@ -17,7 +17,7 @@ export default defineConfigWithVueTs(
       },
     },
     {
-      files: ['*.config.ts'],
+      files: ['*.config.ts', 'e2e/**/*.ts'],
       languageOptions: {
         globals: { ...globals.node },
       },

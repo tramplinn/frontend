@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
@@ -19,6 +20,11 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': { target: backendUrl, changeOrigin: true },
       },
+    },
+    test: {
+      // e2e/*.e2e.ts гоняет Playwright против живого стенда, не vitest.
+      include: ['src/**/*.spec.ts'],
+      setupFiles: ['src/__tests__/setup.ts'],
     },
   }
 })
