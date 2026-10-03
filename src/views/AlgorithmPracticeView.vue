@@ -102,13 +102,13 @@ function sessionLabel(status: string): string {
           </button>
         </aside>
 
-        <main v-if="runner.problem.value" class="problem">
+        <section v-if="runner.problem.value" class="problem">
           <ProblemStatement :problem="runner.problem.value" />
           <div class="right">
             <ProblemEditorPanel :runner="runner" />
             <ReflectionPanel :runner="runner" @save="runner.saveReflection" />
           </div>
-        </main>
+        </section>
 
         <p v-else-if="practiceSet.problems.length === 0" class="muted">{{ t('practice.empty') }}</p>
       </div>

@@ -17,8 +17,12 @@ function collectVueWarnings(original: (...args: unknown[]) => void) {
 
 beforeEach(() => {
   vueWarnings = []
-  vi.spyOn(console, 'warn').mockImplementation(collectVueWarnings(console.warn.bind(console)))
-  vi.spyOn(console, 'error').mockImplementation(collectVueWarnings(console.error.bind(console)))
+  // Оригиналы берём до spyOn: аргумент mockImplementation вычисляется уже
+  // после подмены, и console.warn там был бы самим шпионом — рекурсия.
+  const warn = console.warn.bind(console)
+  const error = console.error.bind(console)
+  vi.spyOn(console, 'warn').mockImplementation(collectVueWarnings(warn))
+  vi.spyOn(console, 'error').mockImplementation(collectVueWarnings(error))
 })
 
 afterEach(() => {
