@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { Mail } from '@lucide/vue'
+import { computed, watch } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -11,6 +12,7 @@ import { localeSwitcherEnabled, useI18n } from '@/i18n'
 import { authNextPath } from '@/lib/authNavigation'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
+import { useProjectInvitesStore } from '@/stores/projectInvites'
 
 interface Crumb {
   label: string
@@ -21,7 +23,18 @@ const auth = useAuthStore()
 const content = useContentStore()
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, tc } = useI18n()
+const invites = useProjectInvitesStore()
+
+// Внутриплатформенных уведомлений нет: входящие приглашения — счётчик в шапке.
+watch(
+  () => auth.isAuthenticated,
+  (signedIn) => {
+    if (!signedIn) invites.reset()
+    else if (!invites.loaded) void invites.load().catch(() => {})
+  },
+  { immediate: true },
+)
 
 const nextPath = computed(() => authNextPath(route.fullPath, route.query.login))
 /** Гард роутера кладёт сюда закрытую страницу, куда гость пытался попасть. */
@@ -52,6 +65,10 @@ const SIMPLE_LABELS: Record<string, MessageKey> = {
   profile: 'nav.crumbs.profile',
   people: 'nav.crumbs.people',
   'user-profile': 'nav.crumbs.profile',
+  projects: 'nav.crumbs.projects',
+  'project-create': 'nav.crumbs.projectNew',
+  project: 'nav.crumbs.project',
+  'project-settings': 'nav.crumbs.projectSettings',
   'manage-content': 'nav.crumbs.content',
   'manage-lesson': 'nav.crumbs.contentLesson',
   'manage-quiz': 'nav.crumbs.contentQuiz',
@@ -116,6 +133,16 @@ const crumbs = computed<Crumb[]>(() => {
     <div class="side">
       <LocaleSwitcher v-if="localeSwitcherEnabled" />
       <ThemeToggle />
+      <RouterLink
+        v-if="auth.isAuthenticated && invites.count > 0"
+        :to="{ name: 'profile' }"
+        class="invites"
+        :aria-label="tc('invites.badge', invites.count)"
+        :title="tc('invites.badge', invites.count)"
+        ><Mail :size="16" aria-hidden="true" /><span class="count">{{
+          invites.count
+        }}</span></RouterLink
+      >
       <SignInButton
         v-if="!auth.isAuthenticated"
         size="sm"
@@ -172,6 +199,19 @@ a.crumb:hover {
   align-items: center;
   gap: var(--space-2);
   margin-left: auto;
+}
+
+.invites {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--ctl-sm);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
 }
 
 @media (max-width: 520px) {

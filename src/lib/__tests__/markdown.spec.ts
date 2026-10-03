@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdown, renderReadme } from '@/lib/markdown'
 
 describe('renderMarkdown', () => {
   it('оформляет списки и инлайновый код', () => {
@@ -29,5 +29,31 @@ describe('renderMarkdown', () => {
 
     expect(html).not.toContain('<a ')
     expect(html).not.toContain('href')
+  })
+})
+
+describe('renderReadme', () => {
+  it('открывает ссылки в новой вкладке без передачи opener', () => {
+    const html = renderReadme('[репо](https://gitlab.com/a/b)')
+
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="nofollow noopener noreferrer"')
+  })
+
+  it('не исполняет сырой html', () => {
+    const html = renderReadme('<script>alert(1)</script><img src=x onerror=alert(1)>')
+
+    expect(html).not.toContain('<script')
+    expect(html).not.toContain('<img')
+  })
+
+  it('пропускает картинки только по https', () => {
+    expect(renderReadme('![лого](https://cdn.example.com/a.png)')).toContain(
+      '<img src="https://cdn.example.com/a.png"',
+    )
+    const insecure = renderReadme('![лого](http://cdn.example.com/a.png)')
+    expect(insecure).not.toContain('<img')
+    expect(insecure).toContain('лого')
+    expect(renderReadme('![x](javascript:alert(1))')).not.toContain('<img')
   })
 })

@@ -7,6 +7,7 @@ export type SectionKey =
   | 'catalog'
   | 'algorithms'
   | 'people'
+  | 'projects'
   | 'content'
   | 'news-desk'
   | 'algorithm-library'
@@ -21,6 +22,7 @@ export type SectionMessages =
   | 'catalog'
   | 'algorithms'
   | 'people'
+  | 'projects'
   | 'content'
   | 'newsDesk'
   | 'algorithmLibrary'
@@ -67,6 +69,13 @@ export const SECTIONS: Section[] = [
     key: 'people',
     messages: 'people',
     to: { name: 'people' },
+    access: 'everyone',
+    group: 'learning',
+  },
+  {
+    key: 'projects',
+    messages: 'projects',
+    to: { name: 'projects' },
     access: 'everyone',
     group: 'learning',
   },

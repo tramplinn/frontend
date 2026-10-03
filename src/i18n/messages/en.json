@@ -38,7 +38,11 @@
       "contentQuiz": "content / quiz",
       "news": "news",
       "newsArticle": "news / article",
-      "users": "users"
+      "users": "users",
+      "projects": "projects",
+      "projectNew": "projects / new",
+      "project": "project",
+      "projectSettings": "project / settings"
     }
   },
   "sections": {
@@ -82,6 +86,10 @@
     "users": {
       "title": "users",
       "summary": "Roles and access"
+    },
+    "projects": {
+      "title": "projects",
+      "summary": "Pet projects and team work"
     }
   },
   "auth": {
@@ -774,5 +782,199 @@
     "add": "add to set",
     "noFree": "No available published problems.",
     "createInLibrary": "Create in the library"
+  },
+  "projects": {
+    "heading": "projects",
+    "lead": "What members are building: pet projects, team work, hackathons",
+    "create": "new project",
+    "createTitle": "new project",
+    "back": "to projects",
+    "gateTitle": "Your projects need sign-in",
+    "gateText": "Sign in to create projects, invite a team and show them on your profile.",
+    "yourRole": "you are {role}",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "membersCount": {
+      "one": "{count} member",
+      "other": "{count} members"
+    },
+    "tabs": {
+      "all": "all projects",
+      "mine": "mine"
+    },
+    "status": {
+      "idea": "idea",
+      "planning": "planning",
+      "in_progress": "in progress",
+      "paused": "paused",
+      "done": "done",
+      "archived": "archived"
+    },
+    "visibility": {
+      "public": "public",
+      "authenticated": "members only",
+      "private": "private"
+    },
+    "visibilityHint": {
+      "public": "Visible to everyone, including guests",
+      "authenticated": "Visible to everyone who is signed in",
+      "private": "Visible to project members only"
+    },
+    "role": {
+      "owner": "owner",
+      "maintainer": "maintainer",
+      "contributor": "contributor",
+      "viewer": "viewer"
+    },
+    "linkKind": {
+      "repository": "repository",
+      "demo": "demo",
+      "docs": "docs",
+      "design": "design",
+      "video": "video",
+      "presentation": "slides",
+      "misc": "link"
+    },
+    "linkFilter": {
+      "repository": "has repository",
+      "demo": "has demo",
+      "docs": "has docs",
+      "design": "has design",
+      "video": "has video",
+      "presentation": "has slides",
+      "misc": "other links"
+    },
+    "sort": {
+      "updated": "recently updated",
+      "created": "newest",
+      "status_changed": "status changed",
+      "title": "by title"
+    },
+    "catalog": {
+      "search": "title or summary",
+      "sort": "Sort",
+      "reset": "reset",
+      "statuses": "Statuses",
+      "links": "Links",
+      "role": "My role",
+      "anyRole": "any role",
+      "memberFilter": "projects of @{login}",
+      "more": "show more",
+      "total": {
+        "one": "{count} project",
+        "other": "{count} projects"
+      },
+      "emptyAll": "No projects yet — create the first one.",
+      "emptyFiltered": "Nothing matches these filters.",
+      "emptyMine": "You are not in any project yet."
+    },
+    "fields": {
+      "title": "title",
+      "slug": "address",
+      "slugHint": "latin letters, digits and dashes; the old address will stop working",
+      "slugPreview": "address: /projects/{slug}",
+      "summary": "short summary",
+      "visibility": "visibility",
+      "logo": "logo",
+      "status": "Status"
+    },
+    "readme": {
+      "empty": "The team hasn't described the project yet.",
+      "emptyOwn": "Tell people about the project: what, why and with what.",
+      "write": "write a README",
+      "source": "README in Markdown",
+      "placeholder": "Start writing the README",
+      "save": "save README"
+    },
+    "links": {
+      "heading": "links",
+      "hint": "Up to {max} links, in the order shown.",
+      "kind": "Link type",
+      "url": "Link address",
+      "label": "label",
+      "add": "add link",
+      "remove": "Remove link",
+      "save": "save links"
+    },
+    "team": {
+      "heading": "team",
+      "title": "Title",
+      "titlePlaceholder": "e.g. Backend developer",
+      "role": "Role",
+      "leave": "leave",
+      "remove": "remove",
+      "confirm": "sure?"
+    },
+    "history": {
+      "heading": "status history",
+      "loading": "loading"
+    },
+    "invites": {
+      "heading": "invitations",
+      "login": "member login",
+      "send": "invite",
+      "none": "No pending invitations.",
+      "pendingUntil": "{role} · awaiting reply until {date}",
+      "revoke": "revoke"
+    },
+    "settings": {
+      "open": "settings",
+      "heading": "settings: {title}",
+      "backToProject": "to project",
+      "tabsLabel": "Settings sections",
+      "tabs": {
+        "main": "general",
+        "readme": "README",
+        "links": "links",
+        "members": "members",
+        "danger": "danger zone"
+      },
+      "readOnly": "Your role can't change this project.",
+      "archived": "The project is archived: change its status on the project page to edit it.",
+      "save": "save",
+      "saved": "Saved",
+      "readmeSaved": "README saved",
+      "linksSaved": "Links saved",
+      "inviteSent": "Invitation sent",
+      "transferred": "Ownership transferred",
+      "linksTooMany": "No more than {max} links",
+      "linkInvalid": "Link “{url}” must start with http:// or https://"
+    },
+    "danger": {
+      "transferHeading": "transfer ownership",
+      "transferHint": "The new owner must be a member; you will become a maintainer.",
+      "newOwner": "New owner",
+      "transfer": "transfer",
+      "deleteHeading": "delete project",
+      "deleteHint": "This can't be undone: the README, links, team and history will be gone. Type {slug} to confirm.",
+      "deleteConfirm": "Project address to confirm",
+      "delete": "delete forever"
+    }
+  },
+  "profileBlocks": {
+    "about": "about",
+    "projects": "projects",
+    "stats": "stats",
+    "courses": "courses",
+    "resume": "resume"
+  },
+  "profileLayout": {
+    "heading": "public profile",
+    "blocks": "blocks and their order",
+    "projects": "projects on the profile",
+    "noProjects": "No projects yet.",
+    "save": "save layout",
+    "saved": "Layout saved",
+    "preview": "see it as others do"
+  },
+  "invites": {
+    "heading": "project invitations",
+    "from": "from {inviter} · role: {role} · until {date}",
+    "accept": "accept",
+    "decline": "decline",
+    "badge": {
+      "one": "{count} project invitation",
+      "other": "{count} project invitations"
+    }
   }
 }

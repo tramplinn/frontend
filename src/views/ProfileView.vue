@@ -5,7 +5,9 @@ import { useRouter } from 'vue-router'
 import { logoutEverywhere } from '@/api/auth'
 import type { PublicProfile } from '@/api/schemas/users'
 import { getPublicProfile } from '@/api/users'
+import ProfileLayoutEditor from '@/components/profile/ProfileLayoutEditor.vue'
 import ProfileSummary from '@/components/profile/ProfileSummary.vue'
+import ProjectInvites from '@/components/profile/ProjectInvites.vue'
 import ResumeField from '@/components/profile/ResumeField.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -74,6 +76,7 @@ async function signOut(all = false): Promise<void> {
 
 <template>
   <section v-if="auth.user" class="profile">
+    <ProjectInvites @changed="loadPublicProfile" />
     <ProfileSummary v-if="publicProfile" :profile="publicProfile" own />
     <p v-else-if="error" class="summary-error" role="alert">{{ error }}</p>
     <div class="columns">
@@ -285,6 +288,7 @@ async function signOut(all = false): Promise<void> {
         </div>
       </section>
     </div>
+    <ProfileLayoutEditor :login="auth.user.login" @saved="loadPublicProfile" />
     <p v-if="form.error || identity.error" class="error" role="alert">
       {{ form.error || identity.error }}
     </p>

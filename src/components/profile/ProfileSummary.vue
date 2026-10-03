@@ -2,8 +2,15 @@
 import { AvatarFallback, AvatarImage, AvatarRoot } from 'reka-ui'
 import { computed } from 'vue'
 
+import type { ProfileBlock } from '@/api/schemas/projects'
 import type { PublicProfile } from '@/api/schemas/users'
+import ProfileAboutBlock from '@/components/profile/blocks/ProfileAboutBlock.vue'
+import ProfileCoursesBlock from '@/components/profile/blocks/ProfileCoursesBlock.vue'
+import ProfileProjectsBlock from '@/components/profile/blocks/ProfileProjectsBlock.vue'
+import ProfileResumeBlock from '@/components/profile/blocks/ProfileResumeBlock.vue'
+import ProfileStatsBlock from '@/components/profile/blocks/ProfileStatsBlock.vue'
 import { gradeName, specialtyName } from '@/lib/profile'
+import { profileBlocksToRender } from '@/lib/profileLayout'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
@@ -11,6 +18,15 @@ const { t } = useI18n()
 const props = defineProps<{ profile: PublicProfile; own?: boolean }>()
 const displayName = computed(() => props.profile.name ?? props.profile.login)
 const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
+const blocks = computed(() => profileBlocksToRender(props.profile))
+
+const BLOCK_COMPONENTS = {
+  about: ProfileAboutBlock,
+  projects: ProfileProjectsBlock,
+  stats: ProfileStatsBlock,
+  courses: ProfileCoursesBlock,
+  resume: ProfileResumeBlock,
+} satisfies Record<ProfileBlock, unknown>
 </script>
 
 <template>
@@ -43,48 +59,8 @@ const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
       </div>
     </div>
 
-    <p v-if="profile.bio" class="bio">{{ profile.bio }}</p>
-
-    <ul v-if="profile.interests.length" class="interests">
-      <li v-for="interest in profile.interests" :key="interest.id">{{ interest.name }}</li>
-    </ul>
-
-    <a
-      v-if="profile.resumeUrl"
-      :href="profile.resumeUrl"
-      target="_blank"
-      rel="noopener"
-      class="resume-link"
-      >{{ t('profile.resumePdf') }}</a
-    >
-
-    <dl class="stats">
-      <div>
-        <dt>{{ profile.completedLessons }}</dt>
-        <dd>{{ t('profile.statLessons') }}</dd>
-      </div>
-      <div>
-        <dt>{{ profile.passedQuizzes }}</dt>
-        <dd>{{ t('profile.statQuizzes') }}</dd>
-      </div>
-      <div>
-        <dt>{{ profile.solvedAlgorithms }}</dt>
-        <dd>{{ t('profile.statProblems') }}</dd>
-      </div>
-    </dl>
-
-    <div v-if="profile.activeCourses.length" class="courses">
-      <h2>{{ t('profile.learningNow') }}</h2>
-      <RouterLink
-        v-for="course in profile.activeCourses"
-        :key="course.slug"
-        :to="{ name: 'course', params: { course: course.slug } }"
-        class="course"
-      >
-        <span class="course-mark" :style="{ background: course.color ?? 'var(--accent)' }"></span>
-        <span class="course-title">{{ course.title }}</span>
-        <span class="course-progress">{{ course.completedLessons }}/{{ course.totalLessons }}</span>
-      </RouterLink>
+    <div v-for="block in blocks" :key="block" class="block" :class="`block--${block}`">
+      <component :is="BLOCK_COMPONENTS[block]" :profile="profile" />
     </div>
   </section>
 </template>
@@ -92,6 +68,7 @@ const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
 <style scoped>
 .summary {
   overflow: hidden;
+  padding-bottom: var(--space-8);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--card);
@@ -161,94 +138,8 @@ h1 {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }
-.bio {
-  max-width: var(--measure);
+.block {
   padding: var(--space-6) var(--space-8) 0;
-  white-space: pre-line;
-}
-.interests {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-8) 0;
-  list-style: none;
-}
-.interests li {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-.resume-link {
-  display: inline-flex;
-  width: fit-content;
-  margin: var(--space-4) var(--space-8) 0;
-  color: var(--accent);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-}
-.resume-link:hover {
-  text-decoration: underline;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: var(--space-6) var(--space-8);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ctl);
-}
-.stats div {
-  padding: var(--space-4);
-  text-align: center;
-  border-right: 1px solid var(--border);
-}
-.stats div:last-child {
-  border-right: 0;
-}
-.stats dt {
-  font-size: var(--text-display);
-  font-weight: var(--weight-semibold);
-}
-.stats dd {
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-.courses {
-  padding: 0 var(--space-8) var(--space-8);
-}
-.courses h2 {
-  margin-bottom: var(--space-3);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-medium);
-  color: var(--text-muted);
-}
-.course {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-ctl);
-  background: var(--surface);
-}
-.course + .course {
-  margin-top: var(--space-2);
-}
-.course:hover {
-  background: var(--surface-hover);
-}
-.course-mark {
-  width: var(--space-2);
-  height: var(--space-8);
-  border-radius: var(--radius-pill);
-}
-.course-title {
-  flex: 1;
-  font-weight: var(--weight-medium);
-}
-.course-progress {
-  color: var(--text-muted);
-  font-size: var(--text-caption);
 }
 
 @media (max-width: 620px) {
@@ -260,18 +151,8 @@ h1 {
     width: 72px;
     height: 72px;
   }
-  .bio,
-  .courses {
+  .block {
     padding-inline: var(--space-4);
-  }
-  .stats {
-    margin-inline: var(--space-4);
-  }
-  .stats div {
-    padding-inline: var(--space-2);
-  }
-  .stats dt {
-    font-size: var(--text-title);
   }
 }
 </style>

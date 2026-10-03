@@ -160,6 +160,30 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
+    path: '/projects',
+    name: 'projects',
+    component: () => import('@/views/ProjectsView.vue'),
+  },
+  {
+    path: '/projects/new',
+    name: 'project-create',
+    component: () => import('@/views/ProjectCreateView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/:slug',
+    name: 'project',
+    component: () => import('@/views/ProjectView.vue'),
+    props: true,
+  },
+  {
+    path: '/projects/:slug/settings',
+    name: 'project-settings',
+    component: () => import('@/views/ProjectSettingsView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),

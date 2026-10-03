@@ -68,7 +68,7 @@ interface RequestOptions<T extends z.ZodType> {
   body?: unknown
   rawBody?: { data: BodyInit; contentType: string }
   formData?: FormData
-  query?: Record<string, string | number | boolean | undefined>
+  query?: Record<string, string | number | boolean | readonly string[] | undefined>
   schema?: T
   withCookies?: boolean
   skipRetry?: boolean
@@ -82,7 +82,10 @@ function buildUrl(path: string, query: RequestOptions<z.ZodType>['query']): stri
   }
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined) {
+    if (Array.isArray(value)) {
+      // Мультизначения (?status=a&status=b) FastAPI собирает в list[...].
+      for (const item of value) params.append(key, item)
+    } else if (value !== undefined) {
       params.set(key, String(value))
     }
   }

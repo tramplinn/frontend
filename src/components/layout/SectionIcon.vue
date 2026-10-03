@@ -52,6 +52,14 @@ defineProps<{ name: SectionKey }>()
       <path class="purple" d="M11.3 17c.2-3.1 1.3-4.7 3.3-4.7s3.2 1.6 3.6 4.7z" />
     </svg>
 
+    <svg v-else-if="name === 'projects'" viewBox="0 0 20 20">
+      <rect class="soft-purple" x="2" y="5" width="16" height="12" rx="2.5" />
+      <path class="purple" d="M7 5V3.8C7 3.4 7.4 3 7.8 3h4.4c.4 0 .8.4.8.8V5h-1.6v-.4H8.6V5z" />
+      <rect class="accent" x="4.5" y="8" width="5" height="1.8" rx="0.9" />
+      <rect class="warning" x="4.5" y="11.5" width="8" height="1.8" rx="0.9" />
+      <circle class="success" cx="14.5" cy="9" r="1.6" />
+    </svg>
+
     <svg v-else viewBox="0 0 20 20">
       <circle class="success" cx="6" cy="6" r="3" />
       <circle class="accent" cx="14" cy="6" r="3" />

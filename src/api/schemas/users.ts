@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { pageSchema, uuidSchema } from './common'
 import { companySchema, interestSchema, universitySchema } from './directories'
+import { profileBlockSchema, projectCardSchema } from './projects'
 
 export const specialtySchema = z.enum([
   'frontend',
@@ -38,11 +39,14 @@ export const courseActivitySchema = z.object({
 
 export const publicProfileSchema = publicUserSchema.extend({
   bio: z.string().nullable(),
-  completedLessons: z.number().int(),
-  passedQuizzes: z.number().int(),
-  solvedAlgorithms: z.number().int(),
+  // Скрытые пользователем блоки бэкенд не отдаёт: статистика приходит null.
+  completedLessons: z.number().int().nullable(),
+  passedQuizzes: z.number().int().nullable(),
+  solvedAlgorithms: z.number().int().nullable(),
   activeCourses: z.array(courseActivitySchema),
   resumeUrl: z.string().nullable(),
+  layout: z.array(profileBlockSchema),
+  projects: z.array(projectCardSchema),
 })
 
 export const publicUserPageSchema = pageSchema(publicUserSchema)

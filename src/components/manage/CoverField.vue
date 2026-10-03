@@ -8,7 +8,7 @@ import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
 
-const props = defineProps<{ alt: string }>()
+const props = defineProps<{ alt: string; label?: string }>()
 
 const assetId = defineModel<string | null>('assetId', { required: true })
 const url = defineModel<string | null>('url', { required: true })
@@ -53,7 +53,7 @@ function drop(): void {
 
 <template>
   <div class="cover">
-    <span class="label">{{ t('manage.cover') }}</span>
+    <span class="label">{{ props.label ?? t('manage.cover') }}</span>
     <div class="body">
       <img v-if="url" :src="url" :alt="props.alt" class="preview" />
       <span v-else class="preview preview--empty">{{ t('manage.none') }}</span>
