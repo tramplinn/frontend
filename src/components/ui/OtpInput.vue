@@ -30,7 +30,8 @@ watch(
 function emitValue(): void {
   const value = digits.value.join('')
   emit('update:modelValue', value)
-  if (value.length === props.length && !value.includes('')) emit('complete', value)
+  // Не value.includes(''): пустую подстроку содержит любая строка, и complete не приходил.
+  if (digits.value.every((digit) => digit !== '')) emit('complete', value)
 }
 
 function focusCell(index: number): void {

@@ -75,7 +75,8 @@ export function useIdentityLinking() {
   }
 
   async function confirmEmailLink(): Promise<void> {
-    if (linkCode.value.length !== 6) return
+    // Повторный вызов (complete из OtpInput + Enter) погасил бы код дважды.
+    if (linkCode.value.length !== 6 || anyBusy.value) return
     busyAction.value = 'email-confirm'
     error.value = null
     try {

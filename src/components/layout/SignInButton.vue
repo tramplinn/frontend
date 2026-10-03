@@ -115,7 +115,9 @@ async function sendCode(): Promise<void> {
 }
 
 async function submitCode(): Promise<void> {
-  if (code.value.length !== 6) return
+  // Код уходит и сам по complete из OtpInput, и по Enter в форме — второй
+  // запрос с уже погашенным кодом показал бы ошибку поверх успешного входа.
+  if (code.value.length !== 6 || busy.value) return
   await runBusyAction(busyHandlers, async () => {
     const target = props.nextPath
     await auth.loginWithEmail(email.value.trim(), code.value)
