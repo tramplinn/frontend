@@ -79,8 +79,11 @@ const dirty = computed(() => {
 })
 useUnsavedChangesGuard(dirty, () => translate('unsaved.practiceSet'))
 
-function sync(value: PracticeSetAuthor): void {
+/** Поля формы перезаписываем только при загрузке и после их же сохранения:
+    добавление, удаление и перестановка задач не должны стирать несохранённое. */
+function sync(value: PracticeSetAuthor, { fields = true } = {}): void {
   loaded.value = value
+  if (!fields) return
   title.value = value.title
   description.value = value.description
   mode.value = value.mode
@@ -101,13 +104,16 @@ async function load(): Promise<void> {
   }
 }
 
-async function run(key: string, action: () => Promise<PracticeSetAuthor | null>): Promise<void> {
+async function run(
+  key: string,
+  action: () => Promise<PracticeSetAuthor | null>,
+  { fields = false } = {},
+): Promise<void> {
   busy.value = key
   actionError.value = null
   try {
     const result = await action()
-    if (result) sync(result)
-    else sync(await getPracticeSet(props.set))
+    sync(result ?? (await getPracticeSet(props.set)), { fields })
   } catch (cause) {
     actionError.value = errorText(cause)
   } finally {
@@ -116,13 +122,16 @@ async function run(key: string, action: () => Promise<PracticeSetAuthor | null>)
 }
 
 function save(): void {
-  void run('set', () =>
-    updatePracticeSet(props.set, {
-      title: title.value,
-      description: description.value,
-      mode: mode.value,
-      durationMinutes: mode.value === 'mock_interview' ? duration.value : null,
-    }),
+  void run(
+    'set',
+    () =>
+      updatePracticeSet(props.set, {
+        title: title.value,
+        description: description.value,
+        mode: mode.value,
+        durationMinutes: mode.value === 'mock_interview' ? duration.value : null,
+      }),
+    { fields: true },
   )
 }
 

@@ -32,7 +32,8 @@ export function useCursorInsert(
   function replacePlaceholder(placeholder: string, markdown: string): void {
     const current = get()
     if (current === null) return
-    set(current.replace(placeholder, markdown))
+    // Функция, а не строка: иначе $&, $$ и т.п. в имени файла раскрылись бы как шаблоны замены.
+    set(current.replace(placeholder, () => markdown))
   }
 
   return { insertAtCursor, replacePlaceholder }

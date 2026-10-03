@@ -115,8 +115,10 @@ export function useProjectSettings(slug: () => string) {
   const readmeTooLong = computed(() => readme.value.length > README_MAX_LENGTH)
   const linksError = computed(() => linkErrors(links.value))
 
-  function fill(value: Project): void {
-    project.value = value
+  /* Каждая вкладка — своя форма. Сохранение одной обновляет только её и сам
+     project: иначе несохранённый README затирался бы, например, сохранением
+     ссылок или исключением участника. */
+  function fillMain(value: Project): void {
     main.value = {
       title: value.title,
       slug: value.slug,
@@ -125,13 +127,22 @@ export function useProjectSettings(slug: () => string) {
       logoAssetId: value.logoAssetId,
       logoUrl: value.logoUrl,
     }
-    readme.value = value.readmeMd
+  }
+
+  function fillLinks(value: Project): void {
     links.value = value.links.map((link) => ({
       key: ++linkKey,
       kind: link.kind,
       url: link.url,
       label: link.label ?? '',
     }))
+  }
+
+  function fill(value: Project): void {
+    project.value = value
+    fillMain(value)
+    readme.value = value.readmeMd
+    fillLinks(value)
   }
 
   async function loadInvites(): Promise<void> {
@@ -173,7 +184,8 @@ export function useProjectSettings(slug: () => string) {
         if (!project.value) return
         const before = project.value.slug
         const updated = await updateProject(before, mainChanges(project.value, main.value))
-        fill(updated)
+        project.value = updated
+        fillMain(updated)
         if (updated.slug !== before) {
           await router.replace({ name: 'project-settings', params: { slug: updated.slug } })
         }
@@ -186,7 +198,9 @@ export function useProjectSettings(slug: () => string) {
     return run(
       'readme',
       async () => {
-        fill(await updateProject(slug(), { readmeMd: readme.value }))
+        const updated = await updateProject(slug(), { readmeMd: readme.value })
+        project.value = updated
+        readme.value = updated.readmeMd
       },
       translate('projects.settings.readmeSaved'),
     )
@@ -213,7 +227,9 @@ export function useProjectSettings(slug: () => string) {
     return run(
       'links',
       async () => {
-        fill(await replaceProjectLinks(slug(), drafts))
+        const updated = await replaceProjectLinks(slug(), drafts)
+        project.value = updated
+        fillLinks(updated)
       },
       translate('projects.settings.linksSaved'),
     )
@@ -226,10 +242,16 @@ export function useProjectSettings(slug: () => string) {
     })
   }
 
-  function removeMember(login: string): Promise<void> {
+  /** Себя исключить — значит выйти: настройки проекта больше не наши, а
+      приватный проект и вовсе перестанет открываться. */
+  function removeMember(login: string, { leaving = false } = {}): Promise<void> {
     return run(`remove:${login}`, async () => {
       await removeProjectMember(slug(), login)
-      fill(await getProject(slug()))
+      if (leaving) {
+        await router.push({ name: 'projects', query: { tab: 'mine' } })
+        return
+      }
+      project.value = await getProject(slug())
     })
   }
 
@@ -260,7 +282,7 @@ export function useProjectSettings(slug: () => string) {
     return run(
       'transfer',
       async () => {
-        fill(await transferProject(slug(), transferLogin.value))
+        project.value = await transferProject(slug(), transferLogin.value)
         transferLogin.value = ''
         await loadInvites()
       },

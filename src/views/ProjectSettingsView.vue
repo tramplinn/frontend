@@ -331,7 +331,9 @@ watch(
                 "
                 :confirm-label="t('projects.team.confirm')"
                 :loading="busy === `remove:${member.login}`"
-                @confirm="settings.removeMember(member.login)"
+                @confirm="
+                  settings.removeMember(member.login, { leaving: member.login === myLogin })
+                "
               />
             </li>
           </ul>

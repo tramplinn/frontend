@@ -56,7 +56,9 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
       const updated = await updateQuiz(quiz.id, {
         status: quiz.status === 'published' ? 'draft' : 'published',
       })
-      loaded.value = { ...quiz, status: updated.status }
+      // Не { ...quiz }: пока шли flushAutosaves и PATCH, автосейв вопросов уже
+      // заменил loaded новыми версиями, а снимок вернул бы их к старым.
+      if (loaded.value) loaded.value = { ...loaded.value, status: updated.status }
     } catch (cause) {
       error.value = cause
     } finally {
@@ -98,7 +100,7 @@ export function useQuizEditor(quizId: MaybeRefOrGetter<string>) {
     error.value = null
     try {
       const updated = await updateQuiz(quiz.id, { lessonId: value === MODULE_WIDE ? null : value })
-      loaded.value = { ...quiz, lessonId: updated.lessonId }
+      if (loaded.value) loaded.value = { ...loaded.value, lessonId: updated.lessonId }
     } catch (cause) {
       error.value = cause
     } finally {

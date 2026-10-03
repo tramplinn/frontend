@@ -141,12 +141,14 @@ export function useNewsEditor(newsId: MaybeRefOrGetter<string>) {
         setError: (cause) => (saveError.value = cause),
       },
       async () => {
+        const sent = { title: title.value, summary: summary.value, bodyMd: bodyMd.value }
         const saved = await updateNews(current.id, { status })
         syncing = true
         loaded.value = saved
-        title.value = saved.title
-        summary.value = saved.summary ?? ''
-        bodyMd.value = saved.bodyMd
+        // Набранное, пока шёл запрос, не затираем: оно уйдёт следующим автосейвом.
+        if (title.value === sent.title) title.value = saved.title
+        if (summary.value === sent.summary) summary.value = saved.summary ?? ''
+        if (bodyMd.value === sent.bodyMd) bodyMd.value = saved.bodyMd
         syncing = false
         savedAt.value = new Date()
       },

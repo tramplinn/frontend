@@ -22,10 +22,23 @@ const complexity = ref('')
 const confidence = ref<number | null>(null)
 const notes = ref('')
 
+type Progress = typeof progress.value
+
+function editedSince(saved: Progress): boolean {
+  return (
+    complexity.value !== (saved?.complexityMd ?? '') ||
+    confidence.value !== (saved?.confidence ?? null) ||
+    notes.value !== (saved?.reflectionMd ?? '')
+  )
+}
+
 // Разбор задачи пишется после решения, поэтому подтягиваем то, что уже сохранено.
+// Прогресс обновляется и после каждой отправки решения — несохранённые заметки
+// при этом не трогаем, иначе они пропадали бы по нажатию «отправить».
 watch(
   progress,
-  (value) => {
+  (value, previous) => {
+    if (previous !== undefined && editedSince(previous)) return
     complexity.value = value?.complexityMd ?? ''
     confidence.value = value?.confidence ?? null
     notes.value = value?.reflectionMd ?? ''
@@ -41,12 +54,7 @@ function save(): void {
   })
 }
 
-const dirty = computed(
-  () =>
-    complexity.value !== (progress.value?.complexityMd ?? '') ||
-    confidence.value !== (progress.value?.confidence ?? null) ||
-    notes.value !== (progress.value?.reflectionMd ?? ''),
-)
+const dirty = computed(() => editedSince(progress.value))
 useUnsavedChangesGuard(dirty, () => translate('unsaved.reflection'))
 </script>
 

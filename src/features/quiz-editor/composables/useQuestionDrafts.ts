@@ -225,7 +225,8 @@ export function useQuestionDrafts(
     try {
       const created = await createQuestion(quiz.id, draft)
       const authored: QuizQuestionAuthor = { ...created, answer: draft.answer, explainMd: null }
-      loaded.value = { ...quiz, questions: [...quiz.questions, authored] }
+      const current = loaded.value
+      if (current) loaded.value = { ...current, questions: [...current.questions, authored] }
       drafts.value = new Map(drafts.value).set(authored.id, toEditableQuestion(authored))
     } catch (cause) {
       error.value = cause
@@ -265,12 +266,12 @@ export function useQuestionDrafts(
   }
 
   async function remove(questionId: string): Promise<void> {
-    const quiz = loaded.value
     clearTimeout(saveTimers.get(questionId))
     saveTimers.delete(questionId)
     busy.value = questionId
     try {
       await deleteQuestion(questionId)
+      const quiz = loaded.value
       if (quiz) {
         loaded.value = {
           ...quiz,

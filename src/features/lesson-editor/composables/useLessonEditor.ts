@@ -152,12 +152,16 @@ export function useLessonEditor(lessonId: MaybeRefOrGetter<string>) {
         setError: (cause) => (saveError.value = cause),
       },
       async () => {
+        const sent = { title: title.value, bodyMd: bodyMd.value }
         const saved = await updateLesson(current.id, { status })
         syncing = true
         loaded.value = saved
-        title.value = saved.title
-        bodyMd.value = saved.bodyMd
-        html.value = saved.bodyHtml
+        // Набранное, пока шёл запрос, не затираем: оно уйдёт следующим автосейвом.
+        if (title.value === sent.title) title.value = saved.title
+        if (bodyMd.value === sent.bodyMd) {
+          bodyMd.value = saved.bodyMd
+          html.value = saved.bodyHtml
+        }
         syncing = false
         savedAt.value = new Date()
       },
