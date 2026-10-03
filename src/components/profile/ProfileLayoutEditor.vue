@@ -11,7 +11,6 @@ import { useI18n } from '@/i18n'
 import { profileBlockLabel } from '@/lib/projects'
 
 const { t } = useI18n()
-const props = defineProps<{ login: string }>()
 const emit = defineEmits<{ saved: [] }>()
 
 const editor = useProfileLayoutEditor(() => {
@@ -124,11 +123,6 @@ onMounted(() => void editor.load())
         <AppButton variant="primary" :loading="saving" @click="editor.save">{{
           t('profileLayout.save')
         }}</AppButton>
-        <RouterLink
-          :to="{ name: 'user-profile', params: { login: props.login } }"
-          class="preview"
-          >{{ t('profileLayout.preview') }}</RouterLink
-        >
       </div>
     </LoadState>
   </section>
@@ -209,10 +203,6 @@ h3 {
   align-items: center;
   gap: var(--space-4);
   margin-top: var(--space-4);
-}
-.preview {
-  color: var(--accent);
-  font-size: var(--text-caption);
 }
 @media (max-width: 520px) {
   .card {

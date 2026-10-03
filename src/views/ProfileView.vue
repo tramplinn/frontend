@@ -288,7 +288,7 @@ async function signOut(all = false): Promise<void> {
         </div>
       </section>
     </div>
-    <ProfileLayoutEditor :login="auth.user.login" @saved="loadPublicProfile" />
+    <ProfileLayoutEditor @saved="loadPublicProfile" />
     <p v-if="form.error || identity.error" class="error" role="alert">
       {{ form.error || identity.error }}
     </p>

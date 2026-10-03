@@ -964,8 +964,7 @@
     "projects": "projects on the profile",
     "noProjects": "No projects yet.",
     "save": "save layout",
-    "saved": "Layout saved",
-    "preview": "see it as others do"
+    "saved": "Layout saved"
   },
   "invites": {
     "heading": "project invitations",
