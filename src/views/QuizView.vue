@@ -13,6 +13,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { MissingContentError, errorText } from '@/lib/errors'
 import { useContentStore } from '@/stores/content'
+import { useProgressStore } from '@/stores/progress'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
@@ -20,6 +21,7 @@ const { t } = useI18n()
 const props = defineProps<{ course: string; module: string; quiz: string }>()
 
 const content = useContentStore()
+const progress = useProgressStore()
 
 const loaded = ref<Quiz | null>(null)
 const attempt = ref<QuizAttempt | null>(null)
@@ -87,6 +89,7 @@ async function send(answers: Record<string, unknown>): Promise<void> {
   try {
     attempt.value = await submitQuiz(current.id, answers)
     previous.value = await listQuizAttempts(current.id)
+    void progress.reloadQuizProgress().catch(() => {})
   } catch (cause) {
     submitError.value = cause
   } finally {

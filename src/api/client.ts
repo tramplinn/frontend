@@ -19,6 +19,16 @@ interface Session {
 let session: Session | null = null
 let refreshInFlight: Promise<Session | null> | null = null
 
+/* Сервер отверг refresh-куку (вышли в другой вкладке, «завершить все сеансы»,
+   истёк срок): без сигнала наружу интерфейс продолжал бы показывать «вы вошли»,
+   а каждый запрос падал бы с 401. Сетевой сбой сюда не относится — это не выход. */
+const sessionLostListeners = new Set<() => void>()
+
+export function onSessionLost(listener: () => void): () => void {
+  sessionLostListeners.add(listener)
+  return () => sessionLostListeners.delete(listener)
+}
+
 const EXPIRY_SKEW_MS = 30_000
 
 export function clearSession(): void {
@@ -44,7 +54,11 @@ export function refreshSession(): Promise<Session | null> {
         credentials: 'include',
       })
       if (!response.ok) {
+        const hadSession = session !== null
         session = null
+        if (hadSession && (response.status === 401 || response.status === 403)) {
+          for (const listener of sessionLostListeners) listener()
+        }
         return null
       }
       const parsed = accessTokenSchema.parse(camelizeKeys(await response.json()))

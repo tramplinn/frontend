@@ -6,6 +6,23 @@ import type { TutorEvent } from '@/api/schemas/tutor'
 import { errorText } from '@/lib/errors'
 import { useTutorStore } from '@/stores/tutor'
 
+/* Лимиты схемы TutorAskIn на бэкенде: не больше 50 реплик и 8000 символов в
+   каждой, иначе 422 на каждый следующий вопрос — тред «ломался» после ~25
+   вопросов или одного длинного ответа. Модель всё равно видит только хвост
+   (llm_history_limit), поэтому шлём последние реплики, а длинные прошлые
+   ответы обрезаем; сама история в сторе остаётся целой. */
+const MAX_SENT_TURNS = 20
+const MAX_TURN_CHARS = 8000
+
+export function tutorRequestHistory(history: TutorTurn[]): TutorTurn[] {
+  const recent = history.slice(-MAX_SENT_TURNS)
+  return recent.map((turn, index) =>
+    index < recent.length - 1 && turn.content.length > MAX_TURN_CHARS
+      ? { ...turn, content: turn.content.slice(0, MAX_TURN_CHARS) }
+      : turn,
+  )
+}
+
 export type AskTutor = (
   id: string,
   messages: TutorTurn[],
@@ -73,7 +90,11 @@ export function useTutorChat(contentId: () => string, ask: AskTutor = askTutor) 
     scrollToEnd()
 
     try {
-      for await (const event of ask(targetId, history, requestController.signal)) {
+      for await (const event of ask(
+        targetId,
+        tutorRequestHistory(history),
+        requestController.signal,
+      )) {
         if ('delta' in event) {
           received += event.delta
           if (controller === requestController) {

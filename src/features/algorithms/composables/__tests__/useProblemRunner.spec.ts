@@ -5,6 +5,7 @@ import {
   getAlgorithmProgress,
   listAlgorithmLanguages,
   listAlgorithmSolutions,
+  runAlgorithm,
 } from '@/api/algorithms'
 import type { AlgorithmProblem } from '@/api/schemas/algorithms'
 
@@ -171,5 +172,25 @@ describe('useProblemRunner', () => {
     runner.sourceCode.value = 'print(1)'
 
     expect(runner.canExecute.value).toBe(false)
+  })
+
+  it('switching problems mid-run does not leave the run buttons locked', async () => {
+    let currentId = problem.id
+    const runner = useProblemRunner({
+      problemId: () => currentId,
+      sessionId: () => 'session-1',
+      active: () => true,
+    })
+    await runner.load()
+    vi.mocked(runAlgorithm).mockReturnValue(new Promise(() => {}))
+    void runner.execute('run')
+    expect(runner.running.value).toBe(true)
+
+    currentId = '01910000-0000-7000-8000-000000000009'
+    vi.mocked(getAlgorithmProblem).mockResolvedValue({ ...problem, id: currentId })
+    await runner.load()
+
+    expect(runner.running.value).toBe(false)
+    expect(runner.canExecute.value).toBe(true)
   })
 })

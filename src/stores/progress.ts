@@ -87,6 +87,18 @@ export const useProgressStore = defineStore('progress', () => {
     }
   }
 
+  /** После сдачи теста: «пройден» решает порог на бэкенде, поэтому не угадываем
+      по баллам, а перечитываем. Без этого отметка в пейджере модуля появлялась
+      только после перезагрузки — load() второй раз не ходит. */
+  async function reloadQuizProgress(): Promise<void> {
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) return
+    const requestGeneration = generation
+    const quizzes = await listQuizProgress()
+    if (requestGeneration !== generation) return
+    passedQuizIds.value = new Set(quizzes.filter((item) => item.passed).map((item) => item.quizId))
+  }
+
   function reset(): void {
     generation += 1
     completedLessonIds.value = new Set()
@@ -107,6 +119,7 @@ export const useProgressStore = defineStore('progress', () => {
     loadCourseProgress,
     markCompleted,
     markReopened,
+    reloadQuizProgress,
     reset,
   }
 })

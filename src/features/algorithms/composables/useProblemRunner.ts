@@ -109,6 +109,9 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
     problemPending.value = true
     runError.value = null
     result.value = null
+    // Запуск по прошлой задаче брошен: его finally уже не снимет флаг (версия
+    // устарела), и без сброса кнопки новой задачи остались бы заблокированы.
+    running.value = false
     solutions.value = []
     try {
       const [loaded, allowed] = await Promise.all([getAlgorithmProblem(id), loadRunnerLanguages()])
