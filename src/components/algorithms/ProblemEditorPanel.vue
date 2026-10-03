@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
+import SignInButton from '@/components/layout/SignInButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import CodeEditor from '@/components/ui/CodeEditor.vue'
@@ -8,9 +10,12 @@ import ConfirmButton from '@/components/ui/ConfirmButton.vue'
 import type { useProblemRunner } from '@/features/algorithms/composables/useProblemRunner'
 import { isAccepted, languageLabel, verdictLabel } from '@/lib/algorithms'
 import { errorText } from '@/lib/errors'
+import { useAuthStore } from '@/stores/auth'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
+const auth = useAuthStore()
+const route = useRoute()
 
 const props = defineProps<{ runner: ReturnType<typeof useProblemRunner> }>()
 
@@ -134,7 +139,10 @@ const failedCase = computed(() => (finished.value ? (result.value?.failedCase ??
       <textarea v-model="customInput" spellcheck="false" :aria-label="t('runner.customStdin')" />
     </details>
 
-    <div class="actions">
+    <div v-if="!auth.isAuthenticated" class="actions">
+      <SignInButton :label="t('runner.signInToRun')" :next-path="route.fullPath" />
+    </div>
+    <div v-else class="actions">
       <AppButton :disabled="!canExecute" :loading="running" @click="execute('run')">
         {{ t('runner.run') }}
       </AppButton>

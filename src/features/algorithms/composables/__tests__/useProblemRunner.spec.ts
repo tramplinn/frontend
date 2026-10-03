@@ -50,6 +50,7 @@ function makeRunner() {
 
 describe('useProblemRunner', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(getAlgorithmProblem).mockResolvedValue(problem)
     vi.mocked(getAlgorithmProgress).mockRejectedValue(new Error('no progress'))
     vi.mocked(listAlgorithmLanguages).mockResolvedValue([
@@ -144,6 +145,20 @@ describe('useProblemRunner', () => {
 
     runner.sourceCode.value = 'print(1)'
     expect(runner.canExecute.value).toBe(true)
+  })
+
+  it('skips personal data for guests', async () => {
+    const runner = useProblemRunner({
+      problemId: () => problem.id,
+      sessionId: () => null,
+      active: () => false,
+      signedIn: () => false,
+    })
+    await runner.load()
+
+    expect(runner.problem.value?.id).toBe(problem.id)
+    expect(getAlgorithmProgress).not.toHaveBeenCalled()
+    expect(listAlgorithmSolutions).not.toHaveBeenCalled()
   })
 
   it('refuses to execute without an active session', async () => {

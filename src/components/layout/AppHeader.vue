@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import SignInButton from '@/components/layout/SignInButton.vue'
 import LocaleSwitcher from '@/components/layout/LocaleSwitcher.vue'
@@ -20,9 +20,19 @@ interface Crumb {
 const auth = useAuthStore()
 const content = useContentStore()
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 
 const nextPath = computed(() => authNextPath(route.fullPath, route.query.login))
+/** Гард роутера кладёт сюда закрытую страницу, куда гость пытался попасть. */
+const loginRequested = computed(() => typeof route.query.login === 'string')
+
+function dropLoginQuery(): void {
+  if (!loginRequested.value) return
+  const query = { ...route.query }
+  delete query.login
+  void router.replace({ query })
+}
 
 function param(name: string): string {
   const value = route.params[name]
@@ -106,7 +116,13 @@ const crumbs = computed<Crumb[]>(() => {
     <div class="side">
       <LocaleSwitcher v-if="localeSwitcherEnabled" />
       <ThemeToggle />
-      <SignInButton v-if="!auth.isAuthenticated" size="sm" :next-path="nextPath" />
+      <SignInButton
+        v-if="!auth.isAuthenticated"
+        size="sm"
+        :next-path="nextPath"
+        :auto-open="loginRequested"
+        @close="dropLoginQuery"
+      />
     </div>
   </header>
 </template>

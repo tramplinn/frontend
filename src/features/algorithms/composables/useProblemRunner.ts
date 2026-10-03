@@ -34,6 +34,8 @@ export interface ProblemRunnerOptions {
   problemId: () => string
   sessionId: () => string | null
   active: () => boolean
+  /** Гость видит условие и редактор, но прогресса и прошлых решений у него нет. */
+  signedIn?: () => boolean
 }
 
 export function useProblemRunner(options: ProblemRunnerOptions) {
@@ -115,6 +117,7 @@ export function useProblemRunner(options: ProblemRunnerOptions) {
       supported.value = allowed
       language.value = ''
       selectLanguage(languages.value[0] ?? loaded.templates[0]?.language ?? '')
+      if (options.signedIn?.() === false) return
       const languageAtLoad = language.value
       const sourceCodeAtLoad = sourceCode.value
       getAlgorithmProgress(id)

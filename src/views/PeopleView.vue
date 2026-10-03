@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { ChevronRight } from '@lucide/vue'
 
 import { searchPeople } from '@/api/users'
 import type { PublicUser } from '@/api/schemas/users'
+import SignInGate from '@/components/layout/SignInGate.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { gradeName, specialtyName } from '@/lib/profile'
+import { useAuthStore } from '@/stores/auth'
 import { useI18n } from '@/i18n'
 
 const { t, tc } = useI18n()
+const auth = useAuthStore()
 
 const SEARCH_DEBOUNCE_MS = 250
 
@@ -18,6 +22,7 @@ const pending = ref(true)
 const error = ref<unknown>(null)
 
 async function search(): Promise<void> {
+  if (!auth.isAuthenticated) return
   pending.value = true
   error.value = null
   try {
@@ -39,6 +44,11 @@ watch(query, () => {
 })
 
 onMounted(() => void search())
+// Вход по коду проходит без перезагрузки — сразу показываем список.
+watch(
+  () => auth.isAuthenticated,
+  () => void search(),
+)
 onUnmounted(() => {
   clearTimeout(debounce)
 })
@@ -57,36 +67,47 @@ function subtitle(person: PublicUser): string {
       <div>
         <h1>{{ t('people.heading') }}</h1>
       </div>
-      <p v-if="!pending && !error">{{ tc('units.profiles', total) }}</p>
+      <p v-if="auth.isAuthenticated && !pending && !error">{{ tc('units.profiles', total) }}</p>
     </header>
-    <input
-      v-model="query"
-      class="text-field search"
-      type="search"
-      :placeholder="t('people.search')"
+    <SignInGate
+      v-if="!auth.isAuthenticated"
+      :title="t('people.gateTitle')"
+      :text="t('people.gateText')"
     />
-    <LoadState :pending="pending" :error="error" @retry="search">
-      <p v-if="people.length === 0" class="empty">{{ t('people.empty') }}</p>
-      <div v-else class="grid">
-        <RouterLink
-          v-for="person in people"
-          :key="person.id"
-          :to="{ name: 'user-profile', params: { login: person.login } }"
-          class="person"
-        >
-          <img v-if="person.avatarUrl" :src="person.avatarUrl" :alt="person.name ?? person.login" />
-          <span v-else class="fallback">{{
-            (person.name ?? person.login).slice(0, 1).toUpperCase()
-          }}</span>
-          <span class="person-copy"
-            ><strong>{{ person.name ?? person.login }}</strong
-            ><small>@{{ person.login }}</small
-            ><span>{{ subtitle(person) }}</span></span
+    <template v-else>
+      <input
+        v-model="query"
+        class="text-field search"
+        type="search"
+        :placeholder="t('people.search')"
+      />
+      <LoadState :pending="pending" :error="error" @retry="search">
+        <p v-if="people.length === 0" class="empty">{{ t('people.empty') }}</p>
+        <div v-else class="grid">
+          <RouterLink
+            v-for="person in people"
+            :key="person.id"
+            :to="{ name: 'user-profile', params: { login: person.login } }"
+            class="person"
           >
-          <span class="arrow" aria-hidden="true">→</span>
-        </RouterLink>
-      </div>
-    </LoadState>
+            <img
+              v-if="person.avatarUrl"
+              :src="person.avatarUrl"
+              :alt="person.name ?? person.login"
+            />
+            <span v-else class="fallback">{{
+              (person.name ?? person.login).slice(0, 1).toUpperCase()
+            }}</span>
+            <span class="person-copy"
+              ><strong>{{ person.name ?? person.login }}</strong
+              ><small>@{{ person.login }}</small
+              ><span>{{ subtitle(person) }}</span></span
+            >
+            <ChevronRight class="arrow" :size="18" aria-hidden="true" />
+          </RouterLink>
+        </div>
+      </LoadState>
+    </template>
   </section>
 </template>
 
@@ -169,6 +190,7 @@ function subtitle(person: PublicUser): string {
   font-size: var(--text-caption);
 }
 .arrow {
+  flex-shrink: 0;
   color: var(--text-muted);
 }
 .empty {

@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { listCourses } from '@/api/content'
 import {
   completeLesson as completeLessonRequest,
   getCourseProgress,
@@ -10,37 +9,19 @@ import {
   reopenLesson as reopenLessonRequest,
 } from '@/api/learning'
 import type { CourseProgress } from '@/api/schemas/learning'
+import { learningKeys } from '@/features/learning/queries'
+import { queryClient } from '@/lib/queryClient'
 import { useAuthStore } from './auth'
-
-export interface StartedCourse {
-  slug: string
-  title: string
-  summary: string | null
-  completed: number
-  total: number
-}
 
 export const useProgressStore = defineStore('progress', () => {
   const completedLessonIds = ref(new Set<string>())
   const passedQuizIds = ref(new Set<string>())
   const courseProgress = ref(new Map<string, CourseProgress>())
   const loaded = ref(false)
-  const started = ref<StartedCourse[]>([])
-  const startedLoaded = ref(false)
   let progressRequest: Promise<void> | null = null
-  let startedRequest: Promise<void> | null = null
   let generation = 0
 
   const completedCount = computed(() => completedLessonIds.value.size)
-  const startedCourses = computed(() => started.value)
-  /** «Продолжить» — только незаконченное: пройденный курс продолжать нечем. */
-  const inProgressCourses = computed(() =>
-    started.value.filter((course) => course.completed < course.total),
-  )
-  const finishedCourses = computed(() =>
-    started.value.filter((course) => course.total > 0 && course.completed >= course.total),
-  )
-
   function isCompleted(lessonId: string): boolean {
     return completedLessonIds.value.has(lessonId)
   }
@@ -89,6 +70,7 @@ export const useProgressStore = defineStore('progress', () => {
   async function markCompleted(lessonId: string, courseSlug?: string): Promise<void> {
     await completeLessonRequest(lessonId)
     completedLessonIds.value = new Set(completedLessonIds.value).add(lessonId)
+    void queryClient.invalidateQueries({ queryKey: learningKeys.all })
     if (courseSlug !== undefined) {
       await loadCourseProgress(courseSlug)
     }
@@ -99,49 +81,10 @@ export const useProgressStore = defineStore('progress', () => {
     const next = new Set(completedLessonIds.value)
     next.delete(lessonId)
     completedLessonIds.value = next
+    void queryClient.invalidateQueries({ queryKey: learningKeys.all })
     if (courseSlug !== undefined) {
       await loadCourseProgress(courseSlug)
     }
-  }
-
-  /** Эндпоинта «мои курсы» на бэкенде нет: агрегат собирается запросом на курс.
-      Для колледжа это единицы запросов, при росте каталога нужен свой роут. */
-  async function loadStarted(): Promise<void> {
-    const auth = useAuthStore()
-    if (!auth.isAuthenticated || startedLoaded.value) {
-      return
-    }
-    if (!startedRequest) {
-      const requestGeneration = generation
-      const request = listCourses()
-        .then((courses) =>
-          Promise.all(
-            courses.map(async (course) => {
-              const item = await loadCourseProgress(course.slug)
-              return { course, item }
-            }),
-          ),
-        )
-        .then((rows) => {
-          if (requestGeneration !== generation) return
-          started.value = rows
-            .filter(({ item }) => item !== null && item.completedLessons > 0)
-            .map(({ course, item }) => ({
-              slug: course.slug,
-              title: course.title,
-              summary: course.summary,
-              completed: item?.completedLessons ?? 0,
-              total: item?.totalLessons ?? 0,
-            }))
-            .sort((a, b) => b.completed / (b.total || 1) - a.completed / (a.total || 1))
-          startedLoaded.value = true
-        })
-        .finally(() => {
-          if (startedRequest === request) startedRequest = null
-        })
-      startedRequest = request
-    }
-    return startedRequest
   }
 
   function reset(): void {
@@ -150,23 +93,17 @@ export const useProgressStore = defineStore('progress', () => {
     passedQuizIds.value = new Set()
     courseProgress.value = new Map()
     loaded.value = false
-    started.value = []
-    startedLoaded.value = false
     progressRequest = null
-    startedRequest = null
+    queryClient.removeQueries({ queryKey: learningKeys.all })
   }
 
   return {
     completedLessonIds,
     courseProgress,
     completedCount,
-    startedCourses,
-    inProgressCourses,
-    finishedCourses,
     isCompleted,
     isQuizPassed,
     load,
-    loadStarted,
     loadCourseProgress,
     markCompleted,
     markReopened,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ExternalLink } from '@lucide/vue'
 import type { AlgorithmProblem } from '@/api/schemas/algorithms'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
 import { memoryLabel } from '@/lib/algorithms'
@@ -28,6 +29,7 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
           class="external"
         >
           {{ t('runner.providerStatement') }}
+          <ExternalLink :size="13" aria-hidden="true" />
         </a>
       </p>
     </header>
@@ -87,6 +89,9 @@ const props = defineProps<{ problem: AlgorithmProblem }>()
 }
 
 .external {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--accent);
 }
 

@@ -269,8 +269,10 @@
   },
   "home": {
     "heading": "my learning",
+    "gateTitle": "Your progress — after signing in",
+    "gateText": "Sign in to see the courses you started, pick up where you left off and mark lessons as completed.",
     "empty": "You haven't started any courses yet.",
-    "openCatalog": "open the catalog →",
+    "openCatalog": "open the catalog",
     "completedLessons": "{lessons} completed",
     "continue": "continue",
     "courseProgress": "Progress: {title}",
@@ -348,6 +350,8 @@
   },
   "people": {
     "heading": "people",
+    "gateTitle": "Community — after signing in",
+    "gateText": "Sign in to find classmates and teachers and view their profiles and progress.",
     "defaultSubtitle": "learning and growing",
     "search": "name, login or field",
     "empty": "nobody found",
@@ -404,6 +408,7 @@
     "empty": "this set has no problems yet"
   },
   "runner": {
+    "signInToRun": "sign in to run your solution",
     "language": "Solution language",
     "noLanguage": "no available language is configured for this problem",
     "pastSolutions": "past solutions ({count})",
@@ -425,7 +430,7 @@
     "customRun": "custom input",
     "sample": "example {number}",
     "output": "output",
-    "providerStatement": "statement on the provider ↗"
+    "providerStatement": "statement on the provider"
   },
   "reflection": {
     "title": "solution review",

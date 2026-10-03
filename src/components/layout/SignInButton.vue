@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 import type { IdentityProvider } from '@/api/schemas/common'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -13,13 +14,21 @@ import { providerName } from '@/lib/providers'
 import { useAuthStore } from '@/stores/auth'
 
 const props = withDefaults(
-  defineProps<{ nextPath: string; label?: string | undefined; size?: 'sm' | 'md' }>(),
-  { label: undefined, size: 'md' },
+  defineProps<{
+    nextPath: string
+    label?: string | undefined
+    size?: 'sm' | 'md'
+    /** Открыть окно сразу — например, когда гард роутера не пустил на закрытую страницу. */
+    autoOpen?: boolean
+  }>(),
+  { label: undefined, size: 'md', autoOpen: false },
 )
+const emit = defineEmits<{ close: [] }>()
 
 type Step = 'providers' | 'email-code'
 
 const auth = useAuthStore()
+const router = useRouter()
 const { t } = useI18n()
 const open = ref(false)
 const step = ref<Step>('providers')
@@ -53,6 +62,7 @@ onUnmounted(() => {
 })
 
 function reset(): void {
+  if (open.value) emit('close')
   open.value = false
   step.value = 'providers'
   busy.value = false
@@ -81,6 +91,14 @@ function start(): void {
   open.value = true
 }
 
+watch(
+  () => props.autoOpen,
+  (value) => {
+    if (value && !open.value) start()
+  },
+  { immediate: true },
+)
+
 const busyHandlers = {
   setBusy: (active: boolean) => (busy.value = active),
   clearError: () => (error.value = null),
@@ -99,8 +117,11 @@ async function sendCode(): Promise<void> {
 async function submitCode(): Promise<void> {
   if (code.value.length !== 6) return
   await runBusyAction(busyHandlers, async () => {
+    const target = props.nextPath
     await auth.loginWithEmail(email.value.trim(), code.value)
     reset()
+    // OAuth возвращает на nextPath через бэкенд, вход по коду — без перезагрузки.
+    if (router.currentRoute.value.fullPath !== target) await router.push(target)
   })
 }
 </script>

@@ -10,11 +10,10 @@ import type { Section } from '@/lib/sections'
 import { visibleSections } from '@/lib/sections'
 import { useAuthStore } from '@/stores/auth'
 import { useContentStore } from '@/stores/content'
-import { useProgressStore } from '@/stores/progress'
+import { useStartedCoursesQuery } from '@/features/learning/queries'
 
 const auth = useAuthStore()
 const content = useContentStore()
-const progress = useProgressStore()
 const route = useRoute()
 const { t } = useI18n()
 const mobileOpen = ref(false)
@@ -31,7 +30,7 @@ const groups = computed(() => {
   return [...byGroup.entries()]
 })
 
-const continuing = computed(() => progress.inProgressCourses)
+const { inProgress: continuing } = useStartedCoursesQuery({ fetch: false })
 
 onMounted(() => {
   void content.loadTracks().catch(() => {})

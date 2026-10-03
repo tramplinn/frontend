@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { Asset } from '@/api/schemas/assets'
 import { useI18n } from '@/i18n'
 
@@ -25,7 +26,7 @@ const emit = defineEmits<{
           :aria-label="t('photos.left')"
           @click="emit('move', index, -1)"
         >
-          ←
+          <ChevronLeft :size="16" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -34,7 +35,7 @@ const emit = defineEmits<{
           :aria-label="t('photos.right')"
           @click="emit('move', index, 1)"
         >
-          →
+          <ChevronRight :size="16" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -81,6 +82,9 @@ const emit = defineEmits<{
 }
 
 .control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: var(--ctl-sm);
   height: var(--ctl-sm);
   border: none;

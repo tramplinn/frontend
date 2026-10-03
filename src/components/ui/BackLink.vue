@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeft } from '@lucide/vue'
 import type { RouteLocationRaw } from 'vue-router'
 
 defineProps<{ to: RouteLocationRaw }>()
@@ -6,7 +7,7 @@ defineProps<{ to: RouteLocationRaw }>()
 
 <template>
   <RouterLink :to="to" class="back-link">
-    <span aria-hidden="true">←</span>
+    <ArrowLeft :size="14" aria-hidden="true" />
     <slot />
   </RouterLink>
 </template>

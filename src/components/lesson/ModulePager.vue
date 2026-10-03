@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { computed, onMounted } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 
@@ -91,7 +92,7 @@ function label(item: FlowItem, direction: 'previous' | 'next'): string {
       :to="target(siblings.previous)"
       :title="siblings.previous.title"
     >
-      <span class="arrow" aria-hidden="true">←</span>
+      <ChevronLeft class="arrow" :size="16" aria-hidden="true" />
       <span class="side-label">{{ label(siblings.previous, 'previous') }}</span>
     </RouterLink>
     <span v-else class="side side--empty" aria-hidden="true"></span>
@@ -123,7 +124,7 @@ function label(item: FlowItem, direction: 'previous' | 'next'): string {
       :title="siblings.next.title"
     >
       <span class="side-label">{{ label(siblings.next, 'next') }}</span>
-      <span class="arrow" aria-hidden="true">→</span>
+      <ChevronRight class="arrow" :size="16" aria-hidden="true" />
     </RouterLink>
     <span v-else class="side side--empty" aria-hidden="true"></span>
   </nav>

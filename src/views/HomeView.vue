@@ -1,63 +1,40 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-
-import CatalogView from '@/views/CatalogView.vue'
+import { ArrowRight } from '@lucide/vue'
+import SignInGate from '@/components/layout/SignInGate.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import LoadState from '@/components/ui/LoadState.vue'
+import { useStartedCoursesQuery } from '@/features/learning/queries'
 import { useAuthStore } from '@/stores/auth'
-import { useProgressStore } from '@/stores/progress'
 import { useI18n } from '@/i18n'
 
 const { t, tc } = useI18n()
 const auth = useAuthStore()
-const progress = useProgressStore()
-
-const pending = ref(true)
-const error = ref<unknown>(null)
-
-const started = computed(() => progress.startedCourses)
-const inProgress = computed(() => progress.inProgressCourses)
-const finished = computed(() => progress.finishedCourses)
-
-async function load(): Promise<void> {
-  if (!auth.isAuthenticated) {
-    pending.value = false
-    return
-  }
-  pending.value = true
-  error.value = null
-  try {
-    await progress.load()
-    await progress.loadStarted()
-  } catch (cause) {
-    error.value = cause
-  } finally {
-    pending.value = false
-  }
-}
-
-onMounted(() => void load())
+const { started, inProgress, finished, completedCount, isLoading, error, refetch } =
+  useStartedCoursesQuery()
 </script>
 
 <template>
-  <CatalogView v-if="!auth.isAuthenticated" />
-
-  <section v-else>
+  <section>
     <h1 class="heading">{{ t('home.heading') }}</h1>
 
-    <LoadState :pending="pending" :error="error" @retry="load">
+    <SignInGate
+      v-if="!auth.isAuthenticated"
+      class="gate-offset"
+      :title="t('home.gateTitle')"
+      :text="t('home.gateText')"
+    />
+
+    <LoadState v-else :pending="isLoading" :error="error" @retry="refetch()">
       <div v-if="started.length === 0" class="blank">
         <p class="blank-text">{{ t('home.empty') }}</p>
-        <RouterLink :to="{ name: 'catalog' }" class="blank-link">{{
-          t('home.openCatalog')
-        }}</RouterLink>
+        <RouterLink :to="{ name: 'catalog' }" class="blank-link"
+          >{{ t('home.openCatalog') }}<ArrowRight :size="14" aria-hidden="true"
+        /></RouterLink>
       </div>
 
       <template v-else>
         <p class="total">
-          {{
-            t('home.completedLessons', { lessons: tc('units.lessons', progress.completedCount) })
-          }}
+          {{ t('home.completedLessons', { lessons: tc('units.lessons', completedCount) }) }}
         </p>
 
         <div v-if="inProgress.length > 0" class="block">
@@ -110,6 +87,11 @@ onMounted(() => void load())
   font-weight: var(--weight-semibold);
   letter-spacing: -0.03em;
   margin-bottom: var(--space-2);
+}
+
+.gate-offset {
+  /* Вместе с отступом заголовка — те же 24px, что под шапкой «людей». */
+  margin-top: var(--space-4);
 }
 
 .total {
@@ -195,6 +177,9 @@ onMounted(() => void load())
 }
 
 .blank-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--accent);
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);

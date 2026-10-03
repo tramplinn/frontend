@@ -6,9 +6,11 @@ import ReflectionPanel from '@/components/algorithms/ReflectionPanel.vue'
 import BackLink from '@/components/ui/BackLink.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import { useAlgorithmSolo } from '@/features/algorithms/composables/useAlgorithmSolo'
+import { useAuthStore } from '@/stores/auth'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
+const auth = useAuthStore()
 
 const props = defineProps<{ problem: string }>()
 const { error, load, pending, runner, solved } = useAlgorithmSolo(() => props.problem)
@@ -26,7 +28,11 @@ const { error, load, pending, runner, solved } = useAlgorithmSolo(() => props.pr
         <ProblemStatement :problem="runner.problem.value" />
         <div class="right">
           <ProblemEditorPanel :runner="runner" />
-          <ReflectionPanel :runner="runner" @save="runner.saveReflection" />
+          <ReflectionPanel
+            v-if="auth.isAuthenticated"
+            :runner="runner"
+            @save="runner.saveReflection"
+          />
         </div>
       </div>
 

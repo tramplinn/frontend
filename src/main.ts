@@ -1,9 +1,11 @@
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 
 import App from './App.vue'
 import { initTheme } from './composables/useTheme'
 import { initLocale } from './i18n'
+import { queryClient } from './lib/queryClient'
 import { clearStaleChunkGuard, reloadOnStaleChunk } from './lib/staleChunk'
 import { router } from './router'
 import './styles/base.css'
@@ -17,5 +19,5 @@ window.addEventListener('vite:preloadError', (event) => {
   reloadOnStaleChunk(event.payload)
 })
 
-createApp(App).use(createPinia()).use(router).mount('#app')
+createApp(App).use(createPinia()).use(VueQueryPlugin, { queryClient }).use(router).mount('#app')
 clearStaleChunkGuard()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChevronDown } from '@lucide/vue'
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 
 import type { InterviewCard } from '@/api/schemas/content'
@@ -16,7 +17,7 @@ const props = defineProps<{ cards: InterviewCard[] }>()
     <CollapsibleRoot v-for="card in props.cards" :key="card.id" class="card">
       <CollapsibleTrigger class="question">
         <span class="question-text">{{ card.questionMd }}</span>
-        <span class="toggle" aria-hidden="true">↓</span>
+        <ChevronDown class="toggle" :size="18" aria-hidden="true" />
       </CollapsibleTrigger>
       <CollapsibleContent class="answer">
         <p class="answer-text">{{ card.answerMd }}</p>

@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { getPracticeSession, startFreeSession } from '@/api/algorithms'
 import type { PracticeSession } from '@/api/schemas/algorithms'
 import { readSessionValue, writeSessionValue } from '@/lib/sessionKeyStorage'
+import { useAuthStore } from '@/stores/auth'
 
 import { useProblemRunner } from './useProblemRunner'
 
@@ -32,6 +33,7 @@ async function restoreOrStart(): Promise<PracticeSession> {
 }
 
 export function useAlgorithmSolo(problemId: () => string) {
+  const auth = useAuthStore()
   const session = ref<PracticeSession | null>(null)
   const pending = ref(true)
   const error = ref<unknown>(null)
@@ -40,6 +42,7 @@ export function useAlgorithmSolo(problemId: () => string) {
     problemId,
     sessionId: () => session.value?.id ?? null,
     active: () => session.value?.status === 'active',
+    signedIn: () => auth.isAuthenticated,
   })
 
   const solved = computed(() => runner.progress.value?.status === 'solved')
@@ -50,7 +53,8 @@ export function useAlgorithmSolo(problemId: () => string) {
     pending.value = true
     error.value = null
     try {
-      session.value = await restoreOrStart()
+      // Сессия нужна только для запуска кода, а запускать гость не может.
+      session.value = auth.isAuthenticated ? await restoreOrStart() : null
       if (!alive) return
       await runner.load()
     } catch (cause) {
@@ -61,6 +65,11 @@ export function useAlgorithmSolo(problemId: () => string) {
   }
 
   watch(problemId, () => void runner.load())
+  // Вход по коду проходит без перезагрузки: подтягиваем сессию и прогресс на месте.
+  watch(
+    () => auth.isAuthenticated,
+    () => void load(),
+  )
 
   onMounted(() => void load())
   onUnmounted(() => {

@@ -70,14 +70,12 @@ const routes: RouteRecordRaw[] = [
     path: '/algorithms',
     name: 'algorithms',
     component: () => import('@/views/AlgorithmsView.vue'),
-    meta: { requiresAuth: true },
   },
   {
     path: '/algorithms/:problem',
     name: 'algorithm-solo',
     component: () => import('@/views/AlgorithmSoloView.vue'),
     props: true,
-    meta: { requiresAuth: true },
   },
   {
     path: '/me',

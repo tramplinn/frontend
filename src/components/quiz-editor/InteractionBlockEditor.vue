@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowRight, ChevronDown, ChevronUp } from '@lucide/vue'
 import { computed } from 'vue'
 
 import AppButton from '@/components/ui/AppButton.vue'
@@ -124,7 +125,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
             :placeholder="t('quizEditor.newTerm')"
             @input="setPair(index, 'left', ($event.target as HTMLInputElement).value)"
         /></label>
-        <span class="pair-arrow" aria-hidden="true">→</span>
+        <span class="pair-arrow" aria-hidden="true"><ArrowRight :size="16" /></span>
         <label
           ><span>{{ t('quizEditor.match') }}</span
           ><input
@@ -173,7 +174,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
               :disabled="itemIndex === 0"
               @click="moveItem(groupIndex, itemIndex, -1)"
             >
-              ↑
+              <ChevronUp :size="16" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -182,7 +183,7 @@ function moveItem(groupIndex: number, itemIndex: number, delta: number): void {
               :disabled="itemIndex === group.items.length - 1"
               @click="moveItem(groupIndex, itemIndex, 1)"
             >
-              ↓
+              <ChevronDown :size="16" aria-hidden="true" />
             </button>
             <input
               :value="item"
@@ -304,6 +305,9 @@ input::placeholder {
   flex: 1;
 }
 .item-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: var(--ctl-sm);
   height: var(--ctl-sm);
