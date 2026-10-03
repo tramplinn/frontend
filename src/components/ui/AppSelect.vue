@@ -31,13 +31,25 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [value: T] }>()
 
+/* reka-ui запрещает SelectItem с value="" (пустая строка у него — сброс
+   выбора) и падает в setup, ломая всё дерево страницы, — после этого роутер
+   меняет URL, но страница не уходит. Опции «не выбрано»
+   с '' подменяем служебным ключом и обратно. */
+const EMPTY_KEY = '__app-select-empty__'
+
+const hasEmptyOption = computed(() => props.options.some((item) => item.value === ''))
+
+function toKey(value: T): string {
+  return value === '' && hasEmptyOption.value ? EMPTY_KEY : value
+}
+
 const currentLabel = computed(
   () =>
     props.options.find((item) => item.value === props.modelValue)?.label ?? props.placeholder ?? '',
 )
 
 function update(value: unknown): void {
-  const option = props.options.find((item) => item.value === value)
+  const option = props.options.find((item) => toKey(item.value) === value)
   if (option) {
     emit('update:modelValue', option.value)
   }
@@ -46,7 +58,7 @@ function update(value: unknown): void {
 
 <template>
   <SelectRoot
-    :model-value="props.modelValue"
+    :model-value="toKey(props.modelValue)"
     :disabled="props.disabled"
     @update:model-value="update"
   >
@@ -65,7 +77,7 @@ function update(value: unknown): void {
           <SelectItem
             v-for="option in props.options"
             :key="option.value"
-            :value="option.value"
+            :value="toKey(option.value)"
             class="app-select-item"
           >
             <SelectItemIndicator class="app-select-check">✓</SelectItemIndicator>
@@ -83,14 +95,14 @@ function update(value: unknown): void {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  height: var(--ctl-sm);
+  height: var(--ctl-md);
   padding: 0 var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-ctl);
   background: var(--card);
   color: var(--text);
   font-family: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text-input);
   cursor: pointer;
   transition:
     background var(--motion-fast) var(--ease),
