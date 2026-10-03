@@ -72,8 +72,10 @@
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --ctl-md: 48px;
-  --ctl-sm: 32px;
+  /* Поля, селекты и основные кнопки — одной высоты (--ctl-md), чтобы в одном
+     ряду ничего не торчало; --ctl-sm — компактные и иконочные кнопки. */
+  --ctl-md: 40px;
+  --ctl-sm: 36px;
 
   --measure: 72ch;
   --learning-width: calc(var(--measure) + var(--space-12) * 2);
@@ -208,6 +210,7 @@
 @media (max-width: 800px) {
   :root {
     --text-input: 16px;
+    --ctl-md: 44px;
     --ctl-sm: 44px;
   }
 }

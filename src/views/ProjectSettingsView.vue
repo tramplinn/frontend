@@ -368,7 +368,7 @@ watch(
           <p v-if="invites.length === 0" class="hint">{{ t('projects.invites.none') }}</p>
           <ul v-else class="member-rows">
             <li v-for="item in invites" :key="item.id" class="member-row">
-              <span class="person">
+              <span class="person person--wide">
                 <strong>@{{ item.inviteeLogin }}</strong>
                 <small>{{
                   t('projects.invites.pendingUntil', {
@@ -514,6 +514,12 @@ h2 {
   gap: var(--space-2);
   list-style: none;
 }
+/* Колонки задаёт список, строки берут их через subgrid — иначе у каждой
+   строки свой auto-столбец под кнопку и поля разъезжаются. */
+.member-rows {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 170px auto;
+  column-gap: var(--space-3);
+}
 .link-row {
   display: grid;
   grid-template-columns: 170px minmax(0, 2fr) minmax(0, 1fr) auto;
@@ -530,12 +536,19 @@ h2 {
 }
 .member-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 170px auto;
-  gap: var(--space-3);
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
   padding: var(--space-2);
   border-radius: var(--radius-ctl);
   background: var(--surface);
+}
+.member-row > button:last-child {
+  grid-column: -2;
+  justify-self: end;
+}
+.person--wide {
+  grid-column: 1 / -2;
 }
 .person {
   display: flex;
@@ -568,8 +581,17 @@ h2 {
 }
 @media (max-width: 800px) {
   .link-row,
+  .member-rows,
   .member-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .member-row > *,
+  .member-row > button:last-child,
+  .person--wide {
+    grid-column: auto;
+  }
+  .member-row > button:last-child {
+    justify-self: start;
   }
   .card {
     padding: var(--space-4);
