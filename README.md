@@ -1,14 +1,13 @@
 # Tramplin Frontend
 
-Vue-приложение учебной платформы: каталог, уроки, тесты, прогресс, профиль,
-authoring и практика алгоритмов.
+The platform's web app: catalog, lessons, quizzes, progress, profile, authoring,
+and algorithm practice.
 
-Стек: Vue 3, TypeScript, Vite, Pinia, Vue Router, Reka UI, Vitest, ESLint и
-Prettier.
+Stack: Vue 3, TypeScript, Vite, Pinia, Vue Router, Reka UI, Vitest, ESLint, Prettier.
 
-## Быстрый старт
+## Quick start
 
-Нужны Node.js 22+ и pnpm через Corepack.
+You need Node.js 22+ and pnpm (via Corepack).
 
 ```bash
 cp .env.dev.example .env
@@ -17,85 +16,46 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Приложение откроется на `http://localhost:5173`. Vite проксирует `/api` в
-`BACKEND_ORIGIN`, по умолчанию `http://localhost:8000`.
+Open `http://localhost:5173`. Vite proxies `/api` to `BACKEND_ORIGIN`
+(`http://localhost:8000` by default).
 
-## Команды
+### With Docker
 
-```bash
-pnpm dev           # Vite dev server
-pnpm lint          # ESLint
-pnpm format:check  # проверка Prettier
-pnpm typecheck     # проверка TypeScript/Vue
-pnpm test          # Vitest
-pnpm build         # production bundle
-pnpm preview       # просмотр собранного bundle
-```
-
-## Конфигурация
-
-Для разработки используется [`.env.dev.example`](.env.dev.example):
-
-- `BACKEND_ORIGIN` — адрес backend для Vite proxy;
-- `VITE_API_BASE_URL` — браузерный API prefix.
-- `VITE_LOCALE_SWITCHER` — `true` показывает переключатель RU/EN. Пока локализация
-  не готова публично, включается только в сборках для команды (в Docker — build arg);
-  без флага интерфейс остаётся на русском.
-
-Для контейнера используется [`.env.example`](.env.example):
-
-- `API_UPSTREAM` — backend внутри Docker network;
-- `WEB_NETWORK_ALIAS` — alias для Caddy в сети `tramplin-edge`;
-- `CLIENT_MAX_BODY_SIZE` — лимит тела запроса в Nginx.
-
-## Структура
-
-```text
-src/
-  api/          HTTP-клиент, контракты и SSE
-  components/   переиспользуемые UI-компоненты
-  composables/  Vue composables
-  features/     функциональные модули
-  router/       маршруты и guards
-  stores/       Pinia stores
-  styles/       общие стили и design tokens
-  views/        страницы
-```
-
-API-клиент находится в `src/api`, состояние — в `src/stores`, предметная логика
-редакторов и тестов — в `src/features`. Access token хранится в памяти, refresh
-cookie управляется backend.
-
-Основные маршруты:
-
-- `/`, `/sections`, `/courses`
-- `/courses/:course` и вложенные lesson/quiz/practice routes
-- `/me`, `/manage/*`, `/admin/users`
-
-## Docker
-
-Production image собирает Vite bundle и раздаёт его через Nginx. Nginx также
-проксирует `/api` в backend и сохраняет потоковую передачу SSE.
+Nginx serves the built app and proxies `/api` to the backend. You need the
+`tramplin-edge` network from `infra`:
 
 ```bash
 cp .env.example .env
 docker compose up -d --build --wait
 ```
 
-Compose использует внешнюю сеть `tramplin-edge`; её и Caddy поднимает соседний
-репозиторий `infra`.
+## Commands
 
-## CI/CD
+```bash
+pnpm dev           # dev server
+pnpm lint          # ESLint
+pnpm format:check  # Prettier
+pnpm typecheck     # TypeScript/Vue
+pnpm test          # Vitest
+pnpm build         # production build
+pnpm preview       # preview the build
+```
 
-Pipeline выполняет quality/security checks, собирает и сканирует immutable image,
-затем разворачивает его на stage или production и запускает Nuclei.
+## Structure
 
-Нужные protected CI/CD variables:
+```text
+src/
+  api/          HTTP client, contracts, SSE
+  components/   shared UI components
+  composables/  Vue composables
+  features/     editors, quizzes, and other features
+  router/       routes and guards
+  stores/       Pinia stores
+  styles/       styles and design tokens
+  views/        pages
+```
 
-- `SERVER_IP`, `SSH_PORT`, `SSH_USER`, `SSH_PRIVATE_KEY`
-- `STAGE_ENV`, `PROD_ENV` типа File
-- `STAGE_URL`, `PROD_URL`
+The access token lives in memory; the backend manages the refresh cookie.
 
-Ветки `stage` и `main` используют отдельные Compose-проекты
-`tramplin-frontend-stage` и `tramplin-frontend-prod`. При ошибке deploy job
-печатает состояние и последние логи контейнера.
+Main routes: `/`, `/sections`, `/courses`, `/courses/:course` with nested
+lesson/quiz/practice pages, `/me`, `/manage/*`, `/admin/users`.
