@@ -1,3 +1,5 @@
+> Production в k3s: [манифесты, настройки и порядок запуска](k8s/README.md).
+
 # Tramplin Frontend
 
 The platform's web app: catalog, lessons, quizzes, progress, profile, authoring,
@@ -19,15 +21,10 @@ pnpm dev
 Open `http://localhost:5173`. Vite proxies `/api` to `BACKEND_ORIGIN`
 (`http://localhost:8000` by default).
 
-### With Docker
+## Production
 
-Nginx serves the built app and proxies `/api` to the backend. You need the
-`tramplin-edge` network from `infra`:
-
-```bash
-cp .env.example .env
-docker compose up -d --build --wait
-```
+Nginx раздаёт сборку и проксирует `/api` в backend. Настройки, Service и Ingress
+описаны в [k8s/README.md](k8s/README.md); деплой выполняется через GitLab CI.
 
 ## Commands
 

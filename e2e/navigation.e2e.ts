@@ -5,7 +5,7 @@ import type { Locator, Page } from '@playwright/test'
    Ловит страницы, которые падают при монтировании или не дают с себя уйти
    (URL меняется, а на экране остаётся старая страница), и любые ошибки Vue.
 
-   E2E_REFRESH_TOKEN — сырой refresh-токен (backend/scripts/issue_refresh_token.py);
+   E2E_REFRESH_TOKEN — сырой refresh-токен (backend/admin/issue_refresh_token.py);
    с ним проходятся и закрытые страницы, без него — только публичные.
    Токен одноразовый и ротируется при входе, поэтому весь обход — один тест
    в одной вкладке, а на каждый прогон нужен свежий токен. */

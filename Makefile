@@ -29,6 +29,6 @@ run:
 
 # Smoke-обход страниц в браузере против живого стенда (нужен бэкенд с сидами),
 # поэтому не входит в check. Закрытые страницы — с E2E_REFRESH_TOKEN, его выдаёт
-# backend: uv run python scripts/issue_refresh_token.py <login>.
+# backend: uv run python admin/issue_refresh_token.py <login>.
 e2e:
 	$(PNPM) e2e

@@ -25,8 +25,9 @@ RUN apk upgrade --no-cache
 # Без флага NGINX_LOCAL_RESOLVERS остаётся пустым и конфиг не соберётся.
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 ENV CLIENT_MAX_BODY_SIZE=12m
+ENV NGINX_PORT=80
 
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
