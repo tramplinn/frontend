@@ -1,4 +1,4 @@
-> Production в k3s: [манифесты, настройки и порядок запуска](k8s/README.md).
+> Production в k3s: [манифесты, настройки и порядок запуска](k8s/).
 
 # Tramplin Frontend
 
@@ -25,7 +25,7 @@ Open `http://localhost:5173`. Vite proxies `/api` to `BACKEND_ORIGIN`
 
 Nginx раздаёт сборку и обслуживает SPA-маршруты. Traefik направляет `/api`
 непосредственно в Service backend, а `/` — во frontend. Настройки, Service и Ingress
-описаны в [k8s/README.md](k8s/README.md); деплой выполняется через GitLab CI.
+описаны в [k8s/README.md](k8s/); деплой выполняется через GitLab CI.
 
 ## Commands
 
