@@ -129,6 +129,7 @@ deploy-production:
     - kubectl apply -k k8s/
     - kubectl -n tramplin rollout restart deployment/tramplin-frontend
     - kubectl -n tramplin rollout status deployment/tramplin-frontend --timeout=600s
+    - kubectl -n tramplin exec deployment/tramplin-frontend -- sh -ec 'wget -qO- "http://127.0.0.1:$NGINX_PORT/api/v1/health/ready"'
     - kubectl -n tramplin wait --for=create certificate/tramplin-frontend-tls --timeout=120s
     - kubectl -n tramplin wait --for=condition=Ready certificate/tramplin-frontend-tls --timeout=600s
     - |
