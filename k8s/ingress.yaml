@@ -16,6 +16,13 @@ spec:
   - host: replace.invalid
     http:
       paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: tramplin-api
+            port:
+              name: http
       - path: /
         pathType: Prefix
         backend:
