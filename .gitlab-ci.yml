@@ -132,8 +132,8 @@ deploy-production:
     - kubectl -n tramplin wait --for=create certificate/tramplin-frontend-tls --timeout=120s
     - kubectl -n tramplin wait --for=condition=Ready certificate/tramplin-frontend-tls --timeout=600s
     - |
-      kubectl -n tramplin exec deployment/tramplin-frontend -- sh -ec \
-        'wget -qO- "https://$PUBLIC_HOST/api/v1/health/ready"' | grep -F '"status":"ok"'
+      public_host=$(kubectl -n tramplin get configmap tramplin-frontend -o jsonpath='{.data.PUBLIC_HOST}')
+      wget -qO- "https://$public_host/api/v1/health/ready" | grep -F '"status":"ok"'
 
 nuclei-scan:
   stage: scan
