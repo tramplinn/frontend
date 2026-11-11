@@ -6,9 +6,11 @@ import { createProblem, deleteProblem, listProblems } from '@/api/algorithmAutho
 import type { ProblemAuthor } from '@/api/schemas/algorithmAuthoring'
 import type { AlgorithmDifficulty } from '@/api/schemas/algorithms'
 import DifficultyChip from '@/components/algorithms/DifficultyChip.vue'
+import ManageList from '@/components/manage/ManageList.vue'
 import InlineCreate from '@/components/manage/InlineCreate.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
-import ConfirmButton from '@/components/ui/ConfirmButton.vue'
+import RowMenu from '@/components/ui/RowMenu.vue'
+import RowMenuItem from '@/components/ui/RowMenuItem.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import StatusChip from '@/components/ui/StatusChip.vue'
 import { DIFFICULTY_ORDER, difficultyLabel, languageLabel } from '@/lib/algorithms'
@@ -77,7 +79,7 @@ onMounted(() => void load())
 </script>
 
 <template>
-  <section class="page">
+  <section>
     <header class="head">
       <div>
         <h1>{{ t('library.heading') }}</h1>
@@ -107,49 +109,46 @@ onMounted(() => void load())
     <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="problems.length === 0" class="muted empty">{{ t('library.empty') }}</p>
 
-      <ul v-else class="list">
-        <li v-for="item in problems" :key="item.id" class="row">
-          <RouterLink
-            :to="{ name: 'manage-algorithm', params: { problem: item.id } }"
-            class="row-main"
-          >
-            <span class="row-title">{{ item.title }}</span>
-            <span class="row-meta">
-              <DifficultyChip :difficulty="item.difficulty" />
-              <StatusChip :status="item.status" />
-              <span class="counts">
-                {{
-                  t('library.counts', {
-                    tests: item.testCases.length,
-                    samples: item.testCases.filter((test) => test.isSample).length,
-                  })
-                }}
-              </span>
-              <span v-if="item.templates.length > 0" class="counts">
-                {{ item.templates.map((tpl) => languageLabel(tpl.language)).join(' · ') }}
-              </span>
-            </span>
-          </RouterLink>
-
-          <ConfirmButton :loading="busy === item.id" @confirm="remove(item.id)" />
-        </li>
-      </ul>
+      <ManageList
+        v-else
+        :items="problems"
+        :to="(item) => ({ name: 'manage-algorithm', params: { problem: item.id } })"
+      >
+        <template #badges="{ item }">
+          <DifficultyChip :difficulty="item.difficulty" />
+          <StatusChip :status="item.status" />
+        </template>
+        <template #meta="{ item }">
+          <span>
+            {{
+              t('library.counts', {
+                tests: item.testCases.length,
+                samples: item.testCases.filter((test) => test.isSample).length,
+              })
+            }}
+          </span>
+          <span v-if="item.templates.length > 0">
+            {{ item.templates.map((tpl) => languageLabel(tpl.language)).join(' · ') }}
+          </span>
+        </template>
+        <template #actions="{ item }">
+          <RowMenu :disabled="busy !== null" :label="t('manage.actionsFor', { title: item.title })">
+            <RowMenuItem danger @select="remove(item.id)">{{ t('ui.delete') }}</RowMenuItem>
+          </RowMenu>
+        </template>
+      </ManageList>
     </LoadState>
   </section>
 </template>
 
 <style scoped>
-.page {
-  display: grid;
-  gap: var(--space-6);
-}
-
 .head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 .head h1 {
@@ -158,8 +157,7 @@ onMounted(() => void load())
   letter-spacing: -0.03em;
 }
 
-.muted,
-.counts {
+.muted {
   color: var(--text-muted);
   font-size: var(--text-caption);
 }
@@ -169,44 +167,9 @@ onMounted(() => void load())
 }
 
 .error {
+  margin-bottom: var(--space-4);
   color: var(--danger);
   font-size: var(--text-caption);
-}
-
-.list {
-  display: grid;
-  gap: var(--space-2);
-  list-style: none;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--card);
-}
-
-.row-main {
-  display: grid;
-  gap: var(--space-2);
-  flex: 1;
-  min-width: 0;
-  color: inherit;
-  text-decoration: none;
-}
-
-.row-title {
-  font-weight: var(--weight-medium);
-}
-
-.row-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
 }
 
 .empty {

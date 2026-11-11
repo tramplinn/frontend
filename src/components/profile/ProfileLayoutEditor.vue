@@ -130,6 +130,7 @@ onMounted(() => void editor.load())
 
 <style scoped>
 .card {
+  min-width: 0;
   padding: var(--space-6);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -153,11 +154,13 @@ h3 {
 }
 .rows {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
   list-style: none;
 }
 .row {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
@@ -207,6 +210,20 @@ h3 {
 @media (max-width: 520px) {
   .card {
     padding: var(--space-4);
+  }
+  .row {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .grip {
+    display: none;
+  }
+  .name {
+    flex-basis: calc(100% - var(--space-8));
+    white-space: normal;
+  }
+  .buttons {
+    margin-left: auto;
   }
 }
 </style>

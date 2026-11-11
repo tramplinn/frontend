@@ -32,7 +32,7 @@ defineProps<{ profile: PublicProfile }>()
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: var(--space-3);
 }
 </style>

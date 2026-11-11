@@ -24,9 +24,12 @@
     "continue": "продолжить",
     "continueLearning": "Продолжить обучение",
     "crumbs": {
+      "mcpAuthorization": "доступ к MCP",
+      "notFound": "страница не найдена",
       "sections": "все разделы",
       "learning": "моё обучение",
       "algorithms": "алгосы",
+      "algorithmProblem": "задача",
       "algorithmProblems": "алгозадачи",
       "practice": "практика",
       "newsItem": "новость",
@@ -34,15 +37,15 @@
       "profile": "профиль",
       "people": "люди",
       "content": "контент",
-      "contentLesson": "контент / урок",
-      "contentQuiz": "контент / тест",
+      "contentLesson": "урок",
+      "contentQuiz": "тест",
       "news": "новости",
-      "newsArticle": "новости / статья",
+      "newsArticle": "статья",
       "users": "пользователи",
       "projects": "проекты",
-      "projectNew": "проекты / новый",
+      "projectNew": "новый",
       "project": "проект",
-      "projectSettings": "проект / настройки"
+      "projectSettings": "настройки"
     }
   },
   "sections": {

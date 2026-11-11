@@ -88,4 +88,11 @@ const shown = computed(() => props.photos[Math.min(current.value, props.photos.l
   height: 100%;
   object-fit: cover;
 }
+@media (max-width: 620px) {
+  .photo,
+  .gallery--compact .photo {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
 </style>

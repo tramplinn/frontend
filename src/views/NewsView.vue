@@ -57,7 +57,7 @@ onMounted(() => void load())
 </script>
 
 <template>
-  <div class="page">
+  <div class="page" :class="{ 'page--with-rail': auth.isAuthenticated }">
     <section class="news-page">
       <h1 class="heading">{{ t('news.heading') }}</h1>
 
@@ -90,9 +90,17 @@ onMounted(() => void load())
 <style scoped>
 .page {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: var(--space-8);
+}
+
+.page--with-rail {
+  grid-template-columns: minmax(0, 1fr) 280px;
+}
+
+.news-page {
+  min-width: 0;
 }
 
 .rail {
@@ -125,8 +133,9 @@ onMounted(() => void load())
 }
 
 @media (max-width: 900px) {
-  .page {
-    grid-template-columns: 1fr;
+  .page,
+  .page--with-rail {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .rail {
@@ -140,24 +149,7 @@ onMounted(() => void load())
   }
 
   .feed {
-    width: calc(100% + var(--space-3));
-    max-width: none;
-    padding-right: var(--space-3);
-    overflow-x: auto;
-    flex-direction: row;
-    gap: var(--space-3);
-    scroll-padding-inline: 0 var(--space-3);
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-
-  .feed::-webkit-scrollbar {
-    display: none;
-  }
-
-  .feed > * {
-    flex: 0 0 min(88%, 420px);
-    scroll-snap-align: start;
+    gap: var(--space-4);
   }
 }
 </style>

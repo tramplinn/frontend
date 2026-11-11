@@ -24,9 +24,12 @@
     "continue": "continue",
     "continueLearning": "Continue learning",
     "crumbs": {
+      "mcpAuthorization": "MCP access",
+      "notFound": "page not found",
       "sections": "all sections",
       "learning": "my learning",
       "algorithms": "algorithms",
+      "algorithmProblem": "problem",
       "algorithmProblems": "algorithm problems",
       "practice": "practice",
       "newsItem": "news",
@@ -34,15 +37,15 @@
       "profile": "profile",
       "people": "people",
       "content": "content",
-      "contentLesson": "content / lesson",
-      "contentQuiz": "content / quiz",
+      "contentLesson": "lesson",
+      "contentQuiz": "quiz",
       "news": "news",
-      "newsArticle": "news / article",
+      "newsArticle": "article",
       "users": "users",
       "projects": "projects",
-      "projectNew": "projects / new",
+      "projectNew": "new",
       "project": "project",
-      "projectSettings": "project / settings"
+      "projectSettings": "settings"
     }
   },
   "sections": {

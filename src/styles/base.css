@@ -12,7 +12,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   /* Свойство наследуется: серый прямоугольник, который WebKit рисует под
      каждым тапом, гасим один раз на корне и заменяем своим :active ниже. */
   -webkit-tap-highlight-color: transparent;
@@ -73,9 +73,7 @@ canvas {
   max-width: 100%;
 }
 
-/* Тонкий скроллбар в тон темы вместо системного — на любом overflow,
-   не только на документе. .feed в NewsView переопределяет это локально
-   (класс перебивает универсальный селектор), там скроллбар скрыт нарочно. */
+/* Тонкий скроллбар в тон темы вместо системного — на любом overflow. */
 * {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--text-muted) 50%, transparent) transparent;

@@ -91,6 +91,8 @@ function update(value: unknown): void {
 
 <style scoped>
 .trigger {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -145,6 +147,9 @@ function update(value: unknown): void {
      стилизуется глобально; имена классов уникальны. -->
 <style>
 .app-select-surface {
+  max-width: min(calc(100vw - var(--space-6)), var(--reka-select-content-available-width));
+  max-height: var(--reka-select-content-available-height);
+  overflow-y: auto;
   min-width: var(--reka-select-trigger-width);
   padding: var(--space-2);
   background: var(--card);

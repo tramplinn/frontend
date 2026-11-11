@@ -27,6 +27,7 @@ const date = computed(() => formatNewsDate(props.news.publishedAt))
 
 <style scoped>
 .card {
+  min-width: 0;
   overflow: hidden;
   background: var(--card);
   border: 1px solid var(--border);
@@ -57,5 +58,10 @@ const date = computed(() => formatNewsDate(props.news.publishedAt))
   margin-top: var(--space-3);
   color: var(--text-muted);
   line-height: 1.6;
+}
+@media (max-width: 620px) {
+  .body {
+    padding: var(--space-4);
+  }
 }
 </style>

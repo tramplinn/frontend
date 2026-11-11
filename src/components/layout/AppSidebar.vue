@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AvatarFallback, AvatarImage, AvatarRoot } from 'reka-ui'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import BrandMark from '@/components/layout/BrandMark.vue'
@@ -9,11 +9,8 @@ import { useI18n } from '@/i18n'
 import type { Section } from '@/lib/sections'
 import { visibleSections } from '@/lib/sections'
 import { useAuthStore } from '@/stores/auth'
-import { useContentStore } from '@/stores/content'
-import { useStartedCoursesQuery } from '@/features/learning/queries'
 
 const auth = useAuthStore()
-const content = useContentStore()
 const route = useRoute()
 const { t } = useI18n()
 const mobileOpen = ref(false)
@@ -28,12 +25,6 @@ const groups = computed(() => {
     byGroup.set(section.group, [...(byGroup.get(section.group) ?? []), section])
   }
   return [...byGroup.entries()]
-})
-
-const { inProgress: continuing } = useStartedCoursesQuery({ fetch: false })
-
-onMounted(() => {
-  void content.loadTracks().catch(() => {})
 })
 
 watch(
@@ -109,22 +100,6 @@ watch(
           <RouterLink v-for="section in items" :key="section.key" :to="section.to" class="item">
             <SectionIcon :name="section.key" />
             <span class="item-title">{{ t(`sections.${section.messages}.title`) }}</span>
-          </RouterLink>
-        </nav>
-      </div>
-
-      <div v-if="continuing.length > 0" class="group">
-        <p class="group-title">{{ t('nav.continue') }}</p>
-        <nav class="nav" :aria-label="t('nav.continueLearning')">
-          <RouterLink
-            v-for="course in continuing"
-            :key="course.slug"
-            :to="{ name: 'course', params: { course: course.slug } }"
-            class="item"
-          >
-            <span class="mark" />
-            <span class="item-title">{{ course.title }}</span>
-            <span class="item-tail">{{ course.completed }}/{{ course.total }}</span>
           </RouterLink>
         </nav>
       </div>
@@ -312,22 +287,6 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.item-tail {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: var(--text-caption);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-}
-
-.mark {
-  flex-shrink: 0;
-  width: var(--space-2);
-  height: var(--space-2);
-  border-radius: var(--radius-xs);
-  background: var(--accent);
 }
 
 @media (max-width: 800px) {

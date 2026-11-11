@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ManageList from '@/components/manage/ManageList.vue'
 import InlineCreate from '@/components/manage/InlineCreate.vue'
 import LoadState from '@/components/ui/LoadState.vue'
 import RowMenu from '@/components/ui/RowMenu.vue'
@@ -31,27 +32,24 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
     <LoadState :pending="pending" :error="error" @retry="load">
       <p v-if="items.length === 0" class="blank">{{ t('newsEditor.empty') }}</p>
 
-      <ul v-else class="list">
-        <li v-for="news in items" :key="news.id" class="item">
-          <RouterLink
-            class="item-link"
-            :to="{ name: 'manage-news-item', params: { news: news.id } }"
-          >
-            <span class="item-title">{{ news.title }}</span>
-            <StatusChip :status="news.status" />
-            <span v-if="news.publishedAt" class="item-meta">
-              {{ formatNewsDate(news.publishedAt) }}
-            </span>
-          </RouterLink>
-
-          <RowMenu :disabled="busy" :label="t('manage.actionsFor', { title: news.title })">
-            <RowMenuItem @select="togglePublished(news)">
-              {{ news.status === 'published' ? t('manage.toDraft') : t('manage.publish') }}
+      <ManageList
+        v-else
+        :items="items"
+        :to="(news) => ({ name: 'manage-news-item', params: { news: news.id } })"
+      >
+        <template #badges="{ item }"><StatusChip :status="item.status" /></template>
+        <template #meta="{ item }">
+          <span v-if="item.publishedAt">{{ formatNewsDate(item.publishedAt) }}</span>
+        </template>
+        <template #actions="{ item }">
+          <RowMenu :disabled="busy" :label="t('manage.actionsFor', { title: item.title })">
+            <RowMenuItem @select="togglePublished(item)">
+              {{ item.status === 'published' ? t('manage.toDraft') : t('manage.publish') }}
             </RowMenuItem>
-            <RowMenuItem danger @select="remove(news.id)">{{ t('newsEditor.delete') }}</RowMenuItem>
+            <RowMenuItem danger @select="remove(item.id)">{{ t('newsEditor.delete') }}</RowMenuItem>
           </RowMenu>
-        </li>
-      </ul>
+        </template>
+      </ManageList>
     </LoadState>
   </section>
 </template>
@@ -80,48 +78,6 @@ const { items, pending, error, actionError, busy, load, add, remove, togglePubli
 
 .blank {
   padding: var(--space-12) 0;
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  list-style: none;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  border-radius: var(--radius-ctl);
-  transition: background var(--motion-fast) var(--ease);
-}
-
-.item:hover {
-  background: var(--surface);
-}
-
-.item-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex: 1;
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-caption);
-}
-
-.item-title {
-  overflow: hidden;
-  font-weight: var(--weight-medium);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-meta {
-  margin-left: auto;
   color: var(--text-muted);
   font-size: var(--text-caption);
 }

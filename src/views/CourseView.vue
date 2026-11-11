@@ -320,4 +320,10 @@ watch(
     padding: var(--space-4);
   }
 }
+@media (max-width: 420px) {
+  .map {
+    margin-inline: calc(var(--space-3) * -1);
+    padding: var(--space-3);
+  }
+}
 </style>

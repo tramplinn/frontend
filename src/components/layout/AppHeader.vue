@@ -56,9 +56,9 @@ const SIMPLE_LABELS: Record<string, MessageKey> = {
   sections: 'nav.crumbs.sections',
   learning: 'nav.crumbs.learning',
   algorithms: 'nav.crumbs.algorithms',
-  'algorithm-solo': 'nav.crumbs.algorithms',
+  'algorithm-solo': 'nav.crumbs.algorithmProblem',
   'manage-algorithms': 'nav.crumbs.algorithmProblems',
-  'manage-algorithm': 'nav.crumbs.algorithmProblems',
+  'manage-algorithm': 'nav.crumbs.algorithmProblem',
   'manage-practice-set': 'nav.crumbs.practice',
   'news-item': 'nav.crumbs.newsItem',
   catalog: 'nav.crumbs.catalog',
@@ -75,13 +75,48 @@ const SIMPLE_LABELS: Record<string, MessageKey> = {
   'manage-news': 'nav.crumbs.news',
   'manage-news-item': 'nav.crumbs.newsArticle',
   'admin-users': 'nav.crumbs.users',
+  'mcp-authorize': 'nav.crumbs.mcpAuthorization',
+  'not-found': 'nav.crumbs.notFound',
+}
+
+interface ParentCrumb {
+  label: MessageKey
+  name: string
+  param?: string
+}
+
+const PARENT_CRUMBS: Record<string, ParentCrumb[]> = {
+  'user-profile': [{ label: 'nav.crumbs.people', name: 'people' }],
+  'algorithm-solo': [{ label: 'nav.crumbs.algorithms', name: 'algorithms' }],
+  'manage-algorithm': [{ label: 'nav.crumbs.algorithmProblems', name: 'manage-algorithms' }],
+  'manage-practice-set': [{ label: 'nav.crumbs.content', name: 'manage-content' }],
+  'manage-lesson': [{ label: 'nav.crumbs.content', name: 'manage-content' }],
+  'manage-quiz': [{ label: 'nav.crumbs.content', name: 'manage-content' }],
+  'manage-news-item': [{ label: 'nav.crumbs.news', name: 'manage-news' }],
+  'project-create': [{ label: 'nav.crumbs.projects', name: 'projects' }],
+  project: [{ label: 'nav.crumbs.projects', name: 'projects' }],
+  'project-settings': [
+    { label: 'nav.crumbs.projects', name: 'projects' },
+    { label: 'nav.crumbs.project', name: 'project', param: 'slug' },
+  ],
 }
 
 const crumbs = computed<Crumb[]>(() => {
-  const trail: Crumb[] = [{ label: t('nav.home'), to: { name: 'home' } }]
+  const trail: Crumb[] = [
+    { label: t('nav.home'), to: route.name === 'home' ? null : { name: 'home' } },
+  ]
   const courseSlug = param('course')
   if (!courseSlug) {
     const name = typeof route.name === 'string' ? route.name : ''
+    for (const parent of PARENT_CRUMBS[name] ?? []) {
+      trail.push({
+        label: t(parent.label),
+        to: {
+          name: parent.name,
+          ...(parent.param ? { params: { [parent.param]: param(parent.param) } } : {}),
+        },
+      })
+    }
     const label = SIMPLE_LABELS[name]
     if (label !== undefined) {
       trail.push({ label: t(label), to: null })
@@ -93,7 +128,7 @@ const crumbs = computed<Crumb[]>(() => {
   const course = content.courses.get(courseSlug)
   trail.push({
     label: course?.title.toLowerCase() ?? courseSlug,
-    to: { name: 'course', params: { course: courseSlug } },
+    to: route.name === 'course' ? null : { name: 'course', params: { course: courseSlug } },
   })
 
   const found =
@@ -115,6 +150,10 @@ const crumbs = computed<Crumb[]>(() => {
       ).toLowerCase(),
       to: null,
     })
+  } else if (route.name !== 'course') {
+    const item = param('lesson') || param('quiz') || param('set')
+    trail.push({ label: param('module'), to: null })
+    trail.push({ label: item, to: null })
   }
   return trail
 })
@@ -125,8 +164,17 @@ const crumbs = computed<Crumb[]>(() => {
     <nav class="crumbs" :aria-label="t('nav.breadcrumbs')">
       <template v-for="(crumb, index) in crumbs" :key="crumb.label + String(index)">
         <span v-if="index > 0" class="sep" aria-hidden="true">/</span>
-        <RouterLink v-if="crumb.to" :to="crumb.to" class="crumb">{{ crumb.label }}</RouterLink>
-        <span v-else class="crumb crumb--current" aria-current="page">{{ crumb.label }}</span>
+        <RouterLink v-if="crumb.to" :to="crumb.to" class="crumb" :title="crumb.label">{{
+          crumb.label
+        }}</RouterLink>
+        <span
+          v-else
+          class="crumb"
+          :title="crumb.label"
+          :class="{ 'crumb--current': index === crumbs.length - 1 }"
+          :aria-current="index === crumbs.length - 1 ? 'page' : undefined"
+          >{{ crumb.label }}</span
+        >
       </template>
     </nav>
 
@@ -144,7 +192,7 @@ const crumbs = computed<Crumb[]>(() => {
         }}</span></RouterLink
       >
       <SignInButton
-        v-if="!auth.isAuthenticated"
+        v-if="auth.status === 'ready' && !auth.isAuthenticated"
         size="sm"
         :next-path="nextPath"
         :auto-open="loginRequested"
@@ -173,6 +221,10 @@ const crumbs = computed<Crumb[]>(() => {
 }
 
 .crumb {
+  min-width: 2ch;
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-muted);
   font-size: var(--text-caption);
   white-space: nowrap;
@@ -190,11 +242,13 @@ a.crumb:hover {
 }
 
 .sep {
+  flex-shrink: 0;
   color: var(--border);
   font-size: var(--text-caption);
 }
 
 .side {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);

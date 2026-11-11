@@ -243,4 +243,18 @@ function onFiles(event: Event): void {
   gap: var(--space-3);
   margin-top: var(--space-6);
 }
+@media (max-width: 620px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .title-input {
+    width: 100%;
+  }
+
+  .head-side {
+    flex-wrap: wrap;
+  }
+}
 </style>

@@ -297,6 +297,7 @@ async function signOut(all = false): Promise<void> {
 
 <style scoped>
 .profile {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: var(--space-6);
   max-width: 1100px;
@@ -435,7 +436,7 @@ header h2 {
 }
 @media (max-width: 800px) {
   .columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 520px) {
@@ -444,7 +445,7 @@ header h2 {
   }
   .pair,
   .triple {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
